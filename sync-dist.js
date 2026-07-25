@@ -175,8 +175,8 @@ try {
     const modernJs = assetFiles.find(f => f.startsWith('index-') && !f.includes('legacy') && f.endsWith('.js')) || 'index-BZTC8CmI.js';
     const mainCss = assetFiles.find(f => f.startsWith('index-') && f.endsWith('.css')) || 'index-ClO9OIkj.css';
 
-    srcHtml = srcHtml.replace(/\/assets\/index-[^'"]+\.js/g, `./assets/${modernJs}`);
-    srcHtml = srcHtml.replace(/\/assets\/index-[^'"]+\.css/g, `./assets/${mainCss}`);
+    srcHtml = srcHtml.replace(/['"](?:\.\/|\.\.\/|\/)*assets\/index-[^'"]+\.js['"]/g, `'./assets/${modernJs}'`);
+    srcHtml = srcHtml.replace(/['"](?:\.\/|\.\.\/|\/)*assets\/index-[^'"]+\.css['"]/g, `'./assets/${mainCss}'`);
     fs.writeFileSync(frontendSourceIndex, srcHtml, 'utf8');
     console.log('✅ Synchronized frontend/index.html IIS asset hashes.');
   }
