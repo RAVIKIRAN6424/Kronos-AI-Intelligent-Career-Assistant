@@ -28,6 +28,9 @@ function patchHtmlForFileProtocol(filePath, distAssetsDir) {
   if (!fs.existsSync(filePath)) return;
   let html = fs.readFileSync(filePath, 'utf8');
 
+  // Remove source template redirect from compiled output files
+  html = html.replace(/<script id="__kronos_src_redirect__">[\s\S]*?<\/script>/gi, '');
+
   let legacyJsName = 'index-legacy-BBH8HwjI.js';
   if (distAssetsDir && fs.existsSync(distAssetsDir)) {
     const files = fs.readdirSync(distAssetsDir);
