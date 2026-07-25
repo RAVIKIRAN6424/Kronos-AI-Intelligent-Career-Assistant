@@ -167,7 +167,21 @@ try {
     console.log('✅ Synchronized root and frontend assets directories with production build.');
   }
 
-  // 5. Ensure web.config exists in root, dist, frontend, and frontend/dist
+  // 5. Update frontend/index.html with current production asset hashes for IIS mode
+  const frontendSourceIndex = path.join(__dirname, 'frontend', 'index.html');
+  if (fs.existsSync(frontendSourceIndex) && fs.existsSync(distAssets)) {
+    let srcHtml = fs.readFileSync(frontendSourceIndex, 'utf8');
+    const assetFiles = fs.readdirSync(distAssets);
+    const modernJs = assetFiles.find(f => f.startsWith('index-') && !f.includes('legacy') && f.endsWith('.js')) || 'index-BZTC8CmI.js';
+    const mainCss = assetFiles.find(f => f.startsWith('index-') && f.endsWith('.css')) || 'index-ClO9OIkj.css';
+
+    srcHtml = srcHtml.replace(/\/assets\/index-[^'"]+\.js/g, `./assets/${modernJs}`);
+    srcHtml = srcHtml.replace(/\/assets\/index-[^'"]+\.css/g, `./assets/${mainCss}`);
+    fs.writeFileSync(frontendSourceIndex, srcHtml, 'utf8');
+    console.log('✅ Synchronized frontend/index.html IIS asset hashes.');
+  }
+
+  // 6. Ensure web.config exists in root, dist, frontend, and frontend/dist
   if (fs.existsSync(webConfigPath)) {
     fs.copyFileSync(webConfigPath, path.join(rootDist, 'web.config'));
     fs.copyFileSync(webConfigPath, path.join(frontendDist, 'web.config'));
