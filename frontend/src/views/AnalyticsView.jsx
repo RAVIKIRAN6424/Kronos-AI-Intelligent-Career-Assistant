@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, PieChart, TrendingUp, Globe, Briefcase, Award, Zap, Calendar, Filter } from 'lucide-react';
+import { BarChart3, PieChart, TrendingUp, Globe, Briefcase, Award, Zap, Calendar, Filter, Lock, LogIn } from 'lucide-react';
 import { api } from '../utils/api';
 import { categoryTheme } from '../utils/categoryColors';
 
-export const AnalyticsView = ({ jobs }) => {
+export const AnalyticsView = ({ jobs, currentUser, onOpenAuthModal }) => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('Past 30 Days'); // 'Today' | 'Past 7 Days' | 'Past 30 Days' | 'Year to Date'
@@ -12,10 +12,15 @@ export const AnalyticsView = ({ jobs }) => {
 
   useEffect(() => {
     fetchAnalytics();
-  }, [jobs, dateRange, startDate, endDate]);
+  }, [jobs, dateRange, startDate, endDate, currentUser]);
 
   const fetchAnalytics = async () => {
     try {
+      if (!currentUser) {
+        setAnalytics(null);
+        setLoading(false);
+        return;
+      }
       const data = await api.getAnalytics();
       setAnalytics(data);
     } catch (err) {
@@ -29,19 +34,32 @@ export const AnalyticsView = ({ jobs }) => {
     return <div style={{ textAlign: 'center', color: 'var(--accent-cyan)', padding: '50px' }}>Calculating CRM metrics...</div>;
   }
 
-  const categoryBreakdown = analytics?.category_breakdown || [];
-  const countryBreakdown = analytics?.country_breakdown || [];
+  const categoryBreakdown = currentUser ? (analytics?.category_breakdown || []) : [];
+  const countryBreakdown = currentUser ? (analytics?.country_breakdown || []) : [];
 
-  // Compute exact metrics from jobs array
-  const jobList = Array.isArray(jobs) ? jobs : [];
-  const appliedCount = jobList.filter(j => j.status === 'Applied').length;
-  const interviewingCount = jobList.filter(j => j.status === 'Interviewing').length;
-  const offerCount = jobList.filter(j => j.status === 'Offer').length;
-  const savedCount = jobList.filter(j => !j.status || j.status === 'Saved' || j.status === 'Saved Jobs').length || (analytics?.saved || jobList.length);
+  // Compute exact metrics: If unauthenticated, ALL metrics MUST be 0!
+  const jobList = currentUser && Array.isArray(jobs) ? jobs : [];
+  const savedCount = currentUser ? (jobList.filter(j => !j.status || j.status === 'Saved' || j.status === 'Saved Jobs').length || (analytics?.saved || jobList.length)) : 0;
+  const appliedCount = currentUser ? jobList.filter(j => j.status === 'Applied').length : 0;
+  const interviewingCount = currentUser ? jobList.filter(j => j.status === 'Interviewing').length : 0;
+  const offerCount = currentUser ? jobList.filter(j => j.status === 'Offer').length : 0;
   const totalTracked = jobList.length || 1;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Unauthenticated Lock Warning Banner */}
+      {!currentUser && (
+        <div className="glass-card" style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #f87171', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ffffff', fontSize: '14px', fontWeight: 600 }}>
+            <Lock size={22} color="#f87171" />
+            <span>Account Sign-In Required: Please sign in or register to view your personalized analytics metrics and recruitment funnel.</span>
+          </div>
+          <button className="btn-cyber-primary" style={{ padding: '8px 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={onOpenAuthModal}>
+            <LogIn size={15} /> SIGN IN / REGISTER
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>

@@ -21,6 +21,15 @@ export const ConnectedPortalsView = ({ toast }) => {
 
   const fetchPortals = async () => {
     try {
+      const stored = localStorage.getItem('kronos_portals');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+          setPortals(parsed);
+          setLoading(false);
+          return;
+        }
+      }
       const data = await api.getPortals();
       if (data && data.length > 0) {
         setPortals(data);

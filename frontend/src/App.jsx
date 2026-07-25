@@ -143,10 +143,12 @@ export function App() {
 
         {activeTab === 'jobs' && (
           <JobsCrmView
-            jobs={jobs}
+            jobs={currentUser ? jobs : []}
             onSelectJob={setSelectedJob}
             onRefreshJobs={handleRefreshJobs}
             toast={addToast}
+            currentUser={currentUser}
+            onOpenAuthModal={() => handleOpenAuth('login')}
           />
         )}
 
@@ -167,7 +169,11 @@ export function App() {
         )}
 
         {activeTab === 'analytics' && (
-          <AnalyticsView jobs={jobs} />
+          <AnalyticsView
+            jobs={currentUser ? jobs : []}
+            currentUser={currentUser}
+            onOpenAuthModal={() => handleOpenAuth('login')}
+          />
         )}
 
         {activeTab === 'chatbot' && (

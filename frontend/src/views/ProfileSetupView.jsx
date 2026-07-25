@@ -53,6 +53,21 @@ export const ProfileSetupView = ({ onProfileUpdated, toast }) => {
     }
   };
 
+  const syncPortalsToStorage = (portalsList) => {
+    try {
+      const formattedForPortalsView = portalsList.map(p => ({
+        id: p.id,
+        portal_name: p.name || p.portal_name,
+        is_connected: p.is_connected ? 1 : 0,
+        is_enabled: p.is_enabled !== undefined ? (p.is_enabled ? 1 : 0) : 1,
+        account_email: p.email || p.account_email || ''
+      }));
+      localStorage.setItem('kronos_portals', JSON.stringify(formattedForPortalsView));
+    } catch (e) {
+      console.warn('Portals storage sync error:', e);
+    }
+  };
+
   const handleAddPortalCredential = () => {
     if (!newPortalEmail || !newPortalEmail.includes('@')) {
       if (toast) toast('Please enter a valid portal login email.', 'error');
@@ -60,8 +75,10 @@ export const ProfileSetupView = ({ onProfileUpdated, toast }) => {
     }
     const finalPortalName = newPortalName === 'Other' ? (customPortalName.trim() || 'Custom Portal') : newPortalName;
     const existing = configuredPortals.find(p => p.name.toLowerCase() === finalPortalName.toLowerCase());
+    
+    let updatedList = [];
     if (existing) {
-      setConfiguredPortals(prev => prev.map(p => p.id === existing.id ? { ...p, email: newPortalEmail, password: newPortalPassword || '••••••••', is_connected: 1 } : p));
+      updatedList = configuredPortals.map(p => p.id === existing.id ? { ...p, email: newPortalEmail, password: newPortalPassword || '••••••••', is_connected: 1 } : p);
     } else {
       const newEntry = {
         id: Date.now(),
@@ -71,12 +88,16 @@ export const ProfileSetupView = ({ onProfileUpdated, toast }) => {
         is_connected: 1,
         is_enabled: 1
       };
-      setConfiguredPortals(prev => [...prev, newEntry]);
+      updatedList = [...configuredPortals, newEntry];
     }
+    
+    setConfiguredPortals(updatedList);
+    syncPortalsToStorage(updatedList);
+
     setNewPortalEmail('');
     setNewPortalPassword('');
     setCustomPortalName('');
-    if (toast) toast(`Configured login credentials for ${finalPortalName}!`, 'success');
+    if (toast) toast(`Configured login credentials for ${finalPortalName}! Automatically synced to Portals section.`, 'success');
   };
 
   const availableRoles = [
@@ -174,7 +195,10 @@ export const ProfileSetupView = ({ onProfileUpdated, toast }) => {
         console.warn('Resume sync warning:', e);
       }
 
-      if (toast) toast('Profile preferences saved! Disabled job roles removed from Resumes section.', 'success');
+      // Sync portals to storage
+      syncPortalsToStorage(configuredPortals);
+
+      if (toast) toast('Profile preferences & portal credentials saved! Automatically updated Portals section.', 'success');
       if (onProfileUpdated) onProfileUpdated({ target_titles: updatedTitles });
     } catch (err) {
       if (toast) toast(err.message || 'Failed to update profile', 'error');
