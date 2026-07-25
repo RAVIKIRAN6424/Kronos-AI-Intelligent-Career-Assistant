@@ -1,133 +1,82 @@
-# ⚡ Kronos AI CRM - Autonomous AI Job Search & Cold Outreach Engine
+# ⚡ Kronos AI - Intelligent Career Assistant
 
-[![Live AWS Server](https://img.shields.io/badge/AWS%20EC2%20Live-http%3A%2F%2F65.2.220.208%3A8080-00f2fe?style=for-the-badge&logo=amazonaws)](http://65.2.220.208:8080)
-[![Production Ready](https://img.shields.io/badge/Production-IIS%20%2B%20Express%20%2B%20React-10b981?style=for-the-badge)](http://65.2.220.208:8080)
+[![AWS EC2 Live Deployment](https://img.shields.io/badge/AWS%20EC2%20Live-http%3A%2F%2F65.2.220.208%3A8080-00f2fe?style=for-the-badge&logo=amazonaws)](http://65.2.220.208:8080)
+[![Production Status](https://img.shields.io/badge/Status-Live%20%26%20Active-10b981?style=for-the-badge)](http://65.2.220.208:8080)
 
-**Live AWS Server**: [http://65.2.220.208:8080](http://65.2.220.208:8080)
-
-Kronos AI CRM is a state-of-the-art, full-stack AI career automation platform. It features a dark cyberpunk glassmorphism UI with interactive 3D particle canvas effects (`RobotBackground.jsx`), multi-industry job stream support (Software, Mechanical, Electrical, Civil, Business, Data Science, Finance, Healthcare), multi-country location targeting (India metro hubs + International), email OTP authentication, automated Playwright web scraping, Anthropic Claude AI match scoring & cold email synthesis, Nodemailer SMTP dispatching, IIS / EC2 deployment rules, and background cron scheduling.
+> **Live AWS Server Link**: [http://65.2.220.208:8080](http://65.2.220.208:8080)
 
 ---
 
-## 🌐 Live AWS Production Server
+## 🚀 Application Overview
 
-The application is deployed live on AWS EC2:
-- **AWS Server URL**: [http://65.2.220.208:8080](http://65.2.220.208:8080)
-- **API Base Endpoint**: [http://65.2.220.208:8080/api](http://65.2.220.208:8080/api)
-- **Health Check**: [http://65.2.220.208:8080/health](http://65.2.220.208:8080/health)
+**Kronos AI** is an intelligent, autonomous career assistant and job application management platform. Built with a modern cyberpunk glassmorphism interface and interactive particle animation engine, Kronos AI automates job discovery, skill matching, resume customization, and recruiter cold email outreach.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🌟 Key Application Features
 
-### Option 1: Automated Windows Launcher
-Double-click `run-app.bat` or run in terminal:
-```cmd
+1. **Autonomous Job Scraper Engine**:
+   - Automated web scraping using Playwright across tech, engineering, and business job boards.
+   - Filter by domain stream (Software, Mechanical, Electrical, Civil, Business, Data Science, Healthcare) and target locations (India Tech Hubs & Global Remote).
+
+2. **AI Resume & Match Scoring Engine**:
+   - Claude AI match score calculation (0–100%) against target job descriptions.
+   - Skill gap identification and tailored resume optimization suggestions.
+
+3. **Recruiter Cold Email Outreach**:
+   - Automated personalized cold outreach email generation.
+   - Customized email tones (Formal, Technical, Startup, Executive, Casual).
+   - Instant Nodemailer SMTP integration for direct email dispatch.
+
+4. **Interactive CRM & Kanban Board**:
+   - Track application stages: Saved, Applied, Interviewing, Offer, Rejected.
+   - Recruiter contact management, note taking, and deadline reminders.
+
+5. **Email OTP Authentication**:
+   - Secure candidate sign-in with live email OTP generation and verification.
+
+---
+
+## 🛠️ Tech Stack & Architecture
+
+- **Frontend**: React (Vite), Glassmorphic CSS design system, Interactive 3D Canvas (`RobotBackground`), Lucide Icons.
+- **Backend**: Node.js, Express REST API, SQLite (`database.sqlite`).
+- **AI & Automation**: Anthropic Claude API, Playwright browser scraping, Nodemailer SMTP, Node-Cron scheduler.
+
+---
+
+## 🌐 Live AWS Hosting Link
+
+- **Live Application URL**: [http://65.2.220.208:8080](http://65.2.220.208:8080)
+- **API Endpoint**: [http://65.2.220.208:8080/api](http://65.2.220.208:8080/api)
+
+---
+
+## 💻 Local Development Setup
+
+```bash
+# 1. Clone repository
+git clone https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git
+cd Kronos-AI-Intelligent-Career-Assistant
+
+# 2. Run single-command launcher
 run-app.bat
 ```
-This script will automatically:
-1. Verify Node.js environment.
-2. Install backend and frontend dependencies if needed (`npm install`).
-3. Boot the unified production engine on **http://localhost:8080**.
 
----
+Or run manually:
 
-### Option 2: Manual Installation & Startup
-
-#### 1. Backend Setup
 ```bash
+# Start Backend
 cd backend
 npm install
-npm run dev
-```
-Backend API will start at `http://localhost:5000`.
+npm start
 
-#### 2. Frontend Setup
-```bash
+# Start Frontend
 cd frontend
 npm install
 npm run dev
 ```
-Frontend Web UI will start at `http://localhost:5173`.
 
 ---
 
-## 🛠️ System Health & Diagnostics
-
-Run system diagnostics script to verify SQLite database connection, SMTP credentials, port availability, and Anthropic API key authorization:
-```cmd
-diagnose.bat
-```
-
----
-
-## 🌟 Key System Features
-
-1. **Cyberpunk Glassmorphism UI & Interactive 3D Canvas**:
-   - Custom HTML5 particle mesh & cyber robot avatar reacting to mouse movements.
-   - Dynamic theme swapper: Cyber Cyan, Neon Violet, Emerald Grid, Solar Gold, Crimson Void.
-
-2. **Authentication & Domain Onboarding**:
-   - Email sign-in with live OTP email dispatch & verification.
-   - Candidate onboarding wizard for domain selection, location preferences, and age/phone details.
-
-3. **Multi-Domain & Multi-Location Support**:
-   - Multi-industry streams: Software Engineering, Mechanical Engineering, Electrical & Power, Civil Infrastructure, Business & Sales Management, Data Science & AI.
-   - Target locations: India hubs (Bengaluru, Mumbai, Pune, Delhi NCR, Hyderabad, Chennai) + Global (US, UK, Canada, Germany, UAE, Singapore, Remote).
-
-4. **Jobs CRM Pipeline**:
-   - Filterable Data Table and Kanban board (Saved, Applied, Interviewing, Offer, Rejected).
-   - Real-time match score progress bars, recruiter email triggers, and note editing modals.
-
-5. **Live Playwright Job Scraper**:
-   - Headless browser automated scraping across public search aggregators and live boards.
-   - Keyword, domain stream, and location customization.
-
-6. **Anthropic Claude AI Integration**:
-   - Match Score (0-100%) and skill gap analysis.
-   - Hyper-personalized cold outreach email generator with tone customization (Formal, Technical, Startup, Casual, Executive).
-   - Built-in smart offline heuristic fallback engine when API key is not provided.
-
-7. **Email Dispatcher & Automation**:
-   - Nodemailer SMTP dispatcher for live email delivery to recruiter contacts and verification OTPs.
-   - Node-Cron scheduler for automated background scraping tasks.
-
----
-
-## 📁 Repository Structure
-```
-c:\AI-JOB-APPLICATION/
-├── backend/
-│   ├── src/
-│   │   ├── config/database.js    # SQLite schema & seed data
-│   │   ├── routes/auth.js        # Email OTP Auth endpoints
-│   │   ├── routes/api.js         # RESTful endpoints
-│   │   ├── services/
-│   │   │   ├── aiService.js      # Anthropic Claude API & Heuristics
-│   │   │   ├── scraperService.js # Playwright Web Scraper
-│   │   │   ├── emailService.js   # Nodemailer SMTP engine
-│   │   │   └── schedulerService.js # Node-cron background jobs
-│   │   ├── utils/otpHelper.js    # OTP generation & validation
-│   │   ├── diagnose.js           # Diagnostics runner
-│   │   └── server.js             # Express app entrypoint
-│   ├── database.db               # SQLite Database
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/           # RobotBackground, Navbar, AuthModal, etc.
-│   │   ├── views/                # Dashboard, Jobs CRM, Scraper, AI Outreach, etc.
-│   │   ├── utils/api.js          # Fetch client wrapper
-│   │   ├── index.css             # Glassmorphic CSS design system & themes
-│   │   ├── App.jsx               # Main React Application
-│   │   └── main.jsx
-│   ├── index.html
-│   ├── vite.config.js
-│   └── package.json
-├── run-app.bat                   # Double-process Windows launcher
-├── diagnose.bat                  # Diagnostic utility launcher
-└── README.md
-```
-
----
-
-© 2026 Kronos AI CRM. All rights reserved.
+© 2026 Kronos AI Intelligent Career Assistant. All rights reserved.
