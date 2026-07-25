@@ -24,9 +24,16 @@ function copyDirRecursive(src, dest) {
   }
 }
 
-function patchHtmlForFileProtocol(filePath) {
+function patchHtmlForFileProtocol(filePath, distAssetsDir) {
   if (!fs.existsSync(filePath)) return;
   let html = fs.readFileSync(filePath, 'utf8');
+
+  let legacyJsName = 'index-legacy-BBH8HwjI.js';
+  if (distAssetsDir && fs.existsSync(distAssetsDir)) {
+    const files = fs.readdirSync(distAssetsDir);
+    const found = files.find(f => f.startsWith('index-legacy-') && f.endsWith('.js'));
+    if (found) legacyJsName = found;
+  }
 
   if (!html.includes('__kronos_file_protocol_loader__')) {
     const loaderScript = `
@@ -94,7 +101,7 @@ function patchHtmlForFileProtocol(filePath) {
                 var polyfill = document.getElementById('vite-legacy-polyfill');
                 var entry = document.getElementById('vite-legacy-entry');
                 var pSrc = polyfill ? polyfill.getAttribute('src') : './assets/polyfills-legacy-DJs1nuYO.js';
-                var eSrc = entry ? (entry.getAttribute('data-src') || entry.getAttribute('src')) : './assets/index-legacy-JOFvYokB.js';
+                var eSrc = entry ? (entry.getAttribute('data-src') || entry.getAttribute('src')) : './assets/${legacyJsName}';
 
                 var sPoly = document.createElement('script');
                 sPoly.src = pSrc;
@@ -130,8 +137,10 @@ try {
     process.exit(1);
   }
 
+  const distAssets = path.join(frontendDist, 'assets');
+
   // 1. Patch frontend/dist/index.html first
-  patchHtmlForFileProtocol(path.join(frontendDist, 'index.html'));
+  patchHtmlForFileProtocol(path.join(frontendDist, 'index.html'), distAssets);
 
   // 2. Copy frontend/dist to root/dist
   copyDirRecursive(frontendDist, rootDist);
@@ -141,12 +150,11 @@ try {
   const rootIndexHtml = path.join(rootDir, 'index.html');
   if (fs.existsSync(distIndexHtml)) {
     fs.copyFileSync(distIndexHtml, rootIndexHtml);
-    patchHtmlForFileProtocol(rootIndexHtml);
+    patchHtmlForFileProtocol(rootIndexHtml, distAssets);
     console.log('✅ Synchronized root index.html with file-protocol support.');
   }
 
   // 4. Copy frontend/dist/assets to root/assets and frontend/assets
-  const distAssets = path.join(frontendDist, 'assets');
   const rootAssets = path.join(rootDir, 'assets');
   const frontendAssets = path.join(__dirname, 'frontend', 'assets');
 
