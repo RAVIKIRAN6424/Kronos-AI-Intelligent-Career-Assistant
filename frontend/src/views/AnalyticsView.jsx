@@ -32,13 +32,13 @@ export const AnalyticsView = ({ jobs }) => {
   const categoryBreakdown = analytics?.category_breakdown || [];
   const countryBreakdown = analytics?.country_breakdown || [];
 
-  // Compute exact metrics from jobs array or analytics API response
-  const jobList = jobs && jobs.length > 0 ? jobs : [];
-  const savedCount = analytics?.saved !== undefined ? analytics.saved : jobList.filter(j => j.status === 'Saved').length;
-  const appliedCount = analytics?.applied !== undefined ? analytics.applied : jobList.filter(j => j.status === 'Applied').length;
-  const interviewingCount = analytics?.interviewing !== undefined ? analytics.interviewing : jobList.filter(j => j.status === 'Interviewing').length;
-  const offerCount = analytics?.offer !== undefined ? analytics.offer : jobList.filter(j => j.status === 'Offer').length;
-  const totalTracked = jobList.length || (savedCount + appliedCount + interviewingCount + offerCount) || 1;
+  // Compute exact metrics from jobs array
+  const jobList = Array.isArray(jobs) ? jobs : [];
+  const appliedCount = jobList.filter(j => j.status === 'Applied').length;
+  const interviewingCount = jobList.filter(j => j.status === 'Interviewing').length;
+  const offerCount = jobList.filter(j => j.status === 'Offer').length;
+  const savedCount = jobList.filter(j => !j.status || j.status === 'Saved' || j.status === 'Saved Jobs').length || (analytics?.saved || jobList.length);
+  const totalTracked = jobList.length || 1;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
