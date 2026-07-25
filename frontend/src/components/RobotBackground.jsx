@@ -55,8 +55,14 @@ export const RobotBackground = () => {
 
       ctx.clearRect(0, 0, width, height);
 
+      // Sample current active theme colors dynamically
+      const styles = getComputedStyle(document.documentElement);
+      const themeCyan = styles.getPropertyValue('--accent-cyan').trim() || '#00f2fe';
+      const themePurple = styles.getPropertyValue('--accent-purple').trim() || '#9d4ede';
+
       // 1. Cyber Grid Grid Lines
-      ctx.strokeStyle = 'rgba(0, 242, 254, 0.03)';
+      ctx.strokeStyle = themeCyan;
+      ctx.globalAlpha = 0.04;
       ctx.lineWidth = 1;
       const gridSize = 60;
       for (let x = 0; x < width; x += gridSize) {
@@ -71,9 +77,9 @@ export const RobotBackground = () => {
         ctx.lineTo(width, y);
         ctx.stroke();
       }
+      ctx.globalAlpha = 1.0;
 
       // 2. Draw & Link Particles
-      ctx.fillStyle = '#00f2fe';
       particles.forEach((p, idx) => {
         p.x += p.vx;
         p.y += p.vy;
@@ -83,8 +89,10 @@ export const RobotBackground = () => {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, 242, 254, ${p.alpha})`;
+        ctx.fillStyle = themeCyan;
+        ctx.globalAlpha = p.alpha;
         ctx.fill();
+        ctx.globalAlpha = 1.0;
 
         // Connect nearby particles
         for (let j = idx + 1; j < particles.length; j++) {
@@ -97,8 +105,10 @@ export const RobotBackground = () => {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(0, 242, 254, ${0.15 * (1 - dist / 130)})`;
+            ctx.strokeStyle = themeCyan;
+            ctx.globalAlpha = 0.15 * (1 - dist / 130);
             ctx.stroke();
+            ctx.globalAlpha = 1.0;
           }
         }
 
@@ -110,8 +120,10 @@ export const RobotBackground = () => {
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
           ctx.lineTo(mouse.x, mouse.y);
-          ctx.strokeStyle = `rgba(157, 78, 221, ${0.25 * (1 - mdist / 180)})`;
+          ctx.strokeStyle = themePurple;
+          ctx.globalAlpha = 0.25 * (1 - mdist / 180);
           ctx.stroke();
+          ctx.globalAlpha = 1.0;
         }
       });
 
