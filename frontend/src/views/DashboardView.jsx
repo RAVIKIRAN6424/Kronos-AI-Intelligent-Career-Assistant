@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Briefcase, Send, Award, TrendingUp, Search, Sparkles, CheckCircle2, ArrowUpRight, Zap, Play, Square, Clock, Globe, Shield
+  Briefcase, Send, Award, TrendingUp, Search, Sparkles, CheckCircle2, ArrowUpRight, Zap, Play, Square, Clock, Globe, Shield, AlertTriangle, X, Lock
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { categoryTheme } from '../utils/categoryColors';
 
-export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpenScraper, toast, currentUser, onOpenAuthModal }) => {
+export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJob, onOpenScraper, toast, currentUser, onOpenAuthModal }) => {
   const [botRunning, setBotRunning] = useState(false);
+  const [showPortalModal, setShowPortalModal] = useState(false);
+  const [connectedCount, setConnectedCount] = useState(0);
   const [botState, setBotState] = useState({
     is_running: 0,
     started_time: null,
@@ -32,14 +34,45 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
   };
 
   const handleToggleBot = async () => {
+    // Rule 1: Must be logged in to start automation
+    if (!currentUser) {
+      if (toast) {
+        toast('🔐 Authentication Required: Please sign in or register before launching Kronos AI Automation!', 'error');
+      }
+      if (onOpenAuthModal) onOpenAuthModal();
+      return;
+    }
+
     const nextRunning = !botRunning;
 
+    // Rule 2: If starting, must have at least 2 connected job portals
+    if (nextRunning) {
+      try {
+        const portalsData = await api.getPortals();
+        const connectedPortals = (portalsData && Array.isArray(portalsData))
+          ? portalsData.filter(p => p.is_connected === 1 || p.is_connected === true)
+          : [];
+
+        if (connectedPortals.length < 2) {
+          setConnectedCount(connectedPortals.length);
+          setShowPortalModal(true);
+          if (toast) {
+            toast('⚠️ Requirements Not Met: Please connect at least 2 job portals before launching automation!', 'error');
+          }
+          return;
+        }
+      } catch (err) {
+        console.warn('Could not verify portals count:', err);
+      }
+    }
+
+    // Execute toggle
     try {
       const updated = await api.toggleBotState(nextRunning ? 1 : 0);
       setBotState(updated);
       setBotRunning(updated.is_running === 1);
       if (toast) {
-        toast(`Automation Bot ${updated.is_running ? 'STARTED' : 'STOPPED'} ${currentUser ? '' : '(Guest Mode)'}`, updated.is_running ? 'success' : 'info');
+        toast(`Automation Bot ${updated.is_running ? 'STARTED' : 'STOPPED'}!`, updated.is_running ? 'success' : 'info');
       }
     } catch (err) {
       const fallbackState = {
@@ -47,13 +80,23 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
         started_time: nextRunning ? new Date().toLocaleTimeString() : null,
         current_portal: 'LinkedIn',
         current_job: nextRunning ? 'Scanning Live Postings...' : 'Stopped',
-        applications_today: 1
+        applications_today: nextRunning ? 1 : 0
       };
       setBotState(fallbackState);
       setBotRunning(nextRunning);
-      if (toast) toast(`Automation Bot ${nextRunning ? 'STARTED' : 'STOPPED'} (Guest Mode)`, nextRunning ? 'success' : 'info');
+      if (toast) toast(`Automation Bot ${nextRunning ? 'STARTED' : 'STOPPED'}`, nextRunning ? 'success' : 'info');
     }
   };
+
+  // Calculate accurate dynamic stats
+  const totalSaved = analytics?.total_jobs ?? jobs.length ?? 0;
+  const totalApplied = analytics?.applied ?? jobs.filter(j => j.status === 'Applied').length ?? 0;
+  const totalInterviews = analytics?.interviewing ?? jobs.filter(j => j.status === 'Interviewing').length ?? 0;
+  const totalOffers = analytics?.offer ?? jobs.filter(j => j.status === 'Offer').length ?? 0;
+
+  const computedAvgScore = jobs.length > 0
+    ? Math.round(jobs.reduce((sum, j) => sum + (j.match_score || 0), 0) / jobs.length)
+    : (analytics?.avg_match_score || 0);
 
   const topJobs = [...jobs]
     .sort((a, b) => (b.match_score || 0) - (a.match_score || 0))
@@ -61,7 +104,7 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Step 10: Bot Controls & Welcome Banner */}
+      {/* Welcome Banner & Bot Control */}
       <div className="glass-card" style={{
         padding: '28px',
         background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.08), rgba(157, 78, 221, 0.12))',
@@ -83,7 +126,7 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
           </p>
         </div>
 
-        {/* Step 10 START / STOP Control Button */}
+        {/* START / STOP Control Button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <button
             onClick={handleToggleBot}
@@ -99,7 +142,8 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              boxShadow: botRunning ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'var(--glow-cyan)'
+              boxShadow: botRunning ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'var(--glow-cyan)',
+              transition: 'all 0.3s ease'
             }}
           >
             {botRunning ? <Square size={20} fill="#f87171" /> : <Play size={20} fill="#060a12" />}
@@ -108,7 +152,7 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
         </div>
       </div>
 
-      {/* Step 10 Bot Engine Status Dashboard Box */}
+      {/* Bot Engine Status Box */}
       <div className="glass-card" style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', border: '1px solid var(--border-cyber)' }}>
         <div>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Bot Execution State</div>
@@ -142,7 +186,7 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
         <div>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Applications Sent Today</div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-purple)', marginTop: '4px', fontFamily: 'var(--font-code)' }}>
-            {botState.applications_today || 1} Jobs
+            {botState.applications_today || 0} Jobs
           </div>
         </div>
       </div>
@@ -159,7 +203,7 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
             <Briefcase size={18} color="var(--accent-cyan)" />
           </div>
           <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: '#ffffff', marginTop: '8px' }}>
-            {analytics?.total_jobs || jobs.length || 0}
+            {totalSaved}
           </div>
           <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', marginTop: '4px' }}>Across all industry streams</div>
         </div>
@@ -170,7 +214,7 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
             <Send size={18} color="var(--accent-blue)" />
           </div>
           <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: 'var(--accent-blue)', marginTop: '8px' }}>
-            {analytics?.applied || jobs.filter(j => j.status === 'Applied').length || 0}
+            {totalApplied}
           </div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Active recruiters contacted</div>
         </div>
@@ -181,7 +225,7 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
             <Award size={18} color="var(--accent-amber)" />
           </div>
           <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: 'var(--accent-amber)', marginTop: '8px' }}>
-            {analytics?.interviewing || jobs.filter(j => j.status === 'Interviewing').length || 0}
+            {totalInterviews}
           </div>
           <div style={{ fontSize: '11px', color: 'var(--accent-amber)', marginTop: '4px' }}>High conversion rate</div>
         </div>
@@ -192,7 +236,7 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
             <Sparkles size={18} color="var(--accent-purple)" />
           </div>
           <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: 'var(--accent-purple)', marginTop: '8px' }}>
-            {analytics?.avg_match_score || 88}%
+            {computedAvgScore}%
           </div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Claude AI Profile Score</div>
         </div>
@@ -203,7 +247,7 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
             <CheckCircle2 size={18} color="var(--accent-emerald)" />
           </div>
           <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: 'var(--accent-emerald)', marginTop: '8px' }}>
-            {analytics?.offer || jobs.filter(j => j.status === 'Offer').length || 0}
+            {totalOffers}
           </div>
           <div style={{ fontSize: '11px', color: 'var(--accent-emerald)', marginTop: '4px' }}>Final offer stage</div>
         </div>
@@ -250,6 +294,101 @@ export const DashboardView = ({ jobs, analytics, onNavigate, onSelectJob, onOpen
           ))}
         </div>
       </div>
+
+      {/* Modal: Job Portals Connection Requirement */}
+      {showPortalModal && (
+        <div className="modal-backdrop">
+          <div className="glass-card animate-slide-up" style={{
+            maxWidth: '480px',
+            width: '90%',
+            padding: '32px',
+            border: '2px solid var(--accent-amber)',
+            boxShadow: '0 0 40px rgba(245, 158, 11, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid var(--accent-amber)'
+                }}>
+                  <AlertTriangle size={26} color="var(--accent-amber)" />
+                </div>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', color: '#ffffff', fontWeight: 800 }}>
+                    Portals Connection Required
+                  </h3>
+                  <div style={{ fontSize: '12px', color: 'var(--accent-amber)', fontWeight: 600, marginTop: '2px' }}>
+                    At least 2 Job Portals needed
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPortalModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '14px', color: 'var(--text-main)', lineHeight: '1.6' }}>
+              To enable Kronos AI Autonomous Background Automation, you must connect at least <strong>2 Job Portals</strong> with your account credentials (e.g., LinkedIn, Indeed, Naukri, Glassdoor).
+            </p>
+
+            <div style={{
+              background: 'rgba(2, 6, 15, 0.6)',
+              padding: '16px',
+              borderRadius: '12px',
+              border: '1px solid var(--border-subtle)',
+              display: 'flex',
+              justify: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Connected Portals Status:</span>
+              <span style={{
+                fontWeight: 800,
+                fontSize: '14px',
+                color: connectedCount >= 2 ? 'var(--accent-emerald)' : '#f87171',
+                background: connectedCount >= 2 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                padding: '4px 12px',
+                borderRadius: '20px',
+                border: connectedCount >= 2 ? '1px solid var(--accent-emerald)' : '1px solid #f87171'
+              }}>
+                {connectedCount} / 2 Portals Connected
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+              <button
+                className="btn-cyber-outline"
+                style={{ padding: '10px 18px', fontSize: '13px' }}
+                onClick={() => setShowPortalModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="btn-cyber-primary"
+                style={{ padding: '10px 20px', fontSize: '13px', fontWeight: 700 }}
+                onClick={() => {
+                  setShowPortalModal(false);
+                  onNavigate('portals');
+                }}
+              >
+                <Globe size={16} /> Connect Job Portals Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
