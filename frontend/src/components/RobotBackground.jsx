@@ -49,19 +49,19 @@ export const RobotBackground = () => {
 
     // Render loop
     const render = () => {
+      // Dynamic Theme Color Resolution
+      const compStyle = getComputedStyle(document.documentElement);
+      const cyan = compStyle.getPropertyValue('--accent-cyan').trim() || '#00f2fe';
+      const purple = compStyle.getPropertyValue('--accent-purple').trim() || '#9d4edd';
+
       // Smooth mouse interpolation
       mouse.x += (mouse.targetX - mouse.x) * 0.05;
       mouse.y += (mouse.targetY - mouse.y) * 0.05;
 
       ctx.clearRect(0, 0, width, height);
 
-      // Sample current active theme colors dynamically
-      const styles = getComputedStyle(document.documentElement);
-      const themeCyan = styles.getPropertyValue('--accent-cyan').trim() || '#00f2fe';
-      const themePurple = styles.getPropertyValue('--accent-purple').trim() || '#9d4ede';
-
-      // 1. Cyber Grid Grid Lines
-      ctx.strokeStyle = themeCyan;
+      // 1. Cyber Grid Lines
+      ctx.strokeStyle = cyan;
       ctx.globalAlpha = 0.04;
       ctx.lineWidth = 1;
       const gridSize = 60;
@@ -77,7 +77,7 @@ export const RobotBackground = () => {
         ctx.lineTo(width, y);
         ctx.stroke();
       }
-      ctx.globalAlpha = 1.0;
+      ctx.globalAlpha = 1;
 
       // 2. Draw & Link Particles
       particles.forEach((p, idx) => {
@@ -89,10 +89,10 @@ export const RobotBackground = () => {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = themeCyan;
+        ctx.fillStyle = cyan;
         ctx.globalAlpha = p.alpha;
         ctx.fill();
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1;
 
         // Connect nearby particles
         for (let j = idx + 1; j < particles.length; j++) {
@@ -105,10 +105,10 @@ export const RobotBackground = () => {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = themeCyan;
+            ctx.strokeStyle = cyan;
             ctx.globalAlpha = 0.15 * (1 - dist / 130);
             ctx.stroke();
-            ctx.globalAlpha = 1.0;
+            ctx.globalAlpha = 1;
           }
         }
 
@@ -120,10 +120,10 @@ export const RobotBackground = () => {
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
           ctx.lineTo(mouse.x, mouse.y);
-          ctx.strokeStyle = themePurple;
-          ctx.globalAlpha = 0.25 * (1 - mdist / 180);
+          ctx.strokeStyle = purple;
+          ctx.globalAlpha = 0.28 * (1 - mdist / 180);
           ctx.stroke();
-          ctx.globalAlpha = 1.0;
+          ctx.globalAlpha = 1;
         }
       });
 
@@ -134,19 +134,21 @@ export const RobotBackground = () => {
       // Outer Glowing Ring
       ctx.beginPath();
       ctx.arc(botCenterX, botCenterY, 35, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(0, 242, 254, 0.4)';
+      ctx.strokeStyle = cyan;
+      ctx.globalAlpha = 0.45;
       ctx.lineWidth = 2;
       ctx.setLineDash([6, 6]);
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
 
       // Core Avatar Eye / Sensor
       ctx.beginPath();
       ctx.arc(botCenterX, botCenterY, 12, 0, Math.PI * 2);
       const gradient = ctx.createRadialGradient(botCenterX, botCenterY, 2, botCenterX, botCenterY, 15);
       gradient.addColorStop(0, '#ffffff');
-      gradient.addColorStop(0.5, '#00f2fe');
-      gradient.addColorStop(1, 'rgba(157, 78, 221, 0.8)');
+      gradient.addColorStop(0.5, cyan);
+      gradient.addColorStop(1, purple);
       ctx.fillStyle = gradient;
       ctx.fill();
 
@@ -154,7 +156,7 @@ export const RobotBackground = () => {
       ctx.beginPath();
       ctx.moveTo(botCenterX - 24, botCenterY - 4);
       ctx.lineTo(botCenterX + 24, botCenterY - 4);
-      ctx.strokeStyle = '#00f2fe';
+      ctx.strokeStyle = cyan;
       ctx.lineWidth = 1.5;
       ctx.stroke();
 

@@ -30,14 +30,14 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
   ];
 
   const themes = [
-    { id: 'cyber-cyan', name: 'Cyber Cyan' },
-    { id: 'neon-violet', name: 'Neon Violet' },
-    { id: 'emerald-grid', name: 'Emerald Grid' },
-    { id: 'solar-gold', name: 'Solar Gold' },
-    { id: 'crimson-void', name: 'Crimson Void' },
-    { id: 'cyber-synthwave', name: 'Cyber Synthwave' },
-    { id: 'midnight-matrix', name: 'Midnight Matrix' },
-    { id: 'hyper-crimson', name: 'Hyper Crimson' }
+    { id: 'cyber-cyan', name: '⚡ Cyber Cyan', color: '#00f2fe' },
+    { id: 'neon-violet', name: '🔮 Neon Violet', color: '#d946ef' },
+    { id: 'emerald-grid', name: '🌿 Emerald Grid', color: '#10b981' },
+    { id: 'solar-gold', name: '☀️ Solar Gold', color: '#fbbf24' },
+    { id: 'crimson-void', name: '🩸 Crimson Void', color: '#ff0055' },
+    { id: 'cyber-synthwave', name: '🌆 Cyber Synthwave', color: '#ff007f' },
+    { id: 'midnight-matrix', name: '💻 Midnight Matrix', color: '#00ff66' },
+    { id: 'hyper-crimson', name: '🔥 Hyper Crimson', color: '#ff3300' }
   ];
 
   return (
