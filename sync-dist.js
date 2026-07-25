@@ -156,15 +156,7 @@ try {
     console.log('✅ Synchronized root and frontend assets directories with production build.');
   }
 
-  // 5. Copy production index.html to frontend/index.html (so IIS pointed to frontend works!)
-  const frontendIndexHtml = path.join(__dirname, 'frontend', 'index.html');
-  if (fs.existsSync(distIndexHtml)) {
-    fs.copyFileSync(distIndexHtml, frontendIndexHtml);
-    patchHtmlForFileProtocol(frontendIndexHtml);
-    console.log('✅ Synchronized frontend/index.html with production build.');
-  }
-
-  // 6. Ensure web.config exists in root, dist, frontend, and frontend/dist
+  // 5. Ensure web.config exists in root, dist, frontend, and frontend/dist
   if (fs.existsSync(webConfigPath)) {
     fs.copyFileSync(webConfigPath, path.join(rootDist, 'web.config'));
     fs.copyFileSync(webConfigPath, path.join(frontendDist, 'web.config'));

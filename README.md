@@ -1,6 +1,20 @@
 # ⚡ Kronos AI CRM - Autonomous AI Job Search & Cold Outreach Engine
 
-Kronos AI CRM is a state-of-the-art, full-stack AI career automation platform. It features a dark cyberpunk glassmorphism UI with interactive 3D particle canvas effects (`RobotBackground.jsx`), multi-industry job stream support (Software, Mechanical, Electrical, Civil, Business, Data Science, Finance, Healthcare), multi-country location targeting (India metro hubs + International), email OTP authentication, automated Playwright web scraping, Anthropic Claude AI match scoring & cold email synthesis, Nodemailer SMTP dispatching, and background cron scheduling.
+[![Live AWS Server](https://img.shields.io/badge/AWS%20EC2%20Live-http%3A%2F%2F65.2.220.208%3A8080-00f2fe?style=for-the-badge&logo=amazonaws)](http://65.2.220.208:8080)
+[![Production Ready](https://img.shields.io/badge/Production-IIS%20%2B%20Express%20%2B%20React-10b981?style=for-the-badge)](http://65.2.220.208:8080)
+
+**Live AWS Server**: [http://65.2.220.208:8080](http://65.2.220.208:8080)
+
+Kronos AI CRM is a state-of-the-art, full-stack AI career automation platform. It features a dark cyberpunk glassmorphism UI with interactive 3D particle canvas effects (`RobotBackground.jsx`), multi-industry job stream support (Software, Mechanical, Electrical, Civil, Business, Data Science, Finance, Healthcare), multi-country location targeting (India metro hubs + International), email OTP authentication, automated Playwright web scraping, Anthropic Claude AI match scoring & cold email synthesis, Nodemailer SMTP dispatching, IIS / EC2 deployment rules, and background cron scheduling.
+
+---
+
+## 🌐 Live AWS Production Server
+
+The application is deployed live on AWS EC2:
+- **AWS Server URL**: [http://65.2.220.208:8080](http://65.2.220.208:8080)
+- **API Base Endpoint**: [http://65.2.220.208:8080/api](http://65.2.220.208:8080/api)
+- **Health Check**: [http://65.2.220.208:8080/health](http://65.2.220.208:8080/health)
 
 ---
 
@@ -14,8 +28,7 @@ run-app.bat
 This script will automatically:
 1. Verify Node.js environment.
 2. Install backend and frontend dependencies if needed (`npm install`).
-3. Boot the backend Express server on **http://localhost:5000**.
-4. Boot the Vite React frontend on **http://localhost:5173**.
+3. Boot the unified production engine on **http://localhost:8080**.
 
 ---
 

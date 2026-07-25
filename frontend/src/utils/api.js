@@ -1,4 +1,6 @@
-const API_BASE = '/api';
+const API_BASE = (typeof window !== 'undefined' && window.location.protocol === 'file:')
+  ? 'http://65.2.220.208:8080/api'
+  : '/api';
 
 /**
  * Helper to get cached data from localStorage
