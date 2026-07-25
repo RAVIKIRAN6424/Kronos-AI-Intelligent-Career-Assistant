@@ -1,0 +1,345 @@
+/* =========================================================
+   KRONOS AI CRM - GLASSMORPHIC CYBERPUNK DESIGN SYSTEM
+   ========================================================= */
+
+:root {
+  /* Default Cyber Cyan Theme */
+  --bg-dark: #060a12;
+  --bg-card: rgba(13, 22, 38, 0.7);
+  --bg-card-hover: rgba(18, 30, 52, 0.85);
+  --bg-modal: rgba(8, 14, 26, 0.95);
+  
+  --border-cyber: rgba(0, 242, 254, 0.25);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+
+  --accent-cyan: #00f2fe;
+  --accent-purple: #9d4edd;
+  --accent-blue: #4facfe;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+
+  --glow-cyan: 0 0 20px rgba(0, 242, 254, 0.35);
+  --glow-purple: 0 0 20px rgba(157, 78, 221, 0.35);
+  --glow-emerald: 0 0 20px rgba(16, 185, 129, 0.35);
+  
+  --font-heading: 'Outfit', -apple-system, sans-serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-code: 'JetBrains Mono', monospace;
+}
+
+/* Theme Variations */
+[data-theme="neon-violet"] {
+  --accent-cyan: #d8b4fe;
+  --accent-purple: #c084fc;
+  --border-cyber: rgba(192, 132, 252, 0.3);
+  --glow-cyan: 0 0 20px rgba(192, 132, 252, 0.4);
+}
+
+[data-theme="emerald-grid"] {
+  --accent-cyan: #34d399;
+  --accent-purple: #059669;
+  --border-cyber: rgba(52, 211, 153, 0.3);
+  --glow-cyan: 0 0 20px rgba(52, 211, 153, 0.4);
+}
+
+[data-theme="solar-gold"] {
+  --accent-cyan: #fbbf24;
+  --accent-purple: #d97706;
+  --border-cyber: rgba(251, 191, 36, 0.3);
+  --glow-cyan: 0 0 20px rgba(251, 191, 36, 0.4);
+}
+
+[data-theme="crimson-void"] {
+  --accent-cyan: #ff4d6d;
+  --accent-purple: #c77dff;
+  --border-cyber: rgba(255, 77, 109, 0.3);
+  --glow-cyan: 0 0 20px rgba(255, 77, 109, 0.4);
+}
+
+[data-theme="cyber-synthwave"] {
+  --bg-dark: #0f081d;
+  --accent-cyan: #ff007f;
+  --accent-purple: #7b2cbf;
+  --border-cyber: rgba(255, 0, 127, 0.4);
+  --glow-cyan: 0 0 25px rgba(255, 0, 127, 0.5);
+}
+
+[data-theme="midnight-matrix"] {
+  --bg-dark: #020b05;
+  --accent-cyan: #00ff66;
+  --accent-purple: #00b33c;
+  --border-cyber: rgba(0, 255, 102, 0.35);
+  --glow-cyan: 0 0 22px rgba(0, 255, 102, 0.45);
+}
+
+[data-theme="hyper-crimson"] {
+  --bg-dark: #120406;
+  --accent-cyan: #ff1a40;
+  --accent-purple: #ff8000;
+  --border-cyber: rgba(255, 26, 64, 0.4);
+  --glow-cyan: 0 0 25px rgba(255, 26, 64, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(6, 10, 18, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 242, 254, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan);
+}
+
+/* Glassmorphism Card Utility */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-cyber);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(0, 242, 254, 0.45);
+  box-shadow: var(--glow-cyan);
+}
+
+.glass-panel {
+  background: rgba(10, 17, 30, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+/* Cyber Button Styling */
+.btn-cyber {
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(157, 78, 221, 0.2));
+  color: #ffffff;
+  border: 1px solid var(--accent-cyan);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-cyber:hover {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  color: #060a12;
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+.btn-cyber-outline {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+}
+
+.btn-cyber-outline:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 242, 254, 0.08);
+}
+
+.btn-danger {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--accent-rose);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+}
+.btn-danger:hover {
+  background: var(--accent-rose);
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+}
+
+/* Input Fields */
+.cyber-input {
+  width: 100%;
+  background: rgba(2, 6, 15, 0.8);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 11px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  transition: all 0.2s ease;
+}
+
+.cyber-input:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+}
+
+.cyber-textarea {
+  width: 100%;
+  background: rgba(2, 6, 15, 0.9) !important;
+  border: 1px solid var(--border-cyber) !important;
+  color: #ffffff !important;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  resize: vertical;
+}
+
+.cyber-textarea:focus {
+  outline: none;
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+}
+
+.cyber-select {
+  width: 100%;
+  background: rgba(2, 6, 15, 0.9);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 11px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.cyber-select:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+}
+
+select option, .cyber-select option {
+  background-color: #090e1a !important;
+  color: #ffffff !important;
+  padding: 10px !important;
+}
+
+/* Badges & Pills */
+.badge-status {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+}
+
+.badge-saved {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+.badge-applied {
+  background: rgba(79, 172, 254, 0.15);
+  color: var(--accent-blue);
+  border: 1px solid rgba(79, 172, 254, 0.4);
+}
+.badge-interviewing {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+.badge-offer {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+.badge-rejected {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--accent-rose);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.badge-domain {
+  background: rgba(157, 78, 221, 0.15);
+  color: #d8b4fe;
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-code);
+}
+
+/* Match Score Bar */
+.score-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.score-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+}
+.score-text {
+  font-family: var(--font-code);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent-cyan);
+  min-width: 38px;
+}
+
+/* Pulse Glow Keyframes */
+@keyframes pulseGlow {
+  0% { opacity: 0.5; filter: drop-shadow(0 0 2px var(--accent-cyan)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 10px var(--accent-cyan)); }
+  100% { opacity: 0.5; filter: drop-shadow(0 0 2px var(--accent-cyan)); }
+}
+
+.cyber-glow-pulse {
+  animation: pulseGlow 3s infinite ease-in-out;
+}

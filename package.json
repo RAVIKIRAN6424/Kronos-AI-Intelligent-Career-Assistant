@@ -1,0 +1,29 @@
+{
+  "name": "kronos-ai-crm-root",
+  "version": "1.0.0",
+  "description": "Kronos AI CRM - AI-Powered Job Search & Cold Outreach CRM",
+  "main": "backend/src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "dev": "npm run build && node backend/src/server.js",
+    "build": "npm --prefix frontend run build && node sync-dist.js",
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "start:backend": "npm --prefix backend start",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "diagnose": "node backend/src/diagnose.js"
+  },
+  "keywords": [
+    "job-search",
+    "crm",
+    "ai",
+    "playwright",
+    "claude",
+    "cold-outreach",
+    "react",
+    "express"
+  ],
+  "author": "Kronos AI",
+  "license": "MIT"
+}

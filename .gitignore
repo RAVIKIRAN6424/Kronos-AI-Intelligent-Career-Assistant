@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Production build outputs (can be generated via npm run build)
+dist/
+frontend/dist/
+
+# Local database & logs
+backend/database.db
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local

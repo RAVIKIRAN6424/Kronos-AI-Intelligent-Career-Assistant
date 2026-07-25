@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ Launch Kronos AI CRM</title>
+  <style>
+    body {
+      background: #060a12;
+      color: #ffffff;
+      font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(13, 22, 38, 0.95);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      box-shadow: 0 0 30px rgba(0, 242, 254, 0.25);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+    }
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      text-decoration: none;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #00f2fe, #4facfe);
+      color: #060a12;
+      border: none;
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+    }
+    .btn-secondary {
+      background: rgba(157, 78, 221, 0.15);
+      border: 1px solid rgba(157, 78, 221, 0.5);
+      color: #d8b4fe;
+    }
+  </style>
+  <script>
+    // Auto-detect backend on port 8080 and redirect seamlessly
+    fetch('http://localhost:8080/health', { mode: 'cors' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.status === 'online') {
+          window.location.replace('http://localhost:8080');
+        }
+      })
+      .catch(function() {
+        console.log('Local server offline, preparing direct standalone view...');
+      });
+
+    function launchLocalServer() {
+      window.location.href = './dist/index.html';
+    }
+  </script>
+</head>
+<body>
+  <div class="card">
+    <h1 style="font-size: 28px; margin-bottom: 8px; background: linear-gradient(90deg, #ffffff, #00f2fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+      ⚡ KRONOS AI CRM
+    </h1>
+    <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+      Autonomous Personal Career Engine & Cold Outreach Manager
+    </p>
+
+    <a href="http://localhost:8080" class="btn btn-primary">
+      🚀 Launch Web App (http://localhost:8080)
+    </a>
+
+    <button onclick="launchLocalServer()" class="btn btn-secondary">
+      ⚡ Open Standalone Local Mode
+    </button>
+  </div>
+</body>
+</html>

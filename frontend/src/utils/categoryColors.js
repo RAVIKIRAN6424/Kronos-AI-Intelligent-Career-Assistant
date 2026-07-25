@@ -1,0 +1,61 @@
+// Unique Theme Styling per Job Role / Category
+export const categoryTheme = {
+  Software: {
+    color: '#00f2fe',
+    bg: 'rgba(0, 242, 254, 0.12)',
+    border: 'rgba(0, 242, 254, 0.4)',
+    glow: '0 0 12px rgba(0, 242, 254, 0.25)',
+    label: 'Software & Web',
+    badgeClass: 'badge-software'
+  },
+  'Data Science': {
+    color: '#c084fc',
+    bg: 'rgba(192, 132, 252, 0.12)',
+    border: 'rgba(192, 132, 252, 0.4)',
+    glow: '0 0 12px rgba(192, 132, 252, 0.25)',
+    label: 'Data Science & AI',
+    badgeClass: 'badge-data-science'
+  },
+  Mechanical: {
+    color: '#fbbf24',
+    bg: 'rgba(251, 191, 36, 0.12)',
+    border: 'rgba(251, 191, 36, 0.4)',
+    glow: '0 0 12px rgba(251, 191, 36, 0.25)',
+    label: 'Mechanical Engineering',
+    badgeClass: 'badge-mechanical'
+  },
+  Electrical: {
+    color: '#34d399',
+    bg: 'rgba(52, 211, 153, 0.12)',
+    border: 'rgba(52, 211, 153, 0.4)',
+    glow: '0 0 12px rgba(52, 211, 153, 0.25)',
+    label: 'Electrical & Telemetry',
+    badgeClass: 'badge-electrical'
+  },
+  Civil: {
+    color: '#ff4d6d',
+    bg: 'rgba(255, 77, 109, 0.12)',
+    border: 'rgba(255, 77, 109, 0.4)',
+    glow: '0 0 12px rgba(255, 77, 109, 0.25)',
+    label: 'Civil & Structural',
+    badgeClass: 'badge-civil'
+  },
+  Business: {
+    color: '#60a5fa',
+    bg: 'rgba(96, 165, 250, 0.12)',
+    border: 'rgba(96, 165, 250, 0.4)',
+    glow: '0 0 12px rgba(96, 165, 250, 0.25)',
+    label: 'Business & Growth',
+    badgeClass: 'badge-business'
+  }
+};
+
+export const getCategoryStyle = (category) => {
+  const cat = categoryTheme[category] || categoryTheme.Software;
+  return {
+    color: cat.color,
+    backgroundColor: cat.bg,
+    border: `1px solid ${cat.border}`,
+    boxShadow: cat.glow
+  };
+};
