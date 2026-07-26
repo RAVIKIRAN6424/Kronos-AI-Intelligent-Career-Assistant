@@ -22,14 +22,13 @@ async function buildMasterPDF() {
     { title: 'REST API Specification', path: path.join(docsDir, 'API_DOCUMENTATION.md') },
     { title: 'Database Schema & Table Specifications', path: path.join(docsDir, 'DATABASE_SCHEMA.md') },
     { title: 'CI/CD Build & Test Pipeline', path: path.join(docsDir, 'CICD_EXPLANATION.md') },
-    { title: 'Deployment Guide (AWS EC2, Docker & IIS)', path: path.join(docsDir, 'DEPLOYMENT_GUIDE.md') },
+    { title: 'Deployment Guide (CI/CD & Docker)', path: path.join(docsDir, 'DEPLOYMENT_GUIDE.md') },
     { title: 'User Interface & Theme Guide', path: path.join(docsDir, 'SCREENSHOTS.md') },
     { title: 'Future Product Roadmap', path: path.join(docsDir, 'FUTURE_ENHANCEMENTS.md') }
   ];
 
   let combinedMarkdown = `# ⚡ Kronos AI - Master Complete Enterprise Documentation\n\n`;
   combinedMarkdown += `**Application Name**: Kronos AI Intelligent Career Assistant & CRM\n`;
-  combinedMarkdown += `**Live AWS EC2 Hosting URL**: http://65.2.220.208:8080\n`;
   combinedMarkdown += `**GitHub Repository**: https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git\n`;
   combinedMarkdown += `**Generated Date**: ${new Date().toLocaleString()} | **Version**: 1.0.0 (Production Master)\n\n---\n\n`;
 
@@ -167,11 +166,15 @@ async function buildMasterPDF() {
     await browser.close();
     console.log('🎉 Successfully generated Master PDF:', pdfPath);
 
-    // Sync PDF to root, downloads, and artifact directory
+    // Sync PDF to root and extra locations if they exist
     fs.copyFileSync(pdfPath, pdfRootPath);
-    fs.copyFileSync(pdfPath, pdfDownloadsPath);
-    fs.copyFileSync(pdfPath, pdfArtifactPath);
-    console.log('✅ Synchronized Master PDF to all locations!');
+    if (fs.existsSync(path.dirname(pdfDownloadsPath))) {
+      fs.copyFileSync(pdfPath, pdfDownloadsPath);
+    }
+    if (fs.existsSync(path.dirname(pdfArtifactPath))) {
+      fs.copyFileSync(pdfPath, pdfArtifactPath);
+    }
+    console.log('✅ Synchronized Master PDF!');
   } catch (err) {
     console.error('❌ PDF Generation Error:', err.message);
   }

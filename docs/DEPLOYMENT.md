@@ -1,7 +1,7 @@
 # Kronos AI CRM - Deployment Guide
 
-## Live AWS EC2 Instance
-- **Hosted Application URL**: `http://65.2.220.208:8080`
+## Live Vercel Deployment
+- **Live Hosted Application URL**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)
 - **GitHub Repository**: [https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git](https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git)
 
 ---

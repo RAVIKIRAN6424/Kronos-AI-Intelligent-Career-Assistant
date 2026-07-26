@@ -1,10 +1,10 @@
-# 🚀 Kronos AI - Deployment Guide (AWS EC2 & Docker)
+# 🚀 Kronos AI - Deployment Guide (Vercel, CI/CD & Docker)
 
-## 1. AWS EC2 Deployment Architecture
+## 1. Live Vercel & CI/CD Deployment Architecture
 
-- **Public IP / URL**: `http://65.2.220.208:8080`
-- **Reverse Proxy**: Nginx listening on Port 8080.
-- **Process Manager**: PM2 running `backend/src/server.js` on Port 3001.
+- **Live Hosted Application URL**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)
+- **CI/CD Pipeline**: GitHub Actions (`.github/workflows/ci-cd.yml`)
+- **Edge Deployment**: Vercel Serverless Edge Network
 
 ---
 

@@ -30,4 +30,4 @@
 - **CI/CD Pipeline**: GitHub Actions (`.github/workflows/ci-cd.yml`).
 - **Containerization**: Docker & Docker Compose (`deployment/docker-compose.yml`).
 - **Reverse Proxy**: Nginx (`deployment/nginx.conf`).
-- **Hosting Instance**: Live AWS EC2 Instance (`http://65.2.220.208:8080`).
+- **Hosting Platform**: Live Vercel Deployment (`https://kronos-ai-intelligent-career-assist.vercel.app/`).

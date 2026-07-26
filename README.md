@@ -1,11 +1,11 @@
 # ⚡ Kronos AI - Intelligent Career Assistant & CRM
 
-[![AWS EC2 Live Deployment](https://img.shields.io/badge/AWS%20EC2%20Live-http%3A%2F%2F65.2.220.208%3A8080-00f2fe?style=for-the-badge&logo=amazonaws)](http://65.2.220.208:8080)
-[![Production Status](https://img.shields.io/badge/Status-Live%20%26%20Active-10b981?style=for-the-badge)](http://65.2.220.208:8080)
-[![Node.js CI/CD](https://img.shields.io/badge/CI%2FCD-Node.js%20Pipeline-9d4edd?style=for-the-badge&logo=githubactions)](https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Deployment-00f2fe?style=for-the-badge&logo=vercel)](https://kronos-ai-intelligent-career-assist.vercel.app/)
+[![Production Status](https://img.shields.io/badge/Status-Live%20%26%20Active-10b981?style=for-the-badge)](https://kronos-ai-intelligent-career-assist.vercel.app/)
+[![Node.js CI/CD](https://img.shields.io/badge/CI%2FCD-Node.js%20Pipeline-9d4edd?style=for-the-badge&logo=githubactions)](https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant/actions)
 [![License](https://img.shields.io/badge/License-MIT-fbbf24?style=for-the-badge)](LICENSE)
 
-> **Live AWS EC2 Hosted URL**: [http://65.2.220.208:8080](http://65.2.220.208:8080)  
+> **Live Hosted URL**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)  
 > **GitHub Repository**: [https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git](https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git)
 
 ---
@@ -76,7 +76,7 @@
 - **Frontend**: React 18, Vite, Glassmorphic CSS design system, HTML5, Lucide Icons, SystemJS.
 - **Backend**: Node.js, Express.js REST API, SQLite3 (`database.db`), dotenv.
 - **AI & Services**: Anthropic Claude API, Playwright browser scraper, Nodemailer, Node-Cron scheduler.
-- **CI/CD & Hosting**: GitHub Actions, Docker, Nginx, AWS EC2 (`http://65.2.220.208:8080`).
+- **CI/CD & Hosting**: GitHub Actions, Docker, Nginx, Vercel (`https://kronos-ai-intelligent-career-assist.vercel.app/`).
 
 ---
 
@@ -206,9 +206,9 @@ The SQLite database (`database.db`) manages 11 normalized tables:
 - Matrix testing across Node.js `18.x` and `20.x`.
 - Executes dependency installation, Vite compilation, and build verification.
 
-### Live AWS EC2 Instance
-- **URL**: `http://65.2.220.208:8080`
-- **Reverse Proxy**: Nginx forwarding static assets and API requests (`/api`).
+### Live Vercel Deployment
+- **Live Hosted URL**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)
+- **Reverse Proxy & Edge Network**: Vercel Serverless Edge Network forwarding static assets and API routes (`/api`).
 
 ---
 
