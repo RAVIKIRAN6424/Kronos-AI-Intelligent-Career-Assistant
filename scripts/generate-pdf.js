@@ -6,49 +6,73 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-async function buildPDF() {
-  console.log('📄 Combining Markdown documentation files into HTML...');
+async function buildMasterPDF() {
+  console.log('⚡ Generating Kronos-AI-Master-Complete-Documentation.pdf...');
 
   const docsDir = path.join(rootDir, 'docs');
   const readmePath = path.join(rootDir, 'README.md');
 
-  const files = [
-    { title: 'Master Overview', path: readmePath },
-    { title: 'Project Architecture', path: path.join(docsDir, 'ARCHITECTURE.md') },
-    { title: 'Feature Guide', path: path.join(docsDir, 'FEATURES.md') },
-    { title: 'Technology Stack', path: path.join(docsDir, 'TECH_STACK.md') },
-    { title: 'Installation Guide', path: path.join(docsDir, 'INSTALLATION.md') },
-    { title: 'Folder Structure', path: path.join(docsDir, 'FOLDER_STRUCTURE.md') },
-    { title: 'REST API Documentation', path: path.join(docsDir, 'API_DOCUMENTATION.md') },
-    { title: 'Database Schema', path: path.join(docsDir, 'DATABASE_SCHEMA.md') },
-    { title: 'CI/CD Pipeline', path: path.join(docsDir, 'CICD_EXPLANATION.md') },
-    { title: 'Deployment Guide', path: path.join(docsDir, 'DEPLOYMENT_GUIDE.md') },
-    { title: 'User Interface & Screenshots', path: path.join(docsDir, 'SCREENSHOTS.md') },
-    { title: 'Future Enhancements', path: path.join(docsDir, 'FUTURE_ENHANCEMENTS.md') }
+  const docFiles = [
+    { title: 'Executive Overview & GitHub Guide', path: readmePath },
+    { title: 'System Architecture & Data Flow', path: path.join(docsDir, 'ARCHITECTURE.md') },
+    { title: 'Comprehensive Application Features', path: path.join(docsDir, 'FEATURES.md') },
+    { title: 'Technology Stack & Dependencies', path: path.join(docsDir, 'TECH_STACK.md') },
+    { title: 'Installation & Setup Guide', path: path.join(docsDir, 'INSTALLATION.md') },
+    { title: 'Enterprise Folder Directory Map', path: path.join(docsDir, 'FOLDER_STRUCTURE.md') },
+    { title: 'REST API Specification', path: path.join(docsDir, 'API_DOCUMENTATION.md') },
+    { title: 'Database Schema & Table Specifications', path: path.join(docsDir, 'DATABASE_SCHEMA.md') },
+    { title: 'CI/CD Build & Test Pipeline', path: path.join(docsDir, 'CICD_EXPLANATION.md') },
+    { title: 'Deployment Guide (AWS EC2, Docker & IIS)', path: path.join(docsDir, 'DEPLOYMENT_GUIDE.md') },
+    { title: 'User Interface & Theme Guide', path: path.join(docsDir, 'SCREENSHOTS.md') },
+    { title: 'Future Product Roadmap', path: path.join(docsDir, 'FUTURE_ENHANCEMENTS.md') }
   ];
 
-  let combinedMarkdown = `# ⚡ Kronos AI - Complete Enterprise Documentation\n\n`;
-  combinedMarkdown += `**Generated Date**: ${new Date().toLocaleDateString()} | **Version**: 1.0.0\n`;
-  combinedMarkdown += `**GitHub Repository**: https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant\n`;
-  combinedMarkdown += `**Live AWS EC2**: http://65.2.220.208:8080\n\n---\n\n`;
+  let combinedMarkdown = `# ⚡ Kronos AI - Master Complete Enterprise Documentation\n\n`;
+  combinedMarkdown += `**Application Name**: Kronos AI Intelligent Career Assistant & CRM\n`;
+  combinedMarkdown += `**Live AWS EC2 Hosting URL**: http://65.2.220.208:8080\n`;
+  combinedMarkdown += `**GitHub Repository**: https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git\n`;
+  combinedMarkdown += `**Generated Date**: ${new Date().toLocaleString()} | **Version**: 1.0.0 (Production Master)\n\n---\n\n`;
 
-  for (const item of files) {
+  // Append exhaustive detailed sections
+  for (const item of docFiles) {
     if (fs.existsSync(item.path)) {
       const content = fs.readFileSync(item.path, 'utf8');
-      combinedMarkdown += `\n\n<!-- PAGE BREAK -->\n\n# ${item.title}\n\n${content}\n\n---\n`;
+      combinedMarkdown += `\n\n# 📌 ${item.title}\n\n${content}\n\n---\n`;
     }
   }
 
-  // Simple Markdown to HTML converter
+  // Append Additional Deep Code & Schema Details
+  combinedMarkdown += `
+# 🛠️ Deep Component & Operational Specification
+
+## 1. Authentication & Security Policy
+- **Password Complexity Engine**: Mandatory minimum 8 characters, at least 1 uppercase letter (\`A-Z\`), at least 1 lowercase letter (\`a-z\`), at least 1 number (\`0-9\`), and at least 1 special character (\`!@#$%^&*\`).
+- **OTP Verification Cycle**: 6-digit random number generated via SQLite \`otp_codes\` table. Codes expire after 5 minutes (\`DATETIME('now', '+5 minutes')\`).
+- **60-Second Cooldown Timer**: Frontend \`AuthModal.jsx\` enforces a 60-second countdown timer before allowing candidates to resend an OTP code (\`Resend Code in 60s\`).
+
+## 2. Nodemailer Gmail SMTP Configuration
+- **Host**: \`smtp.gmail.com\`
+- **Port**: \`465\` (SSL Encrypted Connection)
+- **Authentication**: Google App Password (\`EMAIL_USER=kronosai6424@gmail.com\`, \`EMAIL_PASS=atzr geyq ytdu eovb\`).
+- **Fallback Terminal Logging**: Generated OTP codes and mail dispatch statuses are logged directly to the server terminal (\`✉️ Dispatched Registration OTP to: user@domain.com | OTP Code: 123456\`).
+
+## 3. Operational Batch Utilities
+- \`scripts/run-app.bat\`: Launches Express API server (Port 3001) and Vite dev server (Port 8080).
+- \`scripts/install.bat\`: Automatically runs \`npm install\` across root, \`backend/\`, and \`frontend/\`.
+- \`scripts/diagnose.bat\`: Validates system requirements, database connectivity, and node dependencies.
+- \`scripts/sync-dist.js\`: Synchronizes Vite build output from \`frontend/dist\` to root \`dist/\` and patches SystemJS legacy hash tags.
+`;
+
+  // HTML Renderer
   let htmlBody = combinedMarkdown
-    .replace(/^# (.*$)/gim, '<h1 style="color: #00f2fe; border-bottom: 2px solid #00f2fe; padding-bottom: 8px;">$1</h1>')
-    .replace(/^## (.*$)/gim, '<h2 style="color: #38bdf8; margin-top: 24px;">$1</h2>')
-    .replace(/^### (.*$)/gim, '<h3 style="color: #818cf8;">$1</h3>')
-    .replace(/^\> (.*$)/gim, '<blockquote style="border-left: 4px solid #00f2fe; background: #0f172a; padding: 10px 16px; color: #94a3b8;">$1</blockquote>')
+    .replace(/^# (.*$)/gim, '<h1 style="color: #00f2fe; border-bottom: 2px solid #00f2fe; padding-bottom: 8px; font-size: 24px;">$1</h1>')
+    .replace(/^## (.*$)/gim, '<h2 style="color: #38bdf8; margin-top: 20px; font-size: 18px;">$1</h2>')
+    .replace(/^### (.*$)/gim, '<h3 style="color: #818cf8; font-size: 15px;">$1</h3>')
+    .replace(/^\> (.*$)/gim, '<blockquote style="border-left: 4px solid #00f2fe; background: #0f172a; padding: 10px 16px; color: #94a3b8; margin: 12px 0;">$1</blockquote>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/```([\s\S]*?)```/g, '<pre style="background: #090d16; color: #38bdf8; padding: 14px; border-radius: 8px; border: 1px solid #1e293b; overflow-x: auto;"><code>$1</code></pre>')
-    .replace(/`([^`]+)`/g, '<code style="background: #1e293b; color: #00f2fe; padding: 2px 6px; border-radius: 4px;">$1</code>')
+    .replace(/```([\s\S]*?)```/g, '<pre style="background: #090d16; color: #38bdf8; padding: 14px; border-radius: 8px; border: 1px solid #1e293b; overflow-x: auto; font-family: monospace; font-size: 12px;"><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g, '<code style="background: #1e293b; color: #00f2fe; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px;">$1</code>')
     .replace(/\n/g, '<br>');
 
   const htmlDoc = `
@@ -56,31 +80,32 @@ async function buildPDF() {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Kronos AI - Complete Enterprise Documentation</title>
+  <title>Kronos AI - Master Complete Enterprise Documentation</title>
   <style>
-    @page { size: A4; margin: 20mm; }
+    @page { size: A4; margin: 15mm; }
     body {
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       background: #020617;
       color: #f1f5f9;
       line-height: 1.6;
-      padding: 30px;
+      padding: 24px;
     }
     h1, h2, h3 { font-family: system-ui, sans-serif; }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
+      margin: 16px 0;
       background: #0f172a;
+      font-size: 13px;
     }
     th, td {
       border: 1px solid #334155;
-      padding: 10px 14px;
+      padding: 8px 12px;
       text-align: left;
     }
     th { background: #1e293b; color: #00f2fe; }
     a { color: #38bdf8; text-decoration: none; }
-    hr { border: none; border-top: 1px solid #334155; margin: 30px 0; }
+    hr { border: none; border-top: 1px solid #334155; margin: 24px 0; }
   </style>
 </head>
 <body>
@@ -89,11 +114,15 @@ async function buildPDF() {
 </html>
   `;
 
-  const outputPathHtml = path.join(rootDir, 'docs', 'Kronos-AI-Documentation.html');
-  fs.writeFileSync(outputPathHtml, htmlDoc, 'utf8');
-  console.log('✅ Generated HTML documentation:', outputPathHtml);
+  const pdfPath = path.join(rootDir, 'docs', 'Kronos-AI-Master-Complete-Documentation.pdf');
+  const pdfRootPath = path.join(rootDir, 'Kronos-AI-Master-Complete-Documentation.pdf');
+  const pdfDownloadsPath = 'C:\\Users\\ravik\\Downloads\\kronos-ai final application\\Kronos-AI-Master-Complete-Documentation.pdf';
+  const pdfArtifactPath = 'C:\\Users\\ravik\\.gemini\\antigravity-ide\\brain\\1fb31000-2542-423a-8eff-6e9964277458\\Kronos-AI-Master-Complete-Documentation.pdf';
 
-  // Try Playwright PDF export if installed
+  // Save HTML export
+  fs.writeFileSync(path.join(rootDir, 'docs', 'Kronos-AI-Master-Complete-Documentation.html'), htmlDoc, 'utf8');
+
+  // Render PDF using Playwright Chromium
   try {
     let playwright;
     const backendPlaywrightPath = path.join(rootDir, 'backend', 'node_modules', 'playwright', 'index.js');
@@ -127,24 +156,25 @@ async function buildPDF() {
     const browser = await chromeEngine.launch(launchOpts);
     const page = await browser.newPage();
     await page.setContent(htmlDoc);
-    const pdfPath = path.join(rootDir, 'docs', 'Kronos-AI-Documentation.pdf');
+
     await page.pdf({
       path: pdfPath,
       format: 'A4',
       printBackground: true,
-      margin: { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' }
+      margin: { top: '12mm', bottom: '12mm', left: '12mm', right: '12mm' }
     });
-    await browser.close();
-    console.log('🎉 Successfully created PDF documentation:', pdfPath);
 
-    // Also copy to root & downloads
-    fs.copyFileSync(pdfPath, path.join(rootDir, 'Kronos-AI-Documentation.pdf'));
-    const downloadsCopy = 'C:\\Users\\ravik\\Downloads\\kronos-ai final application\\Kronos-AI-Documentation.pdf';
-    fs.copyFileSync(pdfPath, downloadsCopy);
-    console.log('✅ Synchronized PDF to root and Downloads folder!');
+    await browser.close();
+    console.log('🎉 Successfully generated Master PDF:', pdfPath);
+
+    // Sync PDF to root, downloads, and artifact directory
+    fs.copyFileSync(pdfPath, pdfRootPath);
+    fs.copyFileSync(pdfPath, pdfDownloadsPath);
+    fs.copyFileSync(pdfPath, pdfArtifactPath);
+    console.log('✅ Synchronized Master PDF to all locations!');
   } catch (err) {
-    console.log('ℹ️ Playwright PDF engine notice:', err.message);
+    console.error('❌ PDF Generation Error:', err.message);
   }
 }
 
-buildPDF().catch(console.error);
+buildMasterPDF().catch(console.error);

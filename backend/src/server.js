@@ -9,10 +9,18 @@ import authRoutes from './routes/auth.js';
 import apiRoutes from './routes/api.js';
 import { initScheduler } from './services/schedulerService.js';
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Validate that backend/.env is loaded before the server starts
+const envPath = path.resolve(__dirname, '../.env');
+dotenv.config({ path: envPath });
+
+if (!process.env.RESEND_API_KEY) {
+  console.warn('RESEND_API_KEY not found in backend/.env');
+} else {
+  console.log('✅ RESEND_API_KEY loaded successfully from backend/.env');
+}
 
 import fs from 'fs';
 

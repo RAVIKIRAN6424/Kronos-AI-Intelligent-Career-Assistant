@@ -7,7 +7,8 @@ import {
   sendForgotPasswordOTP,
   sendDailyJobReport,
   sendMissingInformationEmail,
-  sendApplicationSuccessEmail
+  sendApplicationSuccessEmail,
+  sendTestEmail
 } from '../services/emailService.js';
 import { startScheduler, stopScheduler, getSchedulerStatus } from '../services/schedulerService.js';
 
@@ -923,6 +924,36 @@ router.get('/email-logs', async (req, res) => {
     res.json(logs);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch email logs: ' + err.message });
+  }
+});
+
+/**
+ * STEP 16: Test Email Dispatch via Resend SDK
+ * GET /api/test-email
+ */
+router.get('/test-email', async (req, res) => {
+  try {
+    const toEmail = req.query.to || req.query.email || 'kronosai6424@gmail.com';
+    const result = await sendTestEmail(toEmail);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error || 'Failed to send test email via Resend'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Test email sent successfully.',
+      data: result.data
+    });
+  } catch (err) {
+    const errMsg = err.message || JSON.stringify(err);
+    res.status(400).json({
+      success: false,
+      error: errMsg
+    });
   }
 });
 

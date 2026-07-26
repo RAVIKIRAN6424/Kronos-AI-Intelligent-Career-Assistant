@@ -7,8 +7,16 @@ import { run } from '../config/database.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure .env variables are loaded
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Ensure .env variables are loaded from backend/.env before service initializes
+const envPath = path.resolve(__dirname, '../../.env');
+dotenv.config({ path: envPath });
+
+// Validate RESEND_API_KEY presence
+if (!process.env.RESEND_API_KEY) {
+  console.warn('RESEND_API_KEY not found in backend/.env');
+} else {
+  console.log('✅ RESEND_API_KEY loaded successfully from backend/.env');
+}
 
 // Initialize Resend SDK with API key from .env
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -186,6 +194,10 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     userName = email ? email.split('@')[0] : 'Candidate';
   }
 
+  console.log(`Starting OTP request for: ${email}...`);
+  console.log(`Generated OTP: ${otp}...`);
+  console.log(`Calling Resend for: ${email}...`);
+
   const subject = 'Verify your Kronos AI Account';
   const html = getEmailHTMLTemplate({
     title: 'Account Verification',
@@ -202,7 +214,6 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     `
   });
 
-  console.log('✉️ Dispatched Registration OTP via Resend SDK to:', email, '| OTP Code:', otp);
   try {
     const { data, error } = await resend.emails.send({
       from: 'Kronos AI <onboarding@resend.dev>',
@@ -212,18 +223,21 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     });
 
     if (error) {
-      console.error('❌ Resend API Error for:', email, ':', error.message || error);
-      await logEmail(email, subject, 'Registration OTP', 'failed', error.message || JSON.stringify(error));
-      return { success: false, error: error.message || error, otp };
+      const errMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      console.error(`Resend API Error: ${errMsg}`);
+      await logEmail(email, subject, 'Registration OTP', 'failed', errMsg);
+      return { success: false, error: errMsg, otp };
     }
 
-    console.log('✅ Resend SDK success for:', email, '| Message ID:', data.id);
+    console.log('📬 Resend API Response:', data);
+    console.log(`Email sent successfully via Resend. Message ID: ${data.id}`);
     await logEmail(email, subject, 'Registration OTP', 'success');
     return { success: true, messageId: data.id };
   } catch (err) {
-    console.error('❌ Failed to send Registration OTP email to', email, ':', err.message);
-    await logEmail(email, subject, 'Registration OTP', 'failed', err.message);
-    return { success: false, error: err.message, otp };
+    const errMsg = err.message || JSON.stringify(err);
+    console.error(`Resend API Error: ${errMsg}`);
+    await logEmail(email, subject, 'Registration OTP', 'failed', errMsg);
+    return { success: false, error: errMsg, otp };
   }
 }
 
@@ -231,6 +245,10 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
  * 2. STEP 6: Forgot Password OTP Email (sendForgotPasswordOTP)
  */
 export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
+  console.log(`Starting Forgot Password OTP request for: ${email}...`);
+  console.log(`Generated Password Reset OTP: ${otp}...`);
+  console.log(`Calling Resend for: ${email}...`);
+
   const subject = 'Kronos AI - Password Reset Verification Code';
   const html = getEmailHTMLTemplate({
     title: 'Password Reset Request',
@@ -256,17 +274,21 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
     });
 
     if (error) {
-      console.error('❌ Resend API Error for Forgot Password OTP:', error.message || error);
-      await logEmail(email, subject, 'Forgot Password OTP', 'failed', error.message || JSON.stringify(error));
-      throw new Error(`Password reset email failed: ${error.message || JSON.stringify(error)}`);
+      const errMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      console.error(`Resend API Error: ${errMsg}`);
+      await logEmail(email, subject, 'Forgot Password OTP', 'failed', errMsg);
+      return { success: false, error: errMsg, otp };
     }
 
+    console.log('📬 Resend API Response:', data);
+    console.log(`Password reset email sent successfully via Resend. Message ID: ${data.id}`);
     await logEmail(email, subject, 'Forgot Password OTP', 'success');
     return { success: true, messageId: data.id };
   } catch (err) {
-    console.error('❌ Failed to send Forgot Password OTP email:', err.message);
-    await logEmail(email, subject, 'Forgot Password OTP', 'failed', err.message);
-    throw new Error(`Password reset email failed: ${err.message}`);
+    const errMsg = err.message || JSON.stringify(err);
+    console.error(`Resend API Error: ${errMsg}`);
+    await logEmail(email, subject, 'Forgot Password OTP', 'failed', errMsg);
+    return { success: false, error: errMsg, otp };
   }
 }
 
@@ -346,20 +368,25 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
       payload.attachments = attachments;
     }
 
+    console.log(`Calling Resend API for Daily Report to: ${email}...`);
     const { data, error } = await resend.emails.send(payload);
 
     if (error) {
-      console.error('❌ Resend API Error for Daily Job Report:', error.message || error);
-      await logEmail(email, subject, 'Daily Job Report', 'failed', error.message || JSON.stringify(error));
-      throw new Error(`Daily report dispatch failed: ${error.message || JSON.stringify(error)}`);
+      const errMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      console.error(`Resend API Error: ${errMsg}`);
+      await logEmail(email, subject, 'Daily Job Report', 'failed', errMsg);
+      return { success: false, error: errMsg };
     }
 
+    console.log('📬 Resend API Response:', data);
+    console.log(`Daily Report sent successfully via Resend. Message ID: ${data.id}`);
     await logEmail(email, subject, 'Daily Job Report', 'success');
     return { success: true, messageId: data.id };
   } catch (err) {
-    console.error('❌ Failed to send Daily Job Report email:', err.message);
-    await logEmail(email, subject, 'Daily Job Report', 'failed', err.message);
-    throw new Error(`Daily report dispatch failed: ${err.message}`);
+    const errMsg = err.message || JSON.stringify(err);
+    console.error(`Resend API Error: ${errMsg}`);
+    await logEmail(email, subject, 'Daily Job Report', 'failed', errMsg);
+    return { success: false, error: errMsg };
   }
 }
 
@@ -393,6 +420,7 @@ export async function sendMissingInformationEmail(email, userName = 'User', miss
   });
 
   try {
+    console.log(`Calling Resend API for Missing Info Alert to: ${email}...`);
     const { data, error } = await resend.emails.send({
       from: 'Kronos AI <onboarding@resend.dev>',
       to: [email],
@@ -401,17 +429,21 @@ export async function sendMissingInformationEmail(email, userName = 'User', miss
     });
 
     if (error) {
-      console.error('❌ Resend API Error for Missing Information email:', error.message || error);
-      await logEmail(email, subject, 'Missing Profile Alert', 'failed', error.message || JSON.stringify(error));
-      throw new Error(`Missing information alert failed: ${error.message || JSON.stringify(error)}`);
+      const errMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      console.error(`Resend API Error: ${errMsg}`);
+      await logEmail(email, subject, 'Missing Profile Alert', 'failed', errMsg);
+      return { success: false, error: errMsg };
     }
 
+    console.log('📬 Resend API Response:', data);
+    console.log(`Missing Info Alert sent successfully via Resend. Message ID: ${data.id}`);
     await logEmail(email, subject, 'Missing Profile Alert', 'success');
     return { success: true, messageId: data.id };
   } catch (err) {
-    console.error('❌ Failed to send Missing Information email:', err.message);
-    await logEmail(email, subject, 'Missing Profile Alert', 'failed', err.message);
-    throw new Error(`Missing information alert failed: ${err.message}`);
+    const errMsg = err.message || JSON.stringify(err);
+    console.error(`Resend API Error: ${errMsg}`);
+    await logEmail(email, subject, 'Missing Profile Alert', 'failed', errMsg);
+    return { success: false, error: errMsg };
   }
 }
 
@@ -442,6 +474,7 @@ export async function sendApplicationSuccessEmail(email, userName = 'User', appl
   });
 
   try {
+    console.log(`Calling Resend API for Application Success Notification to: ${email}...`);
     const { data, error } = await resend.emails.send({
       from: 'Kronos AI <onboarding@resend.dev>',
       to: [email],
@@ -450,16 +483,69 @@ export async function sendApplicationSuccessEmail(email, userName = 'User', appl
     });
 
     if (error) {
-      console.error('❌ Resend API Error for Application Success email:', error.message || error);
-      await logEmail(email, subject, 'Application Success', 'failed', error.message || JSON.stringify(error));
-      throw new Error(`Application success email failed: ${error.message || JSON.stringify(error)}`);
+      const errMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      console.error(`Resend API Error: ${errMsg}`);
+      await logEmail(email, subject, 'Application Success', 'failed', errMsg);
+      return { success: false, error: errMsg };
     }
 
+    console.log('📬 Resend API Response:', data);
+    console.log(`Application Success email sent successfully via Resend. Message ID: ${data.id}`);
     await logEmail(email, subject, 'Application Success', 'success');
     return { success: true, messageId: data.id };
   } catch (err) {
-    console.error('❌ Failed to send Application Success email:', err.message);
-    await logEmail(email, subject, 'Application Success', 'failed', err.message);
-    throw new Error(`Application success email failed: ${err.message}`);
+    const errMsg = err.message || JSON.stringify(err);
+    console.error(`Resend API Error: ${errMsg}`);
+    await logEmail(email, subject, 'Application Success', 'failed', errMsg);
+    return { success: false, error: errMsg };
+  }
+}
+
+/**
+ * 6. STEP 11: Resend Test Email Endpoint Helper (sendTestEmail)
+ */
+export async function sendTestEmail(toEmail) {
+  const recipient = toEmail || 'kronosai6424@gmail.com';
+  console.log(`Starting test email request for: ${recipient}...`);
+  console.log(`Calling Resend for: ${recipient}...`);
+
+  const subject = 'Kronos AI Resend Integration Test';
+  const html = getEmailHTMLTemplate({
+    title: 'Resend Email System Diagnostic',
+    badge: 'SYSTEM INTEGRATION TEST',
+    userName: recipient.split('@')[0] || 'User',
+    bodyContent: `
+      <p>Congratulations! Your <strong>Resend SDK Integration</strong> for Kronos AI is working perfectly.</p>
+      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 16px; margin: 16px 0;">
+        <p style="margin: 0; color: #10b981; font-weight: 700;">✅ Resend SDK Communication Status: Active & Operational</p>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8;">Dispatched via Resend API Key loaded from backend/.env.</p>
+    `
+  });
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Kronos AI <onboarding@resend.dev>',
+      to: [recipient],
+      subject,
+      html
+    });
+
+    if (error) {
+      const errMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      console.error(`Resend API Error: ${errMsg}`);
+      await logEmail(recipient, subject, 'Test Email', 'failed', errMsg);
+      return { success: false, error: errMsg };
+    }
+
+    console.log('📬 Resend API Response:', data);
+    console.log(`Test email sent successfully via Resend. Message ID: ${data.id}`);
+    await logEmail(recipient, subject, 'Test Email', 'success');
+    return { success: true, message: 'Test email sent successfully.', data };
+  } catch (err) {
+    const errMsg = err.message || JSON.stringify(err);
+    console.error(`Resend API Error: ${errMsg}`);
+    await logEmail(recipient, subject, 'Test Email', 'failed', errMsg);
+    return { success: false, error: errMsg };
   }
 }

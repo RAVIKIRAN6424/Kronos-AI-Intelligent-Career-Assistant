@@ -1,6 +1,6 @@
 import express from 'express';
 import { generateOTP, saveOTP, verifyOTPCode } from '../utils/otpHelper.js';
-import { sendOTPEmail } from '../services/emailService.js';
+import { sendOTPEmail, sendForgotPasswordOTP } from '../services/emailService.js';
 import { getOne, run } from '../config/database.js';
 
 const router = express.Router();
@@ -10,28 +10,39 @@ const router = express.Router();
  */
 router.post('/send-otp', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, full_name, fullName } = req.body;
     if (!email || !email.includes('@')) {
-      return res.status(400).json({ error: 'Valid email address is required.' });
+      return res.status(400).json({ success: false, error: 'Valid email address is required.' });
     }
 
+    const name = fullName || full_name || email.split('@')[0] || 'Candidate';
+    console.log(`Starting OTP request for: ${email}...`);
+
     const code = generateOTP();
+    console.log(`Generated OTP: ${code}...`);
     await saveOTP(email, code);
 
-    const userName = (req.body && req.body.full_name) || email.split('@')[0] || 'Candidate';
-    console.log('🔑 Generating & Dispatched OTP for:', email, '| Code:', code);
+    console.log(`Calling Resend for: ${email}...`);
+    const emailResult = await sendOTPEmail(email, name, code);
 
-    const emailResult = await sendOTPEmail(email, userName, code);
+    if (!emailResult.success) {
+      console.error(`Resend API Error: ${emailResult.error}`);
+      return res.status(400).json({
+        success: false,
+        error: emailResult.error || 'Failed to send verification email via Resend'
+      });
+    }
 
+    console.log(`Email sent successfully via Resend. Message ID: ${emailResult.messageId}`);
     res.json({
+      success: true,
       message: `OTP dispatched to ${email}`,
-      mode: emailResult.mode,
-      // For developer/testing ease when SMTP is not configured:
-      simulatedCode: emailResult.simulatedCode || code
+      messageId: emailResult.messageId
     });
   } catch (err) {
-    console.error('Send OTP error:', err);
-    res.status(500).json({ error: 'Failed to generate OTP: ' + err.message });
+    const errMsg = err.message || JSON.stringify(err);
+    console.error(`Resend API Error: ${errMsg}`);
+    res.status(400).json({ success: false, error: errMsg });
   }
 });
 
@@ -42,12 +53,12 @@ router.post('/verify-otp', async (req, res) => {
   try {
     const { email, code, full_name, age, phone, target_domain, experience_years } = req.body;
     if (!email || !code) {
-      return res.status(400).json({ error: 'Email and OTP code are required.' });
+      return res.status(400).json({ success: false, error: 'Email and OTP code are required.' });
     }
 
     const isValid = await verifyOTPCode(email, code);
     if (!isValid) {
-      return res.status(401).json({ error: 'Invalid or expired OTP code. Please request a new code.' });
+      return res.status(401).json({ success: false, error: 'Invalid or expired OTP code. Please request a new code.' });
     }
 
     // Check if user exists
@@ -94,46 +105,65 @@ router.post('/verify-otp', async (req, res) => {
     `, [user.full_name, user.email, user.phone, user.age, user.target_domain, user.experience_years]);
 
     res.json({
+      success: true,
       message: 'Authentication successful',
       user
     });
   } catch (err) {
     console.error('Verify OTP error:', err);
-    res.status(500).json({ error: 'Authentication failed: ' + err.message });
+    res.status(500).json({ success: false, error: 'Authentication failed: ' + err.message });
   }
 });
 
 /**
- * POST /api/auth/register - Step 2: Account Registration Request (Sends OTP to Email)
+ * POST /api/auth/register
  */
 router.post('/register', async (req, res) => {
   try {
-    const { full_name, gender, age, email, phone, country, password } = req.body;
+    const { full_name, fullName, email, password } = req.body;
     if (!email || !email.includes('@') || !password) {
-      return res.status(400).json({ error: 'Valid email and password are required.' });
+      return res.status(400).json({ success: false, error: 'Valid email and password are required.' });
     }
 
-    const code = generateOTP();
-    await saveOTP(email, code);
-    await sendOTPEmail(email, full_name || email.split('@')[0], code);
+    const name = fullName || full_name || email.split('@')[0] || 'Candidate';
+    console.log(`Starting registration OTP request for: ${email}...`);
 
+    const code = generateOTP();
+    console.log(`Generated OTP: ${code}...`);
+    await saveOTP(email, code);
+
+    console.log(`Calling Resend for: ${email}...`);
+    const emailResult = await sendOTPEmail(email, name, code);
+
+    if (!emailResult.success) {
+      console.error(`Resend API Error: ${emailResult.error}`);
+      return res.status(400).json({
+        success: false,
+        error: emailResult.error || 'Failed to send registration verification code via Resend'
+      });
+    }
+
+    console.log(`Email sent successfully via Resend. Message ID: ${emailResult.messageId}`);
     res.json({
+      success: true,
       message: `Verification code sent to ${email}. Check your email inbox.`,
       email
     });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to initiate registration: ' + err.message });
+    const errMsg = err.message || JSON.stringify(err);
+    console.error(`Resend API Error: ${errMsg}`);
+    res.status(400).json({ success: false, error: errMsg });
   }
 });
 
 /**
- * POST /api/auth/login - Step 3: Password Authentication
+ * POST /api/auth/login
  */
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+      return res.status(400).json({ success: false, error: 'Email and password are required.' });
     }
 
     let user = await getOne(`SELECT * FROM users WHERE email = ?`, [email]);
@@ -147,55 +177,74 @@ router.post('/login', async (req, res) => {
     }
 
     res.json({
+      success: true,
       message: 'Login successful',
       user
     });
   } catch (err) {
-    res.status(500).json({ error: 'Login failed: ' + err.message });
+    res.status(500).json({ success: false, error: 'Login failed: ' + err.message });
   }
 });
 
 /**
- * POST /api/auth/forgot-password - Send OTP for password reset
+ * POST /api/auth/forgot-password
  */
 router.post('/forgot-password', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, full_name, fullName } = req.body;
     if (!email) {
-      return res.status(400).json({ error: 'Email address is required.' });
+      return res.status(400).json({ success: false, error: 'Email address is required.' });
     }
 
-    const code = generateOTP();
-    await saveOTP(email, code);
-    await sendOTPEmail(email, code);
+    const name = fullName || full_name || email.split('@')[0] || 'Candidate';
+    console.log(`Starting Forgot Password OTP request for: ${email}...`);
 
+    const code = generateOTP();
+    console.log(`Generated OTP: ${code}...`);
+    await saveOTP(email, code);
+
+    console.log(`Calling Resend for: ${email}...`);
+    const emailResult = await sendForgotPasswordOTP(email, name, code);
+
+    if (!emailResult.success) {
+      console.error(`Resend API Error: ${emailResult.error}`);
+      return res.status(400).json({
+        success: false,
+        error: emailResult.error || 'Failed to send password reset code via Resend'
+      });
+    }
+
+    console.log(`Password reset email sent successfully via Resend. Message ID: ${emailResult.messageId}`);
     res.json({
+      success: true,
       message: `Password reset OTP dispatched to ${email}.`,
       email
     });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to send reset code: ' + err.message });
+    const errMsg = err.message || JSON.stringify(err);
+    console.error(`Resend API Error: ${errMsg}`);
+    res.status(400).json({ success: false, error: errMsg });
   }
 });
 
 /**
- * POST /api/auth/reset-password - Verify OTP & Create New Password
+ * POST /api/auth/reset-password
  */
 router.post('/reset-password', async (req, res) => {
   try {
     const { email, code, new_password } = req.body;
     if (!email || !code || !new_password) {
-      return res.status(400).json({ error: 'Email, OTP code, and new password are required.' });
+      return res.status(400).json({ success: false, error: 'Email, OTP code, and new password are required.' });
     }
 
     const isValid = await verifyOTPCode(email, code);
     if (!isValid) {
-      return res.status(401).json({ error: 'Invalid or expired OTP code.' });
+      return res.status(401).json({ success: false, error: 'Invalid or expired OTP code.' });
     }
 
-    res.json({ message: 'Password reset successful. Please login with your new password.' });
+    res.json({ success: true, message: 'Password reset successful. Please login with your new password.' });
   } catch (err) {
-    res.status(500).json({ error: 'Password reset failed: ' + err.message });
+    res.status(500).json({ success: false, error: 'Password reset failed: ' + err.message });
   }
 });
 
@@ -207,7 +256,7 @@ router.get('/me', async (req, res) => {
     const user = await getOne(`SELECT * FROM users ORDER BY id DESC LIMIT 1`);
     res.json({ user: user || null });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
