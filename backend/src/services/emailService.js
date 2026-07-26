@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -11,15 +12,32 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(__dirname, '../../.env');
 dotenv.config({ path: envPath });
 
-const resendApiKey = process.env.RESEND_API_KEY;
-if (!resendApiKey) {
-  console.warn('⚠️ RESEND_API_KEY is missing from process.env');
-}
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const EMAIL_USER = process.env.EMAIL_USER || 'kronosai6424@gmail.com';
+const EMAIL_PASS = (process.env.EMAIL_PASS || 'atzr geyq ytdu eovb').replace(/\s+/g, '');
 
-const resend = new Resend(resendApiKey);
-
-// Default sender address as specified in requirements
+const resend = new Resend(RESEND_API_KEY);
 const FROM_EMAIL = 'Kronos AI <onboarding@resend.dev>';
+
+// Gmail SMTP Fallback Transporter for non-owner recipient emails
+const gmailTransporter = nodemailer.createTransport({
+  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  pool: true,
+  maxConnections: 5,
+  auth: {
+    user: EMAIL_USER,
+    pass: EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  },
+  connectionTimeout: 10000,
+  greetingTimeout: 5000,
+  socketTimeout: 10000
+});
 
 /**
  * Log email dispatch result into SQLite database email_logs table
@@ -37,13 +55,16 @@ export async function logEmail(recipient, subject, templateType, status = 'succe
 }
 
 /**
- * Helper to dispatch emails via Resend SDK
+ * Universal Fail-Safe Mail Dispatcher: Resend SDK -> Gmail SMTP Fallback
  */
-async function sendResendMail({ to, subject, html, attachments = [] }) {
+async function sendUniversalMail({ to, subject, html, attachments = [] }) {
+  const cleanRecipient = (to || '').trim();
+
+  // Step 1: Attempt Resend SDK
   try {
     const payload = {
       from: FROM_EMAIL,
-      to,
+      to: cleanRecipient,
       subject,
       html
     };
@@ -55,23 +76,37 @@ async function sendResendMail({ to, subject, html, attachments = [] }) {
       }));
     }
 
-    console.log('Calling Resend...');
+    console.log(`Calling Resend API for ${cleanRecipient}...`);
     const { data, error } = await resend.emails.send(payload);
 
-    if (error) {
-      console.error('\n=========================================');
-      console.error('Resend API Error:', error.message || error);
-      console.error('=========================================\n');
-      return { success: false, error: error.message || JSON.stringify(error) };
+    if (!error && data?.id) {
+      console.log('✅ Resend Email sent successfully. MessageID:', data.id);
+      return { success: true, messageId: data.id };
     }
 
-    console.log('Email sent successfully.');
-    return { success: true, messageId: data?.id || 'resend-id' };
-  } catch (err) {
-    console.error('\n=========================================');
-    console.error('Resend API Error:', err.message || err);
-    console.error('=========================================\n');
-    return { success: false, error: err.message || err.toString() };
+    const resendErrMsg = error ? (error.message || JSON.stringify(error)) : 'Resend returned no ID';
+    console.warn(`⚠️ Resend API Warning (${resendErrMsg}). Falling back to Gmail SMTP...`);
+  } catch (resendErr) {
+    console.warn(`⚠️ Resend SDK Exception (${resendErr.message}). Falling back to Gmail SMTP...`);
+  }
+
+  // Step 2: Fallback to Nodemailer Gmail SMTP for ANY recipient email address
+  try {
+    console.log(`Calling Gmail SMTP Fallback for ${cleanRecipient}...`);
+    const mailOptions = {
+      from: `"Kronos AI System" <${EMAIL_USER}>`,
+      to: cleanRecipient,
+      subject,
+      html,
+      attachments
+    };
+
+    const info = await gmailTransporter.sendMail(mailOptions);
+    console.log('✅ Gmail SMTP Email sent successfully. Response:', info.response || info.messageId);
+    return { success: true, messageId: info.messageId || 'gmail-smtp-id' };
+  } catch (gmailErr) {
+    console.error('❌ Gmail SMTP Fallback Error:', gmailErr.message || gmailErr);
+    return { success: false, error: gmailErr.message || gmailErr.toString() };
   }
 }
 
@@ -211,7 +246,7 @@ function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }
       </div>
       <div class="footer">
         <p>⚡ <strong>Kronos AI Intelligent Career Assistant</strong></p>
-        <p>Support Contact: <a href="mailto:support@resend.dev">support@resend.dev</a></p>
+        <p>Support Contact: <a href="mailto:kronosai6424@gmail.com">kronosai6424@gmail.com</a></p>
         <p>© 2026 Kronos AI Systems. All rights reserved.</p>
       </div>
     </div>
@@ -256,7 +291,7 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     `
   });
 
-  const result = await sendResendMail({
+  const result = await sendUniversalMail({
     to: email,
     subject,
     html
@@ -304,7 +339,7 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
     `
   });
 
-  const result = await sendResendMail({
+  const result = await sendUniversalMail({
     to: email,
     subject,
     html
@@ -348,7 +383,7 @@ export async function sendPasswordChangedEmail(email, userName = 'User') {
     `
   });
 
-  const result = await sendResendMail({
+  const result = await sendUniversalMail({
     to: email,
     subject,
     html
@@ -439,7 +474,7 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
     });
   }
 
-  const result = await sendResendMail({
+  const result = await sendUniversalMail({
     to: email,
     subject,
     html,
@@ -494,7 +529,7 @@ export async function sendMissingInformationEmail(email, userName = 'User', miss
     }
   });
 
-  const result = await sendResendMail({
+  const result = await sendUniversalMail({
     to: email,
     subject,
     html
@@ -545,7 +580,7 @@ export async function sendApplicationSuccessEmail(email, userName = 'User', appl
     `
   });
 
-  const result = await sendResendMail({
+  const result = await sendUniversalMail({
     to: email,
     subject,
     html
@@ -576,21 +611,21 @@ export async function sendTestEmail(toEmail) {
   console.log('TEST EMAIL REQUEST');
   console.log(`Email: ${recipient}`);
 
-  const subject = 'Kronos AI Resend SDK Integration Diagnostic';
+  const subject = 'Kronos AI Email Service System Diagnostic';
   const html = getEmailHTMLTemplate({
-    title: 'Resend Email Service System Diagnostic',
+    title: 'Resend & Gmail SMTP Fail-Safe Diagnostic',
     badge: 'SYSTEM INTEGRATION TEST',
     userName: recipient.split('@')[0] || 'User',
     bodyContent: `
-      <p>Congratulations! Your <strong>Resend SDK Integration</strong> for Kronos AI is working perfectly.</p>
+      <p>Congratulations! Your <strong>Kronos AI Email Dispatcher</strong> is working perfectly for all recipient addresses.</p>
       <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 16px; margin: 16px 0;">
-        <p style="margin: 0; color: #10b981; font-weight: 700;">✅ Resend Email API Status: Active & Connected</p>
+        <p style="margin: 0; color: #10b981; font-weight: 700;">✅ Email API Status: Active & Operational</p>
       </div>
-      <p style="font-size: 13px; color: #94a3b8;">Dispatched via Resend API Key using onboarding@resend.dev.</p>
+      <p style="font-size: 13px; color: #94a3b8;">Dispatched via Universal Fail-Safe Engine (Resend API + Gmail SMTP Fallback).</p>
     `
   });
 
-  const result = await sendResendMail({
+  const result = await sendUniversalMail({
     to: recipient,
     subject,
     html

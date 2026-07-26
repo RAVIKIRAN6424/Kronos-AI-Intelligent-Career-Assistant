@@ -6,12 +6,12 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login', 'register', 'forgot'
   const [step, setStep] = useState('form'); // 'form', 'otp'
   
-  const [fullName, setFullName] = useState('MADASU RAVI KIRAN');
+  const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState('Male');
-  const [age, setAge] = useState('26');
-  const [country, setCountry] = useState('India');
+  const [age, setAge] = useState('');
+  const [country, setCountry] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('+91 98765 43210');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -353,7 +353,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Full Name</label>
-                <input className="cyber-input" value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="MADASU RAVI KIRAN" />
+                <input className="cyber-input" value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="e.g. Alex Vance" />
               </div>
 
               <div>
@@ -369,23 +369,23 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Age</label>
-                <input type="number" className="cyber-input" value={age} onChange={e => setAge(e.target.value)} required />
+                <input type="number" className="cyber-input" value={age} onChange={e => setAge(e.target.value)} required placeholder="e.g. 26" />
               </div>
 
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Country</label>
-                <input className="cyber-input" value={country} onChange={e => setCountry(e.target.value)} required />
+                <input className="cyber-input" value={country} onChange={e => setCountry(e.target.value)} required placeholder="e.g. India" />
               </div>
             </div>
 
             <div>
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Email Address</label>
-              <input type="email" className="cyber-input" value={email} onChange={e => setEmail(e.target.value)} required placeholder="6424ravikiran@gmail.com" />
+              <input type="email" className="cyber-input" value={email} onChange={e => setEmail(e.target.value)} required placeholder="e.g. candidate@domain.com" />
             </div>
 
             <div>
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Phone Number</label>
-              <input className="cyber-input" value={phone} onChange={e => setPhone(e.target.value)} required />
+              <input className="cyber-input" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="e.g. +91 98765 43210" />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
