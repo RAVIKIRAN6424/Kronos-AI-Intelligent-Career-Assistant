@@ -31,8 +31,28 @@ import fs from 'fs';
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Middleware
-app.use(cors({ origin: '*', credentials: true }));
+// CORS Configuration for Render Backend <-> Vercel Frontend
+const allowedOrigins = [
+  'https://kronos-ai-intelligent-career-assist.vercel.app',
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:8080'
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+app.options('*', cors());
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

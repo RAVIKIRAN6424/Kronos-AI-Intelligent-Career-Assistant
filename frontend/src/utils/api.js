@@ -1,6 +1,5 @@
-const API_BASE = (typeof window !== 'undefined' && window.location.protocol === 'file:')
-  ? 'http://65.2.220.208:8080/api'
-  : '/api';
+const RENDER_BACKEND = (import.meta.env.VITE_API_URL || 'https://kronos-ai-intelligent-career-assistant.onrender.com').replace(/\/$/, '');
+const API_BASE = `${RENDER_BACKEND}/api`;
 
 /**
  * Helper to get cached data from localStorage
