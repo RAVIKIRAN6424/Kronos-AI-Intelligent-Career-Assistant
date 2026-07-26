@@ -66,29 +66,72 @@ async function request(url, options = {}) {
 
 export const api = {
   // Auth & User OTP
-  sendOTP: async (email) => {
-    const res = await request('/auth/send-otp', { method: 'POST', body: { email } });
-    return res || { message: 'OTP sent to email (Demo Mode)' };
+  sendOTP: async (email, full_name) => {
+    const res = await request('/auth/send-otp', { method: 'POST', body: { email, full_name } });
+    if (res && res.success === false) {
+      throw new Error(res.error || 'Failed to dispatch verification code');
+    }
+    if (!res) {
+      throw new Error('Server connection error. Please check your network or try again.');
+    }
+    return res;
+  },
+  resendOTP: async (email, full_name) => {
+    const res = await request('/auth/resend-otp', { method: 'POST', body: { email, full_name } });
+    if (res && res.success === false) {
+      throw new Error(res.error || 'Failed to resend verification code');
+    }
+    if (!res) {
+      throw new Error('Server connection error. Please check your network or try again.');
+    }
+    return res;
   },
   verifyOTP: async (payload) => {
     const res = await request('/auth/verify-otp', { method: 'POST', body: payload });
-    return res || { user: { id: 1, email: payload.email || 'guest@kronos.ai', full_name: 'Guest User' } };
+    if (res && res.success === false) {
+      throw new Error(res.error || 'Invalid or expired verification code');
+    }
+    if (res && res.user) {
+      setStorage('kronos_user', res.user);
+    }
+    return res || { success: true, user: { email: payload.email, full_name: payload.full_name || 'User' } };
   },
   register: async (payload) => {
     const res = await request('/auth/register', { method: 'POST', body: payload });
+    if (res && res.success === false) {
+      throw new Error(res.error || 'Registration failed');
+    }
     return res || { user: { id: 1, email: payload.email, full_name: payload.full_name || 'Guest User' } };
   },
   login: async (payload) => {
     const res = await request('/auth/login', { method: 'POST', body: payload });
+    if (res && res.success === false) {
+      throw new Error(res.error || 'Invalid email or password');
+    }
+    if (res && res.user) {
+      setStorage('kronos_user', res.user);
+    }
     return res || { user: { id: 1, email: payload.email, full_name: 'Guest User' } };
   },
   forgotPassword: async (email) => {
     const res = await request('/auth/forgot-password', { method: 'POST', body: { email } });
-    return res || { message: 'Reset link sent' };
+    if (res && res.success === false) {
+      throw new Error(res.error || 'Failed to send password reset code');
+    }
+    if (!res) {
+      throw new Error('Server connection error. Please check your network or try again.');
+    }
+    return res;
   },
   resetPassword: async (payload) => {
     const res = await request('/auth/reset-password', { method: 'POST', body: payload });
-    return res || { message: 'Password reset successful' };
+    if (res && res.success === false) {
+      throw new Error(res.error || 'Password reset failed');
+    }
+    if (!res) {
+      throw new Error('Server connection error. Please check your network or try again.');
+    }
+    return res;
   },
   getAuthMe: async () => {
     const res = await request('/auth/me');

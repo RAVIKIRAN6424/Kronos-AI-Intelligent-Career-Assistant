@@ -1,48 +1,56 @@
-import React, { useState } from 'react';
-import { Mail, KeyRound, User, Phone, CheckCircle2, X, Lock, ShieldCheck, Calendar, Clock, Globe } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Eye, EyeOff } from 'lucide-react';
 import { api } from '../utils/api';
 
-export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode = 'login' }) => {
-  const [activeTab, setActiveTab] = useState(initialMode); // 'login' | 'register' | 'forgot'
-  const [step, setStep] = useState('form'); // 'form' | 'otp' | 'reset'
-
-  // Register state
-  const [fullName, setFullName] = useState('');
+export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
+  const [activeTab, setActiveTab] = useState('login'); // 'login', 'register', 'forgot'
+  const [step, setStep] = useState('form'); // 'form', 'otp'
+  
+  const [fullName, setFullName] = useState('MADASU RAVI KIRAN');
   const [gender, setGender] = useState('Male');
   const [age, setAge] = useState('26');
+  const [country, setCountry] = useState('India');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('+91 98765 43210');
-  const [country, setCountry] = useState('India');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [otpCode, setOtpCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
-  React.useEffect(() => {
+  const currentDate = '2026-07-26';
+  const currentTime = '16:16:41';
+
+  useEffect(() => {
     let timer;
     if (cooldown > 0) {
-      timer = setInterval(() => setCooldown(prev => prev - 1), 1000);
+      timer = setInterval(() => setCooldown(c => c - 1), 1000);
     }
     return () => clearInterval(timer);
   }, [cooldown]);
-
-  const currentDate = new Date().toLocaleDateString();
-  const currentTime = new Date().toLocaleTimeString();
 
   if (!isOpen) return null;
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      toast('Email and password are required.', 'error');
+      toast('Please enter both your email address and password.', 'error');
       return;
     }
 
     setLoading(true);
     try {
       const res = await api.login({ email, password });
+      if (res && res.success === false) {
+        toast(res.error || 'Invalid credentials', 'error');
+        return;
+      }
       toast('Login successful! Welcome to Kronos AI.', 'success');
       onAuthSuccess(res.user);
       onClose();
@@ -105,6 +113,10 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
     setLoading(true);
     try {
       const res = await api.sendOTP(email, fullName);
+      if (res && res.success === false) {
+        toast(res.error || 'Failed to dispatch verification code', 'error');
+        return;
+      }
       toast(`Verification OTP dispatched to ${email}! Please check your Inbox & Spam.`, 'success');
       setStep('otp');
       setCooldown(60);
@@ -118,7 +130,7 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
   const handleVerifyRegisterOTP = async (e) => {
     e.preventDefault();
     if (!otpCode) {
-      toast('Please enter the verification code sent to your email.', 'error');
+      toast('Please enter the 6-digit verification code sent to your email.', 'error');
       return;
     }
 
@@ -128,11 +140,16 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
         email,
         code: otpCode,
         full_name: fullName,
+        password,
         age: parseInt(age),
         phone,
         target_domain: 'Software'
       });
-      toast('Account created successfully!', 'success');
+      if (res && res.success === false) {
+        toast(res.error || 'Invalid verification code', 'error');
+        return;
+      }
+      toast('Account created and verified successfully!', 'success');
       onAuthSuccess(res.user);
       onClose();
     } catch (err) {
@@ -151,7 +168,11 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
 
     setLoading(true);
     try {
-      await api.forgotPassword(email);
+      const res = await api.forgotPassword(email);
+      if (res && res.success === false) {
+        toast(res.error || 'Failed to send reset code', 'error');
+        return;
+      }
       toast(`Reset verification code sent to ${email}.`, 'success');
       setStep('otp');
     } catch (err) {
@@ -164,14 +185,24 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
   const handleResetPasswordSubmit = async (e) => {
     e.preventDefault();
     if (!otpCode || !newPassword) {
-      toast('OTP code and new password are required.', 'error');
+      toast('Please enter the OTP code and your new password.', 'error');
+      return;
+    }
+
+    const passErr = validatePassword(newPassword);
+    if (passErr) {
+      toast(passErr, 'error');
       return;
     }
 
     setLoading(true);
     try {
-      await api.resetPassword({ email, code: otpCode, new_password: newPassword });
-      toast('Password reset successfully! Please log in.', 'success');
+      const res = await api.resetPassword({ email, otp: otpCode, new_password: newPassword });
+      if (res && res.success === false) {
+        toast(res.error || 'Password reset failed', 'error');
+        return;
+      }
+      toast('Password reset successfully! Please sign in with your new password.', 'success');
       setActiveTab('login');
       setStep('form');
     } catch (err) {
@@ -182,15 +213,57 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(2, 6, 15, 0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div className="glass-panel" style={{ width: '100%', maxWidth: '520px', padding: '32px', borderRadius: '24px', position: 'relative', border: '1px solid var(--border-cyber)', maxHeight: '90vh', overflowY: 'auto' }}>
-        
-        <button onClick={onClose} style={{ position: 'absolute', right: '20px', top: '20px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(4, 8, 20, 0.85)',
+      backdropFilter: 'blur(12px)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px'
+    }}>
+      <div style={{
+        background: '#081020',
+        border: '1px solid rgba(0, 242, 254, 0.3)',
+        borderRadius: '16px',
+        width: '100%',
+        maxWidth: '480px',
+        padding: '32px',
+        boxShadow: '0 20px 50px rgba(0, 242, 254, 0.2)',
+        position: 'relative',
+        maxHeight: '90vh',
+        overflowY: 'auto'
+      }}>
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            padding: '4px'
+          }}
+        >
           <X size={20} />
         </button>
 
-        {/* Tab Headers */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: 'rgba(2, 6, 15, 0.8)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+        {/* Tab Selection */}
+        <div style={{
+          display: 'flex',
+          background: 'rgba(255, 255, 255, 0.05)',
+          padding: '4px',
+          borderRadius: '10px',
+          marginBottom: '24px'
+        }}>
           <button
             onClick={() => { setActiveTab('login'); setStep('form'); }}
             style={{
@@ -236,7 +309,28 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
 
             <div>
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Password</label>
-              <input type="password" className="cyber-input" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="cyber-input"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  style={{ paddingRight: '40px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', color: '#00f2fe', cursor: 'pointer', display: 'flex', alignItems: 'center'
+                  }}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -259,7 +353,7 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Full Name</label>
-                <input className="cyber-input" value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="Alex Vance" />
+                <input className="cyber-input" value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="MADASU RAVI KIRAN" />
               </div>
 
               <div>
@@ -286,7 +380,7 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
 
             <div>
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Email Address</label>
-              <input type="email" className="cyber-input" value={email} onChange={e => setEmail(e.target.value)} required />
+              <input type="email" className="cyber-input" value={email} onChange={e => setEmail(e.target.value)} required placeholder="6424ravikiran@gmail.com" />
             </div>
 
             <div>
@@ -297,12 +391,54 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Password (Mandatory 8+ Chars)</label>
-                <input type="password" className="cyber-input" value={password} onChange={e => setPassword(e.target.value)} placeholder="e.g. Kronos#2026" required />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="cyber-input"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="e.g. Kronos#2026"
+                    required
+                    style={{ paddingRight: '36px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', color: '#00f2fe', cursor: 'pointer', display: 'flex', alignItems: 'center'
+                    }}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Confirm Password</label>
-                <input type="password" className="cyber-input" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" required />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    className="cyber-input"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    style={{ paddingRight: '36px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', color: '#00f2fe', cursor: 'pointer', display: 'flex', alignItems: 'center'
+                    }}
+                    title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -326,7 +462,7 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
           <form onSubmit={handleVerifyRegisterOTP} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <h2 style={{ color: '#ffffff', fontSize: '22px', fontWeight: 800 }}>Enter Email Verification Code</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-              Verification code dispatched only to <strong>{email}</strong>. (Code is never displayed on screen).
+              Verification code dispatched only to <strong>{email}</strong>. (Code is sent to your Inbox & Spam).
             </p>
 
             <div>
@@ -346,7 +482,11 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    await api.sendOTP(email, fullName);
+                    const res = await api.resendOTP(email, fullName);
+                    if (res && res.success === false) {
+                      toast(res.error || 'Resend failed', 'error');
+                      return;
+                    }
                     toast(`New verification code sent to ${email}`, 'success');
                     setCooldown(60);
                   } catch (err) {
@@ -373,7 +513,7 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
 
             <div>
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Email Address</label>
-              <input type="email" className="cyber-input" value={email} onChange={e => setEmail(e.target.value)} required />
+              <input type="email" className="cyber-input" value={email} onChange={e => setEmail(e.target.value)} required placeholder="6424ravikiran@gmail.com" />
             </div>
 
             <button className="btn-cyber" type="submit" disabled={loading} style={{ padding: '14px', justifyContent: 'center' }}>
@@ -388,12 +528,33 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
 
             <div>
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Verification Code</label>
-              <input className="cyber-input" value={otpCode} onChange={e => setOtpCode(e.target.value)} required />
+              <input className="cyber-input" value={otpCode} onChange={e => setOtpCode(e.target.value)} required placeholder="123456" />
             </div>
 
             <div>
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>New Password</label>
-              <input type="password" className="cyber-input" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  className="cyber-input"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  style={{ paddingRight: '40px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  style={{
+                    position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', color: '#00f2fe', cursor: 'pointer', display: 'flex', alignItems: 'center'
+                  }}
+                  title={showNewPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button className="btn-cyber" type="submit" disabled={loading} style={{ padding: '14px', justifyContent: 'center' }}>
@@ -401,8 +562,9 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
             </button>
           </form>
         )}
-
       </div>
     </div>
   );
-};
+}
+
+export default AuthModal;
