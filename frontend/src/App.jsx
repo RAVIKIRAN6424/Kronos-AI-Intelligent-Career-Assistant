@@ -131,8 +131,8 @@ export function App() {
 
         {activeTab === 'dashboard' && (
           <DashboardView
-            jobs={jobs}
-            analytics={analytics}
+            jobs={currentUser ? jobs : []}
+            analytics={currentUser ? analytics : null}
             onNavigate={setActiveTab}
             onSelectJob={setSelectedJob}
             toast={addToast}

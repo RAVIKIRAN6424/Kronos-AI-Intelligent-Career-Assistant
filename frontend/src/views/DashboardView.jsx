@@ -88,19 +88,22 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
     }
   };
 
-  // Calculate accurate dynamic stats
-  const totalSaved = analytics?.total_jobs ?? jobs.length ?? 0;
-  const totalApplied = analytics?.applied ?? jobs.filter(j => j.status === 'Applied').length ?? 0;
-  const totalInterviews = analytics?.interviewing ?? jobs.filter(j => j.status === 'Interviewing').length ?? 0;
-  const totalOffers = analytics?.offer ?? jobs.filter(j => j.status === 'Offer').length ?? 0;
+  // Calculate accurate dynamic stats: If not logged in, all metric counts MUST be 0!
+  const isUserLoggedIn = !!currentUser;
+  const totalSaved = isUserLoggedIn ? (analytics?.total_jobs ?? jobs.length ?? 0) : 0;
+  const totalApplied = isUserLoggedIn ? (analytics?.applied ?? jobs.filter(j => j.status === 'Applied').length ?? 0) : 0;
+  const totalInterviews = isUserLoggedIn ? (analytics?.interviewing ?? jobs.filter(j => j.status === 'Interviewing').length ?? 0) : 0;
+  const totalOffers = isUserLoggedIn ? (analytics?.offer ?? jobs.filter(j => j.status === 'Offer').length ?? 0) : 0;
 
-  const computedAvgScore = jobs.length > 0
-    ? Math.round(jobs.reduce((sum, j) => sum + (j.match_score || 0), 0) / jobs.length)
-    : (analytics?.avg_match_score || 0);
+  const computedAvgScore = isUserLoggedIn
+    ? (jobs.length > 0
+        ? Math.round(jobs.reduce((sum, j) => sum + (j.match_score || 0), 0) / jobs.length)
+        : (analytics?.avg_match_score || 0))
+    : 0;
 
-  const topJobs = [...jobs]
-    .sort((a, b) => (b.match_score || 0) - (a.match_score || 0))
-    .slice(0, 4);
+  const topJobs = isUserLoggedIn
+    ? [...jobs].sort((a, b) => (b.match_score || 0) - (a.match_score || 0)).slice(0, 4)
+    : [];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -186,7 +189,7 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
         <div>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Applications Sent Today</div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-purple)', marginTop: '4px', fontFamily: 'var(--font-code)' }}>
-            {botState.applications_today || 0} Jobs
+            {isUserLoggedIn ? (botState.applications_today || 0) : 0} Jobs
           </div>
         </div>
       </div>
