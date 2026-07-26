@@ -50,9 +50,7 @@ async function sendResendMail({ to, subject, html, attachments = [] }) {
     throw new Error("RESEND_FROM_EMAIL is not configured.");
   }
 
-  if (senderEmail.toLowerCase().includes('onboarding@resend.dev')) {
-    throw new Error("Invalid sender: onboarding@resend.dev is disallowed. Please configure a verified domain sender in RESEND_FROM_EMAIL.");
-  }
+
 
   console.log('\n=========================================');
   console.log('SENDING EMAIL USING RESEND');
