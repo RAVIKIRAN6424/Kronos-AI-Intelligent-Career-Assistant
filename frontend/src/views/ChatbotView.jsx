@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Mic, MicOff, User, Sparkles, HelpCircle, MessageSquare } from 'lucide-react';
+import { Bot, Send, Mic, MicOff, User, Volume2, VolumeX, Sparkles } from 'lucide-react';
 import { api } from '../utils/api';
 
 export const ChatbotView = ({ toast }) => {
@@ -9,10 +9,49 @@ export const ChatbotView = ({ toast }) => {
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [sending, setSending] = useState(false);
+  const [speakingBotId, setSpeakingBotId] = useState(null);
+
   const chatEndRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     fetchHistory();
+
+    // Initialize Web Speech API Speech-to-Text Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsRecording(true);
+        if (toast) toast('🎙️ Listening... Speak your career question now!', 'info');
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript) {
+          setInputText(transcript);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsRecording(false);
+        if (toast) toast(`Microphone notice: ${event.error || 'No speech detected'}. You can also type directly.`, 'error');
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
   }, []);
 
   useEffect(() => {
@@ -28,6 +67,34 @@ export const ChatbotView = ({ toast }) => {
     } catch (err) {
       console.warn('Failed to fetch chatbot history:', err);
     }
+  };
+
+  // Text-to-Speech (Voice Output / Read Lines Aloud)
+  const speakText = (text, id = null) => {
+    if (!('speechSynthesis' in window)) {
+      if (toast) toast('Text-to-speech voice playback is not supported in this browser.', 'error');
+      return;
+    }
+
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      if (speakingBotId === id) {
+        setSpeakingBotId(null);
+        return;
+      }
+    }
+
+    const cleanText = text.replace(/[*_#`]/g, '');
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.lang = 'en-US';
+
+    utterance.onstart = () => setSpeakingBotId(id);
+    utterance.onend = () => setSpeakingBotId(null);
+    utterance.onerror = () => setSpeakingBotId(null);
+
+    window.speechSynthesis.speak(utterance);
   };
 
   const generateLocalBotReply = (query) => {
@@ -57,32 +124,51 @@ export const ChatbotView = ({ toast }) => {
 
     try {
       const res = await api.sendChatbotMessage(userMsg);
-      if (res && res.history && res.history.length > 0) {
-        setMessages(res.history);
+      let replyText = '';
+      if (res && res.reply) {
+        replyText = res.reply;
+        setMessages(res.history || [...messages, userEntry, { id: Date.now() + 1, sender: 'bot', text: replyText }]);
       } else {
-        const botReply = generateLocalBotReply(userMsg);
-        setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: botReply }]);
+        replyText = generateLocalBotReply(userMsg);
+        setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: replyText }]);
+      }
+
+      // Automatically speak bot response aloud
+      if (replyText) {
+        speakText(replyText, Date.now() + 1);
       }
     } catch (err) {
       console.warn('Backend API chatbot fallback activated:', err);
-      const botReply = generateLocalBotReply(userMsg);
-      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: botReply }]);
+      const replyText = generateLocalBotReply(userMsg);
+      const botId = Date.now() + 1;
+      setMessages(prev => [...prev, { id: botId, sender: 'bot', text: replyText }]);
+      speakText(replyText, botId);
     } finally {
       setSending(false);
     }
   };
 
   const toggleMic = () => {
-    if (!isRecording) {
-      setIsRecording(true);
-      toast('🎙️ Microphone active. Speak your career question...', 'info');
-      setTimeout(() => {
-        setIsRecording(false);
-        setInputText('How do I answer "Tell me about a challenging project" in a Java interview?');
-        toast('Voice transcription captured!', 'success');
-      }, 3000);
-    } else {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      if (toast) toast('Web Speech Recognition API is not supported in this browser. Please use Chrome or Edge.', 'error');
+      return;
+    }
+
+    if (isRecording) {
+      try {
+        recognitionRef.current?.stop();
+      } catch (err) {
+        console.warn('Mic stop notice:', err);
+      }
       setIsRecording(false);
+    } else {
+      try {
+        recognitionRef.current?.start();
+      } catch (err) {
+        console.warn('Mic start notice:', err);
+        setIsRecording(false);
+      }
     }
   };
 
@@ -125,10 +211,31 @@ export const ChatbotView = ({ toast }) => {
                 borderRadius: '16px',
                 fontSize: '14px',
                 lineHeight: 1.5,
-                fontWeight: m.sender === 'user' ? 600 : 400
+                fontWeight: m.sender === 'user' ? 600 : 400,
+                position: 'relative'
               }}
             >
               {m.text}
+
+              {/* Bot Voice Speaker Playback Button */}
+              {m.sender === 'bot' && (
+                <button
+                  type="button"
+                  onClick={() => speakText(m.text, m.id)}
+                  title={speakingBotId === m.id ? 'Stop voice reading' : 'Listen / Speak aloud'}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: speakingBotId === m.id ? '#00f2fe' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    marginLeft: '8px',
+                    padding: '2px',
+                    verticalAlign: 'middle'
+                  }}
+                >
+                  {speakingBotId === m.id ? <VolumeX size={16} className="cyber-glow-pulse" /> : <Volume2 size={16} />}
+                </button>
+              )}
             </div>
 
             {m.sender === 'user' && (
@@ -147,14 +254,17 @@ export const ChatbotView = ({ toast }) => {
           type="button"
           onClick={toggleMic}
           style={{
-            background: isRecording ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0, 242, 254, 0.12)',
+            background: isRecording ? 'rgba(239, 68, 68, 0.25)' : 'rgba(0, 242, 254, 0.12)',
             border: isRecording ? '1px solid #f87171' : '1px solid rgba(0, 242, 254, 0.3)',
             color: isRecording ? '#f87171' : 'var(--accent-cyan)',
             padding: '12px',
             borderRadius: '10px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
           }}
-          title="Voice / Speech Microphone Input"
+          title="Voice Speech-to-Text Microphone Input"
         >
           {isRecording ? <MicOff size={20} className="cyber-glow-pulse" /> : <Mic size={20} />}
         </button>
@@ -162,7 +272,7 @@ export const ChatbotView = ({ toast }) => {
         <input
           type="text"
           className="cyber-input"
-          placeholder="Ask career advice, interview questions, or resume tips..."
+          placeholder={isRecording ? 'Listening to your voice...' : 'Ask career advice, interview questions, or resume tips...'}
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           style={{ flex: 1, fontSize: '14px' }}
