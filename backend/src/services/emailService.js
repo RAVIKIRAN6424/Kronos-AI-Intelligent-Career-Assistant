@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,7 +16,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Kronos AI <onboarding@resend.dev>';
 
 if (!RESEND_API_KEY) {
-  console.warn("⚠️ RESEND_API_KEY is not configured.");
+  console.warn("⚠️ RESEND_API_KEY is not configured. Will use Gmail SMTP fallback.");
 }
 
 const resend = new Resend(RESEND_API_KEY || '');
@@ -41,7 +42,6 @@ export async function logEmail(recipient, subject, templateType, status = 'succe
 function getCleanSenderEmail() {
   const rawSender = (process.env.RESEND_FROM_EMAIL || '').trim();
 
-  // If env contains corrupted string like "no-onboarding@resend.devreply@yourdomain.com", sanitize it!
   if (!rawSender || rawSender.includes('yourdomain.com') || (rawSender.match(/@/g) || []).length > 1) {
     return 'Kronos AI <onboarding@resend.dev>';
   }
@@ -54,17 +54,27 @@ function getCleanSenderEmail() {
 }
 
 /**
- * Pure Resend SDK Email Dispatcher
+ * Helper to wrap promises with a 10-second timeout
+ */
+function withTimeout(promise, ms = 10000) {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`Email dispatch timed out after ${ms}ms`));
+    }, ms);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId);
+  });
+}
+
+/**
+ * Resend SDK Primary Dispatcher
  */
 async function sendResendMail({ to, subject, html, attachments = [] }) {
   const cleanRecipient = (to || '').trim();
   const senderEmail = getCleanSenderEmail();
-
-  console.log('\n=========================================');
-  console.log('SENDING EMAIL USING RESEND');
-  console.log(`Sender: ${senderEmail}`);
-  console.log(`Recipient: ${cleanRecipient}`);
-  console.log(`Subject: ${subject}`);
 
   try {
     const payload = {
@@ -81,46 +91,91 @@ async function sendResendMail({ to, subject, html, attachments = [] }) {
       }));
     }
 
-    const { data, error } = await resend.emails.send(payload);
+    const resendPromise = resend.emails.send(payload);
+    const { data, error } = await withTimeout(resendPromise, 10000);
 
     if (error) {
       const errorMsg = error.message || JSON.stringify(error);
-      console.error('❌ RESEND ERROR:', errorMsg);
-      console.log('=========================================\n');
-
-      const isResendTestingError = errorMsg.toLowerCase().includes('testing emails') || errorMsg.toLowerCase().includes('domain is not verified');
-
-      return {
-        success: false,
-        error: errorMsg,
-        isResendTestingError,
-        rawError: error
-      };
+      return { success: false, error: errorMsg };
     }
 
     const messageId = data?.id || 'resend-message-id';
-    console.log('✅ EMAIL SENT SUCCESSFULLY');
-    console.log(`MESSAGE ID: ${messageId}`);
-    console.log('=========================================\n');
-
-    return {
-      success: true,
-      messageId
-    };
+    return { success: true, messageId };
   } catch (err) {
-    const errorMsg = err.message || err.toString();
-    console.error('❌ RESEND EXCEPTION:', errorMsg);
-    console.log('=========================================\n');
-
-    const isResendTestingError = errorMsg.toLowerCase().includes('testing emails') || errorMsg.toLowerCase().includes('domain is not verified');
-
-    return {
-      success: false,
-      error: errorMsg,
-      isResendTestingError,
-      rawError: err
-    };
+    return { success: false, error: err.message || err.toString() };
   }
+}
+
+/**
+ * Gmail / SMTP Nodemailer Fallback Dispatcher
+ */
+async function sendNodemailerFallback({ to, subject, html, attachments = [] }) {
+  try {
+    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'kronosai6424@gmail.com';
+    const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'kronos#2026';
+    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.SMTP_PORT || '587');
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      },
+      connectionTimeout: 10000,
+      socketTimeout: 10000
+    });
+
+    const mailOptions = {
+      from: `"Kronos AI" <${smtpUser}>`,
+      to: (to || '').trim(),
+      subject,
+      html,
+      attachments
+    };
+
+    const sendPromise = transporter.sendMail(mailOptions);
+    const info = await withTimeout(sendPromise, 10000);
+    return { success: true, messageId: info.messageId || 'smtp-message-id' };
+  } catch (err) {
+    return { success: false, error: err.message || err.toString() };
+  }
+}
+
+/**
+ * Combined Dual Dispatcher: Resend Primary + Gmail Nodemailer Fallback + Retries
+ */
+export async function sendEmailWithFallback({ to, subject, html, attachments = [] }) {
+  console.log(`\n📧 [Email Dispatch] Preparing email to: ${to} | Subject: "${subject}"`);
+
+  // Retry Loop 1: Resend Primary SDK (2 attempts)
+  if (RESEND_API_KEY) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      console.log(`⚡ [Attempt ${attempt}] Trying Resend SDK...`);
+      const result = await sendResendMail({ to, subject, html, attachments });
+      if (result.success) {
+        console.log(`✅ [Resend Success] Message ID: ${result.messageId}`);
+        return result;
+      }
+      console.warn(`⚠️ [Resend Attempt ${attempt} Failed]: ${result.error}`);
+    }
+  }
+
+  // Retry Loop 2: Nodemailer Gmail SMTP Fallback (2 attempts)
+  console.log(`🔄 Switching to Gmail SMTP Fallback Dispatcher...`);
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const fallbackResult = await sendNodemailerFallback({ to, subject, html, attachments });
+    if (fallbackResult.success) {
+      console.log(`✅ [Nodemailer Fallback Success] Message ID: ${fallbackResult.messageId}`);
+      return fallbackResult;
+    }
+    console.warn(`⚠️ [Nodemailer Attempt ${attempt} Failed]: ${fallbackResult.error}`);
+  }
+
+  console.error(`❌ [Email Service Error] All email dispatch attempts failed for ${to}`);
+  return { success: false, error: 'All primary and fallback email dispatches failed.' };
 }
 
 /**
@@ -280,7 +335,7 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     `
   });
 
-  const result = await sendResendMail({ to: email, subject, html });
+  const result = await sendEmailWithFallback({ to: email, subject, html });
 
   if (result.success) {
     await logEmail(email, subject, 'Registration OTP', 'success');
@@ -290,7 +345,6 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     return {
       success: false,
       error: result.error,
-      isResendTestingError: result.isResendTestingError,
       otp
     };
   }
@@ -310,13 +364,13 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
       <p>Use the secure verification code below to continue:</p>
       <div class="otp-box">
         <div class="otp-code">${otp}</div>
-        <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Valid for 5 minutes</div>
+        <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Valid for 15 minutes</div>
       </div>
       <p style="font-size: 13px; color: #94a3b8;">If you did not request a password reset, please secure your account immediately.</p>
     `
   });
 
-  const result = await sendResendMail({ to: email, subject, html });
+  const result = await sendEmailWithFallback({ to: email, subject, html });
 
   if (result.success) {
     await logEmail(email, subject, 'Forgot Password OTP', 'success');
@@ -326,7 +380,6 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
     return {
       success: false,
       error: result.error,
-      isResendTestingError: result.isResendTestingError,
       otp
     };
   }
