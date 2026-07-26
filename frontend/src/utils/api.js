@@ -90,8 +90,33 @@ export const api = {
     }
     return res;
   },
-  verifyOTP: async (payload) => {
-    const res = await request('/auth/verify-otp', { method: 'POST', body: payload });
+  verifyOTP: async (emailOrPayload, otpCode, full_name, password) => {
+    let emailStr = '';
+    let codeStr = '';
+    let fullNameStr = full_name;
+    let passwordStr = password;
+
+    if (typeof emailOrPayload === 'object' && emailOrPayload !== null) {
+      const rawEmail = emailOrPayload.email;
+      emailStr = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : (typeof rawEmail === 'object' && rawEmail?.email ? rawEmail.email.trim().toLowerCase() : '');
+      codeStr = (emailOrPayload.code || emailOrPayload.otp || '').toString().trim();
+      fullNameStr = emailOrPayload.full_name || emailOrPayload.fullName || full_name;
+      passwordStr = emailOrPayload.password || password;
+    } else {
+      emailStr = typeof emailOrPayload === 'string' ? emailOrPayload.trim().toLowerCase() : '';
+      codeStr = (otpCode || '').toString().trim();
+    }
+
+    const bodyPayload = {
+      email: emailStr,
+      code: codeStr,
+      otp: codeStr
+    };
+
+    if (fullNameStr) bodyPayload.full_name = fullNameStr;
+    if (passwordStr) bodyPayload.password = passwordStr;
+
+    const res = await request('/auth/verify-otp', { method: 'POST', body: bodyPayload });
     if (res && res.success === false) {
       throw new Error(res.message || res.error || 'Invalid or expired verification code. Please check your code and try again.');
     }
@@ -379,13 +404,7 @@ export const api = {
     const res = await request('/auth/send-otp', { method: 'POST', body: { email, full_name } });
     return res || { success: true, message: `Verification code sent to ${email}` };
   },
-  verifyOTP: async (email, otp, full_name, password) => {
-    const res = await request('/auth/verify-otp', { method: 'POST', body: { email, otp, full_name, password } });
-    if (res && res.user) {
-      setStorage('kronos_user', res.user);
-    }
-    return res || { success: true, message: 'Account verified!', user: { email, full_name: full_name || 'User' } };
-  },
+
   forgotPassword: async (email) => {
     const res = await request('/auth/forgot-password', { method: 'POST', body: { email } });
     return res || { success: true, message: `Reset code sent to ${email}` };

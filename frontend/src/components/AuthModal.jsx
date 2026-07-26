@@ -156,14 +156,12 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
     setLoading(true);
     try {
       const fullPhone = phone.startsWith('+') ? phone : `${countryCode} ${phone.trim()}`;
+      const cleanEmailStr = typeof email === 'string' ? email.trim().toLowerCase() : '';
       const res = await api.verifyOTP({
-        email,
+        email: cleanEmailStr,
         code: otpCode.trim(),
         full_name: fullName,
-        password,
-        age: parseInt(age) || 26,
-        phone: fullPhone,
-        target_domain: 'Software'
+        password
       });
       if (res && res.success === false) {
         toast(res.error || res.message || 'Invalid verification code. Please check your email code and try again.', 'error');
