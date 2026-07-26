@@ -16,15 +16,11 @@ console.log('Loading .env...');
 const envPath = path.resolve(__dirname, '../.env');
 dotenv.config({ path: envPath });
 
-if (!process.env.EMAIL_USER) {
-  console.warn('EMAIL_USER not found');
-}
-if (!process.env.EMAIL_PASS) {
-  console.warn('EMAIL_PASS not found');
+if (!process.env.RESEND_API_KEY) {
+  console.warn('⚠️ RESEND_API_KEY not found in process.env');
 }
 
-console.log('Loading Gmail SMTP...');
-console.log('Connecting...');
+console.log('Loading Resend Email Service...');
 
 import fs from 'fs';
 

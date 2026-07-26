@@ -2,8 +2,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { initDb, getOne, query } from '../backend/src/config/database.js';
-import { generateOTP, saveOTP, verifyOTPCode } from '../backend/src/utils/otpHelper.js';
+import { initDb, getOne } from '../backend/src/config/database.js';
+import { generateOTP, saveOTP } from '../backend/src/utils/otpHelper.js';
 import { sendOTPEmail, sendForgotPasswordOTP, sendTestEmail } from '../backend/src/services/emailService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,7 +14,7 @@ dotenv.config({ path: envPath });
 
 async function performSystemAudit() {
   console.log('\n========================================================');
-  console.log('🔍 KRONOS AI EMAIL VERIFICATION SYSTEM AUDIT');
+  console.log('🔍 KRONOS AI RESEND EMAIL SYSTEM AUDIT');
   console.log('========================================================\n');
 
   let failedComponents = [];
@@ -24,11 +24,9 @@ async function performSystemAudit() {
   // STEP 1: Environment Variables Audit
   console.log('--- 1. ENVIRONMENT VARIABLES AUDIT ---');
   const requiredEnvVars = [
-    { name: 'EMAIL_USER', val: process.env.EMAIL_USER, req: true },
-    { name: 'EMAIL_PASS', val: process.env.EMAIL_PASS, req: true },
+    { name: 'RESEND_API_KEY', val: process.env.RESEND_API_KEY, req: true },
     { name: 'PORT', val: process.env.PORT || '8080 (Default)', req: false },
-    { name: 'JWT_SECRET', val: process.env.JWT_SECRET || 'kronos-secret-key-2026', req: false },
-    { name: 'RESEND_API_KEY', val: process.env.RESEND_API_KEY ? '(Present for fallback)' : '(Optional)', req: false }
+    { name: 'JWT_SECRET', val: process.env.JWT_SECRET || 'kronos-secret-key-2026', req: false }
   ];
 
   for (const env of requiredEnvVars) {
@@ -60,7 +58,7 @@ async function performSystemAudit() {
     });
   }
 
-  const testEmail = 'kronosai6424@gmail.com';
+  const testEmail = 'ravikiranmadasu@gmail.com';
   const name = 'Alex Vance Audit';
 
   // STEP 3: OTP Generation, Invalidation & Expiry Audit
@@ -103,7 +101,7 @@ async function performSystemAudit() {
   }
 
   // STEP 4: Live Email Dispatch API Audit
-  console.log('\n--- 4. LIVE EMAIL DISPATCH API AUDIT ---');
+  console.log('\n--- 4. LIVE RESEND EMAIL DISPATCH API AUDIT ---');
   
   // Test 4.1: POST /api/auth/send-otp
   console.log('Testing sendOTPEmail()...');
@@ -112,14 +110,13 @@ async function performSystemAudit() {
   const sendRes = await sendOTPEmail(testEmail, name, otpCode);
   console.log('  sendOTPEmail Response:', JSON.stringify(sendRes));
   if (sendRes.success) {
-    workingComponents.push('Registration OTP Email Dispatch (sendOTPEmail)');
+    workingComponents.push('Registration OTP Resend Email Dispatch (sendOTPEmail)');
   } else {
     failedComponents.push({
       name: 'Registration OTP Email Dispatch',
       file: 'backend/src/services/emailService.js',
-      line: 195,
       rootCause: sendRes.error,
-      fix: 'Check Gmail App Password credentials in backend/.env'
+      fix: 'Check RESEND_API_KEY in backend/.env'
     });
   }
 
@@ -135,9 +132,8 @@ async function performSystemAudit() {
     failedComponents.push({
       name: 'Forgot Password OTP Email Dispatch',
       file: 'backend/src/services/emailService.js',
-      line: 250,
       rootCause: forgotRes.error,
-      fix: 'Check Nodemailer transporter auth.'
+      fix: 'Check Resend API Key.'
     });
   }
 
@@ -146,14 +142,13 @@ async function performSystemAudit() {
   const testRes = await sendTestEmail(testEmail);
   console.log('  sendTestEmail Response:', JSON.stringify(testRes));
   if (testRes.success) {
-    workingComponents.push('Diagnostic Test Email Dispatch (sendTestEmail)');
+    workingComponents.push('Diagnostic Resend Test Email Dispatch (sendTestEmail)');
   } else {
     failedComponents.push({
       name: 'Diagnostic Test Email',
       file: 'backend/src/services/emailService.js',
-      line: 450,
       rootCause: testRes.error,
-      fix: 'Verify port 465 SSL connection.'
+      fix: 'Verify Resend API Key.'
     });
   }
 
@@ -201,7 +196,7 @@ async function performSystemAudit() {
       console.log(`  Required Fix: ${f.fix}`);
     });
   } else {
-    console.log('\n🎉 ALL COMPONENTS VERIFIED! NO FAILED COMPONENTS DETECTED.');
+    console.log('\n🎉 ALL RESEND COMPONENTS VERIFIED! NO FAILED COMPONENTS DETECTED.');
   }
 
   console.log('\n========================================================\n');
