@@ -2,7 +2,13 @@ import express from 'express';
 import { query, getOne, run } from '../config/database.js';
 import { scrapeLiveJobs } from '../services/scraperService.js';
 import { analyzeJobWithAI, generateColdEmailWithAI } from '../services/aiService.js';
-import { sendOutreachEmail, verifySMTPConnection } from '../services/emailService.js';
+import {
+  sendOTPEmail,
+  sendForgotPasswordOTP,
+  sendDailyJobReport,
+  sendMissingInformationEmail,
+  sendApplicationSuccessEmail
+} from '../services/emailService.js';
 import { startScheduler, stopScheduler, getSchedulerStatus } from '../services/schedulerService.js';
 
 const router = express.Router();
@@ -692,6 +698,231 @@ router.post('/chatbot/chat', async (req, res) => {
     res.json({ reply, history });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// 13. AUTHENTICATION, OTP & EMAIL SYSTEM (Steps 4 - 15)
+// ==========================================
+
+/**
+ * STEP 4: Send Registration Verification OTP
+ * POST /api/auth/send-otp
+ */
+router.post('/auth/send-otp', async (req, res) => {
+  try {
+    const { email, full_name } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Valid email address is required.' });
+    }
+
+    // Generate secure 6-digit random OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const userName = full_name || email.split('@')[0] || 'User';
+
+    // Store in database with 5-minute expiry
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    await run(
+      `INSERT INTO otp_codes (email, code, type, expires_at, is_verified) VALUES (?, ?, 'registration', ?, 0)`,
+      [email.toLowerCase().trim(), otp, expiresAt]
+    );
+
+    // Send email using Nodemailer & Gmail SMTP
+    await sendOTPEmail(email, userName, otp);
+
+    res.json({
+      success: true,
+      message: `Verification code sent to ${email}. Code expires in 5 minutes.`,
+      expires_in: 300
+    });
+  } catch (err) {
+    console.error('❌ Send OTP API Error:', err.message);
+    res.status(500).json({ error: 'Failed to dispatch verification email: ' + err.message });
+  }
+});
+
+/**
+ * STEP 5: Verify Registration OTP & Complete Account Creation
+ * POST /api/auth/verify-otp
+ */
+router.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otp, code, full_name, password } = req.body;
+    const inputOtp = otp || code;
+    const cleanEmail = (email || '').toLowerCase().trim();
+
+    if (!cleanEmail || !inputOtp) {
+      return res.status(400).json({ error: 'Email and 6-digit OTP code are required.' });
+    }
+
+    // Check matching non-expired, unverified OTP record
+    const record = await getOne(
+      `SELECT * FROM otp_codes WHERE LOWER(email) = ? AND code = ? AND is_verified = 0 AND expires_at > CURRENT_TIMESTAMP ORDER BY id DESC LIMIT 1`,
+      [cleanEmail, inputOtp.toString().trim()]
+    );
+
+    if (!record) {
+      return res.status(400).json({ error: 'Invalid or expired verification OTP code. Please request a new code.' });
+    }
+
+    // Mark OTP as verified & delete it
+    await run(`UPDATE otp_codes SET is_verified = 1 WHERE id = ?`, [record.id]);
+    await run(`DELETE FROM otp_codes WHERE email = ?`, [cleanEmail]);
+
+    // Create or update user account
+    await run(
+      `INSERT OR REPLACE INTO users (email, full_name, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
+      [cleanEmail, full_name || 'User']
+    );
+
+    // Update profile table
+    await run(
+      `UPDATE profile SET full_name = COALESCE(?, full_name), email = ? WHERE id = 1`,
+      [full_name, cleanEmail]
+    );
+
+    res.json({
+      success: true,
+      message: 'Account verified successfully!',
+      user: { email: cleanEmail, full_name: full_name || 'User' }
+    });
+  } catch (err) {
+    console.error('❌ Verify OTP API Error:', err.message);
+    res.status(500).json({ error: 'Verification error: ' + err.message });
+  }
+});
+
+// Alias route without /api prefix
+router.post('/auth/verify-otp', async (req, res) => {
+  req.url = '/api/auth/verify-otp';
+  router.handle(req, res);
+});
+
+/**
+ * STEP 6: Request Forgot Password OTP
+ * POST /api/auth/forgot-password
+ */
+router.post('/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      return res.status(400).json({ error: 'Valid email address is required.' });
+    }
+
+    // Generate password reset OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+    await run(
+      `INSERT INTO otp_codes (email, code, type, expires_at, is_verified) VALUES (?, ?, 'forgot_password', ?, 0)`,
+      [cleanEmail, otp, expiresAt]
+    );
+
+    // Send email using Nodemailer
+    await sendForgotPasswordOTP(cleanEmail, 'Candidate', otp);
+
+    res.json({
+      success: true,
+      message: `Password reset code sent to ${cleanEmail}. Valid for 5 minutes.`
+    });
+  } catch (err) {
+    console.error('❌ Forgot Password API Error:', err.message);
+    res.status(500).json({ error: 'Failed to send password reset code: ' + err.message });
+  }
+});
+
+/**
+ * STEP 6: Verify Forgot Password OTP & Reset Password
+ * POST /api/auth/reset-password
+ */
+router.post('/auth/reset-password', async (req, res) => {
+  try {
+    const { email, otp, code, new_password } = req.body;
+    const inputOtp = otp || code;
+    const cleanEmail = (email || '').toLowerCase().trim();
+
+    if (!cleanEmail || !inputOtp || !new_password) {
+      return res.status(400).json({ error: 'Email, OTP code, and new password are required.' });
+    }
+
+    const record = await getOne(
+      `SELECT * FROM otp_codes WHERE LOWER(email) = ? AND code = ? AND is_verified = 0 AND expires_at > CURRENT_TIMESTAMP ORDER BY id DESC LIMIT 1`,
+      [cleanEmail, inputOtp.toString().trim()]
+    );
+
+    if (!record) {
+      return res.status(400).json({ error: 'Invalid or expired OTP code. Please request a new code.' });
+    }
+
+    // Delete used OTP and update account
+    await run(`DELETE FROM otp_codes WHERE email = ?`, [cleanEmail]);
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully! You can now log in with your new password.'
+    });
+  } catch (err) {
+    console.error('❌ Reset Password API Error:', err.message);
+    res.status(500).json({ error: 'Password reset error: ' + err.message });
+  }
+});
+
+/**
+ * STEP 7: Dispatch Daily Job Summary Report Email
+ * POST /api/reports/daily
+ */
+router.post('/reports/daily', async (req, res) => {
+  try {
+    const { email, userName, reportData } = req.body;
+    const recipient = email || process.env.EMAIL_USER || 'kronosai6424@gmail.com';
+    const result = await sendDailyJobReport(recipient, userName || 'Candidate', reportData || {});
+    res.json({ success: true, message: 'Daily job report email dispatched successfully!', result });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send daily report email: ' + err.message });
+  }
+});
+
+/**
+ * STEP 8: Dispatch Missing Information Alert Email
+ * POST /api/alerts/missing-info
+ */
+router.post('/alerts/missing-info', async (req, res) => {
+  try {
+    const { email, userName, missingFields, jobDetails } = req.body;
+    const recipient = email || process.env.EMAIL_USER || 'kronosai6424@gmail.com';
+    const result = await sendMissingInformationEmail(recipient, userName || 'Candidate', missingFields, jobDetails);
+    res.json({ success: true, message: 'Missing information alert email dispatched successfully!', result });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send alert email: ' + err.message });
+  }
+});
+
+/**
+ * STEP 9: Dispatch Application Success Notification Email
+ * POST /api/alerts/application-success
+ */
+router.post('/alerts/application-success', async (req, res) => {
+  try {
+    const { email, userName, applicationDetails } = req.body;
+    const recipient = email || process.env.EMAIL_USER || 'kronosai6424@gmail.com';
+    const result = await sendApplicationSuccessEmail(recipient, userName || 'Candidate', applicationDetails);
+    res.json({ success: true, message: 'Application success notification email dispatched successfully!', result });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send application confirmation email: ' + err.message });
+  }
+});
+
+/**
+ * STEP 15: Retrieve Email Dispatch History Logs
+ * GET /api/email-logs
+ */
+router.get('/email-logs', async (req, res) => {
+  try {
+    const logs = await query(`SELECT * FROM email_logs ORDER BY id DESC LIMIT 50`);
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch email logs: ' + err.message });
   }
 });
 

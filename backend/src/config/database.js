@@ -33,14 +33,29 @@ export const initDb = () => {
         )
       `);
 
-      // 2. OTP Codes Table
+      // 2. OTP Codes Table (Account Verification & Forgot Password)
       db.run(`
         CREATE TABLE IF NOT EXISTS otp_codes (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           email TEXT NOT NULL,
           code TEXT NOT NULL,
+          type TEXT DEFAULT 'verification',
           expires_at DATETIME NOT NULL,
+          is_verified INTEGER DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Email Dispatch Logs Table (Step 15)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS email_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          recipient TEXT NOT NULL,
+          subject TEXT NOT NULL,
+          template_type TEXT DEFAULT 'General',
+          status TEXT DEFAULT 'success',
+          failure_reason TEXT,
+          sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
 

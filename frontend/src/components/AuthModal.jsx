@@ -18,6 +18,15 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
   const [otpCode, setOtpCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  React.useEffect(() => {
+    let timer;
+    if (cooldown > 0) {
+      timer = setInterval(() => setCooldown(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const currentDate = new Date().toLocaleDateString();
   const currentTime = new Date().toLocaleTimeString();
@@ -57,19 +66,12 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
 
     setLoading(true);
     try {
-      await api.register({
-        full_name: fullName,
-        gender,
-        age: parseInt(age),
-        email,
-        phone,
-        country,
-        password
-      });
+      await api.sendOTP(email, fullName);
       toast(`Verification code dispatched to ${email}.`, 'success');
       setStep('otp');
+      setCooldown(60);
     } catch (err) {
-      toast(err.message || 'Registration failed', 'error');
+      toast(err.message || 'Failed to dispatch verification code', 'error');
     } finally {
       setLoading(false);
     }
@@ -291,8 +293,31 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
             </div>
 
             <button className="btn-cyber" type="submit" disabled={loading} style={{ padding: '14px', justifyContent: 'center', fontSize: '15px' }}>
-              {loading ? 'Verifying...' : 'Verify Code & Create Account'}
+              {loading ? 'Verifying OTP Code...' : 'Verify Code & Create Account'}
             </button>
+
+            <div style={{ textAlign: 'center', marginTop: '8px' }}>
+              <button
+                type="button"
+                className="btn-cyber-outline"
+                disabled={cooldown > 0 || loading}
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    await api.sendOTP(email, fullName);
+                    toast(`New verification code sent to ${email}`, 'success');
+                    setCooldown(60);
+                  } catch (err) {
+                    toast(err.message || 'Resend failed', 'error');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                style={{ fontSize: '13px', padding: '8px 16px', cursor: cooldown > 0 ? 'not-allowed' : 'pointer', opacity: cooldown > 0 ? 0.6 : 1 }}
+              >
+                {cooldown > 0 ? `Resend Code in ${cooldown}s` : '🔄 Resend Verification Code'}
+              </button>
+            </div>
           </form>
         )}
 

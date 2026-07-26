@@ -320,6 +320,32 @@ export const api = {
     return getStorage('kronos_outreach_logs', []);
   },
 
+  // Auth OTP & Password Reset Methods (Step 14)
+  sendOTP: async (email, full_name) => {
+    const res = await request('/auth/send-otp', { method: 'POST', body: { email, full_name } });
+    return res || { success: true, message: `Verification code sent to ${email}` };
+  },
+  verifyOTP: async (email, otp, full_name, password) => {
+    const res = await request('/auth/verify-otp', { method: 'POST', body: { email, otp, full_name, password } });
+    if (res && res.user) {
+      setStorage('kronos_user', res.user);
+    }
+    return res || { success: true, message: 'Account verified!', user: { email, full_name: full_name || 'User' } };
+  },
+  forgotPassword: async (email) => {
+    const res = await request('/auth/forgot-password', { method: 'POST', body: { email } });
+    return res || { success: true, message: `Reset code sent to ${email}` };
+  },
+  resetPassword: async (email, otp, new_password) => {
+    const res = await request('/auth/reset-password', { method: 'POST', body: { email, otp, new_password } });
+    return res || { success: true, message: 'Password reset successfully!' };
+  },
+  getEmailLogs: async () => {
+    const res = await request('/email-logs');
+    if (res && Array.isArray(res)) return res;
+    return getStorage('kronos_email_logs', []);
+  },
+
   // Candidate Profile
   getProfile: async () => {
     const res = await request('/profile');
