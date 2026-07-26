@@ -8,7 +8,7 @@ export const generateOTP = () => {
 };
 
 /**
- * Invalidate old OTPs and save a NEW OTP to database with 5-minute expiry
+ * Invalidate old OTPs and save a NEW OTP to database with 15-minute expiry
  */
 export const saveOTP = async (email, code, type = 'registration') => {
   const cleanEmail = (email || '').toLowerCase().trim();
@@ -16,13 +16,16 @@ export const saveOTP = async (email, code, type = 'registration') => {
   // Invalidate and delete any existing previous OTPs for this email
   await run(`DELETE FROM otp_codes WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
 
-  // Set 5-minute expiry time
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  // Set 15-minute expiry timestamp in epoch milliseconds (bulletproof across timezones & SQLite)
+  const nowMs = Date.now();
+  const expiresMs = nowMs + 15 * 60 * 1000;
+  const expiresAtStr = new Date(expiresMs).toISOString();
+
   await run(
     `INSERT INTO otp_codes (email, code, type, expires_at, expiry_time, is_verified, verified) VALUES (?, ?, ?, ?, ?, 0, 0)`,
-    [cleanEmail, code.toString(), type, expiresAt, expiresAt]
+    [cleanEmail, code.toString().trim(), type, expiresAtStr, String(expiresMs)]
   );
-  return { code, expiresAt };
+  return { code, expiresAt: expiresAtStr };
 };
 
 /**
@@ -32,16 +35,34 @@ export const verifyOTPCode = async (email, code) => {
   const cleanEmail = (email || '').toLowerCase().trim();
   const inputCode = (code || '').toString().trim();
 
+  if (!cleanEmail || !inputCode) return false;
+
   const rows = await query(
-    `SELECT * FROM otp_codes WHERE LOWER(email) = LOWER(?) AND code = ? AND (is_verified = 0 OR verified = 0) AND expires_at > CURRENT_TIMESTAMP ORDER BY id DESC LIMIT 1`,
+    `SELECT * FROM otp_codes WHERE LOWER(email) = LOWER(?) AND code = ? ORDER BY id DESC LIMIT 1`,
     [cleanEmail, inputCode]
   );
 
   if (rows && rows.length > 0) {
-    // Mark verified and delete used OTP
-    await run(`UPDATE otp_codes SET is_verified = 1, verified = 1 WHERE id = ?`, [rows[0].id]);
-    await run(`DELETE FROM otp_codes WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
-    return true;
+    const record = rows[0];
+
+    // Check expiry using expiry_time ms timestamp or created_at timestamp
+    let isExpired = false;
+    if (record.expiry_time && !isNaN(Number(record.expiry_time))) {
+      isExpired = Date.now() > Number(record.expiry_time);
+    } else if (record.expires_at) {
+      const expMs = new Date(record.expires_at).getTime();
+      if (!isNaN(expMs)) {
+        isExpired = Date.now() > expMs;
+      }
+    }
+
+    if (!isExpired) {
+      // Mark verified & delete used OTP
+      await run(`UPDATE otp_codes SET is_verified = 1, verified = 1 WHERE id = ?`, [record.id]);
+      await run(`DELETE FROM otp_codes WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+      return true;
+    }
   }
+
   return false;
 };

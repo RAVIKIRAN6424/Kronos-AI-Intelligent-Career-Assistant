@@ -1,5 +1,6 @@
 import express from 'express';
 import { query, getOne, run } from '../config/database.js';
+import { generateOTP, saveOTP, verifyOTPCode } from '../utils/otpHelper.js';
 import { scrapeLiveJobs } from '../services/scraperService.js';
 import { analyzeJobWithAI, generateColdEmailWithAI } from '../services/aiService.js';
 import {
@@ -756,19 +757,15 @@ router.post('/api/auth/verify-otp', async (req, res) => {
       return res.status(400).json({ error: 'Email and 6-digit OTP code are required.' });
     }
 
-    // Check matching non-expired, unverified OTP record
-    const record = await getOne(
-      `SELECT * FROM otp_codes WHERE LOWER(email) = ? AND code = ? AND is_verified = 0 AND expires_at > CURRENT_TIMESTAMP ORDER BY id DESC LIMIT 1`,
-      [cleanEmail, inputOtp.toString().trim()]
-    );
-
-    if (!record) {
-      return res.status(400).json({ error: 'Invalid or expired verification OTP code. Please request a new code.' });
+    // Check matching non-expired, unverified OTP record via bulletproof JS verification
+    const isValid = await verifyOTPCode(cleanEmail, inputOtp);
+    if (!isValid) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid or expired verification code. Please check the 6-digit code sent to your email and try again.',
+        message: 'Invalid or expired verification code. Please check the 6-digit code sent to your email and try again.'
+      });
     }
-
-    // Mark OTP as verified & delete it
-    await run(`UPDATE otp_codes SET is_verified = 1 WHERE id = ?`, [record.id]);
-    await run(`DELETE FROM otp_codes WHERE email = ?`, [cleanEmail]);
 
     // Create or update user account
     await run(

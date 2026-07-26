@@ -29,18 +29,6 @@ const handleSendOTP = async (req, res) => {
     }
     console.log(`EMAIL VALIDATED: ${cleanEmail}`);
 
-    // 2. Check Database for Existing User BEFORE generating OTP
-    const existingUser = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
-    if (existingUser && existingUser.verified !== 0) {
-      console.log(`❌ USER EXISTS: ${cleanEmail}`);
-      console.log('=========================================\n');
-      return res.status(400).json({
-        success: false,
-        message: 'An account with this email already exists.'
-      });
-    }
-
-    console.log('NEW USER DETECTED');
     const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
 
     // 3. Generate & Save NEW 6-digit OTP
