@@ -36,5 +36,4 @@ jobs:
 
       - name: Verify Build Artifacts
         run: |
-          node -e "if (!require('fs').existsSync('dist/index.html')) { console.error('Missing dist/index.html'); process.exit(1); }"
-          console.log('✅ Build verification passed!')
+          node -e "if (!require('fs').existsSync('dist/index.html')) { console.error('Missing dist/index.html'); process.exit(1); } else { console.log('✅ Build verification passed!'); }"
