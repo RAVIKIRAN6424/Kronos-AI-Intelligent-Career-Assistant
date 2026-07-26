@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -10,32 +10,8 @@ const __dirname = path.dirname(__filename);
 // Ensure .env variables are loaded
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const EMAIL_USER = process.env.EMAIL_USER || 'kronosai6424@gmail.com';
-const EMAIL_PASS = (process.env.EMAIL_PASS || 'atzr geyq ytdu eovb').replace(/\s+/g, '');
-
-// Initialize Nodemailer Transporter once
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // SSL for Gmail App Password
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
-
-// Verify SMTP connection on server startup
-transporter.verify((error) => {
-  if (error) {
-    console.warn('⚠️ SMTP Transporter Warning:', error.message);
-  } else {
-    console.log('✅ Nodemailer SMTP Transporter ready for Gmail dispatch:', EMAIL_USER);
-  }
-});
+// Initialize Resend SDK with API key from .env
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Log email dispatch result into SQLite database email_logs table
@@ -226,17 +202,24 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     `
   });
 
-  console.log('✉️ Dispatched Registration OTP to:', email, '| OTP Code:', otp);
+  console.log('✉️ Dispatched Registration OTP via Resend SDK to:', email, '| OTP Code:', otp);
   try {
-    const info = await transporter.sendMail({
-      from: `"Kronos AI System" <${EMAIL_USER}>`,
-      to: email,
+    const { data, error } = await resend.emails.send({
+      from: 'Kronos AI <onboarding@resend.dev>',
+      to: [email],
       subject,
       html
     });
-    console.log('✅ Gmail SMTP success for:', email, '| Message ID:', info.messageId);
+
+    if (error) {
+      console.error('❌ Resend API Error for:', email, ':', error.message || error);
+      await logEmail(email, subject, 'Registration OTP', 'failed', error.message || JSON.stringify(error));
+      return { success: false, error: error.message || error, otp };
+    }
+
+    console.log('✅ Resend SDK success for:', email, '| Message ID:', data.id);
     await logEmail(email, subject, 'Registration OTP', 'success');
-    return { success: true, messageId: info.messageId };
+    return { success: true, messageId: data.id };
   } catch (err) {
     console.error('❌ Failed to send Registration OTP email to', email, ':', err.message);
     await logEmail(email, subject, 'Registration OTP', 'failed', err.message);
@@ -265,14 +248,21 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
   });
 
   try {
-    const info = await transporter.sendMail({
-      from: `"Kronos AI Security" <${EMAIL_USER}>`,
-      to: email,
+    const { data, error } = await resend.emails.send({
+      from: 'Kronos AI <onboarding@resend.dev>',
+      to: [email],
       subject,
       html
     });
+
+    if (error) {
+      console.error('❌ Resend API Error for Forgot Password OTP:', error.message || error);
+      await logEmail(email, subject, 'Forgot Password OTP', 'failed', error.message || JSON.stringify(error));
+      throw new Error(`Password reset email failed: ${error.message || JSON.stringify(error)}`);
+    }
+
     await logEmail(email, subject, 'Forgot Password OTP', 'success');
-    return { success: true, messageId: info.messageId };
+    return { success: true, messageId: data.id };
   } catch (err) {
     console.error('❌ Failed to send Forgot Password OTP email:', err.message);
     await logEmail(email, subject, 'Forgot Password OTP', 'failed', err.message);
@@ -341,21 +331,31 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
   if (pdfAttachment) {
     attachments.push({
       filename: `Kronos_Daily_Report_${Date.now()}.pdf`,
-      content: pdfAttachment,
-      contentType: 'application/pdf'
+      content: pdfAttachment
     });
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: `"Kronos AI Reports" <${EMAIL_USER}>`,
-      to: email,
+    const payload = {
+      from: 'Kronos AI <onboarding@resend.dev>',
+      to: [email],
       subject,
-      html,
-      attachments
-    });
+      html
+    };
+    if (attachments.length > 0) {
+      payload.attachments = attachments;
+    }
+
+    const { data, error } = await resend.emails.send(payload);
+
+    if (error) {
+      console.error('❌ Resend API Error for Daily Job Report:', error.message || error);
+      await logEmail(email, subject, 'Daily Job Report', 'failed', error.message || JSON.stringify(error));
+      throw new Error(`Daily report dispatch failed: ${error.message || JSON.stringify(error)}`);
+    }
+
     await logEmail(email, subject, 'Daily Job Report', 'success');
-    return { success: true, messageId: info.messageId };
+    return { success: true, messageId: data.id };
   } catch (err) {
     console.error('❌ Failed to send Daily Job Report email:', err.message);
     await logEmail(email, subject, 'Daily Job Report', 'failed', err.message);
@@ -393,14 +393,21 @@ export async function sendMissingInformationEmail(email, userName = 'User', miss
   });
 
   try {
-    const info = await transporter.sendMail({
-      from: `"Kronos AI Alerts" <${EMAIL_USER}>`,
-      to: email,
+    const { data, error } = await resend.emails.send({
+      from: 'Kronos AI <onboarding@resend.dev>',
+      to: [email],
       subject,
       html
     });
+
+    if (error) {
+      console.error('❌ Resend API Error for Missing Information email:', error.message || error);
+      await logEmail(email, subject, 'Missing Profile Alert', 'failed', error.message || JSON.stringify(error));
+      throw new Error(`Missing information alert failed: ${error.message || JSON.stringify(error)}`);
+    }
+
     await logEmail(email, subject, 'Missing Profile Alert', 'success');
-    return { success: true, messageId: info.messageId };
+    return { success: true, messageId: data.id };
   } catch (err) {
     console.error('❌ Failed to send Missing Information email:', err.message);
     await logEmail(email, subject, 'Missing Profile Alert', 'failed', err.message);
@@ -435,14 +442,21 @@ export async function sendApplicationSuccessEmail(email, userName = 'User', appl
   });
 
   try {
-    const info = await transporter.sendMail({
-      from: `"Kronos AI Confirmations" <${EMAIL_USER}>`,
-      to: email,
+    const { data, error } = await resend.emails.send({
+      from: 'Kronos AI <onboarding@resend.dev>',
+      to: [email],
       subject,
       html
     });
+
+    if (error) {
+      console.error('❌ Resend API Error for Application Success email:', error.message || error);
+      await logEmail(email, subject, 'Application Success', 'failed', error.message || JSON.stringify(error));
+      throw new Error(`Application success email failed: ${error.message || JSON.stringify(error)}`);
+    }
+
     await logEmail(email, subject, 'Application Success', 'success');
-    return { success: true, messageId: info.messageId };
+    return { success: true, messageId: data.id };
   } catch (err) {
     console.error('❌ Failed to send Application Success email:', err.message);
     await logEmail(email, subject, 'Application Success', 'failed', err.message);
