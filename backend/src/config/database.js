@@ -59,6 +59,7 @@ export const initDb = () => {
       db.run(`ALTER TABLE otp_codes ADD COLUMN is_verified INTEGER DEFAULT 0`, () => {});
       db.run(`ALTER TABLE otp_codes ADD COLUMN verified INTEGER DEFAULT 0`, () => {});
       db.run(`ALTER TABLE otp_codes ADD COLUMN expiry_time DATETIME`, () => {});
+      db.run(`DELETE FROM otp_codes WHERE is_verified = 1 OR expires_at < CURRENT_TIMESTAMP`, () => {});
 
       // Email Dispatch Logs Table (Step 15)
       db.run(`

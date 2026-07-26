@@ -35,6 +35,19 @@ const handleSendOTP = async (req, res) => {
       });
     }
 
+    // 2. Check if user account already exists in database
+    const existingUser = await getOne(
+      `SELECT * FROM users WHERE LOWER(email) = LOWER(?) AND (verified = 1 OR verified IS NULL)`,
+      [cleanEmail]
+    );
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account already exists with this email. Please log in or delete your existing account to register again.'
+      });
+    }
+
     const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
 
     // 2. Generate secure 6-digit OTP and save to database
@@ -103,6 +116,13 @@ router.post('/verify-otp', async (req, res) => {
 
     const name = full_name || cleanEmail.split('@')[0] || 'Candidate';
     let user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+
+    if (user && user.verified !== 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account already exists with this email. Please log in or delete your existing account to register again.'
+      });
+    }
 
     if (!user) {
       const result = await run(`
