@@ -50,17 +50,21 @@ async function request(url, options = {}) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      // Don't crash on unauthenticated / 401 in guest mode, return data or error message
       if (response.status === 401) {
         return { unauthenticated: true, user: null, ...data };
       }
-      throw new Error(data.error || `HTTP ${response.status}: Request failed`);
+      const errMsg = data.message || data.error || `HTTP ${response.status}: Request failed`;
+      const errObj = new Error(errMsg);
+      errObj.code = data.code;
+      errObj.status = response.status;
+      throw errObj;
     }
 
     return data;
   } catch (err) {
+    if (err.status) throw err;
     console.warn(`[Kronos API] Offline/Guest fallback for ${url}:`, err.message);
-    return null; // Signals caller to use fallback data
+    return null;
   }
 }
 
@@ -69,7 +73,7 @@ export const api = {
   sendOTP: async (email, full_name) => {
     const res = await request('/auth/send-otp', { method: 'POST', body: { email, full_name } });
     if (res && res.success === false) {
-      throw new Error(res.error || 'Failed to dispatch verification code');
+      throw new Error(res.message || res.error || 'Failed to dispatch verification code');
     }
     if (!res) {
       throw new Error('Server connection error. Please check your network or try again.');
@@ -79,7 +83,7 @@ export const api = {
   resendOTP: async (email, full_name) => {
     const res = await request('/auth/resend-otp', { method: 'POST', body: { email, full_name } });
     if (res && res.success === false) {
-      throw new Error(res.error || 'Failed to resend verification code');
+      throw new Error(res.message || res.error || 'Failed to resend verification code');
     }
     if (!res) {
       throw new Error('Server connection error. Please check your network or try again.');
@@ -89,7 +93,7 @@ export const api = {
   verifyOTP: async (payload) => {
     const res = await request('/auth/verify-otp', { method: 'POST', body: payload });
     if (res && res.success === false) {
-      throw new Error(res.error || 'Invalid or expired verification code');
+      throw new Error(res.message || res.error || 'Invalid or expired verification code');
     }
     if (res && res.user) {
       setStorage('kronos_user', res.user);
@@ -99,14 +103,14 @@ export const api = {
   register: async (payload) => {
     const res = await request('/auth/register', { method: 'POST', body: payload });
     if (res && res.success === false) {
-      throw new Error(res.error || 'Registration failed');
+      throw new Error(res.message || res.error || 'Registration failed');
     }
     return res || { user: { id: 1, email: payload.email, full_name: payload.full_name || 'Guest User' } };
   },
   login: async (payload) => {
     const res = await request('/auth/login', { method: 'POST', body: payload });
     if (res && res.success === false) {
-      throw new Error(res.error || 'Invalid email or password');
+      throw new Error(res.message || res.error || 'Invalid email or password');
     }
     if (res && res.user) {
       setStorage('kronos_user', res.user);
@@ -116,7 +120,7 @@ export const api = {
   forgotPassword: async (email) => {
     const res = await request('/auth/forgot-password', { method: 'POST', body: { email } });
     if (res && res.success === false) {
-      throw new Error(res.error || 'Failed to send password reset code');
+      throw new Error(res.message || res.error || 'Failed to send password reset code');
     }
     if (!res) {
       throw new Error('Server connection error. Please check your network or try again.');
@@ -126,7 +130,7 @@ export const api = {
   resetPassword: async (payload) => {
     const res = await request('/auth/reset-password', { method: 'POST', body: payload });
     if (res && res.success === false) {
-      throw new Error(res.error || 'Password reset failed');
+      throw new Error(res.message || res.error || 'Password reset failed');
     }
     if (!res) {
       throw new Error('Server connection error. Please check your network or try again.');

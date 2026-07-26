@@ -5,52 +5,70 @@ import { getOne, run } from '../config/database.js';
 
 const router = express.Router();
 
+// Email format validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
- * POST /api/auth/send-otp & POST /api/auth/resend-otp - Request Account Registration & Resend OTP Code
+ * Shared Helper: Handle OTP Send logic for Registration
  */
 const handleSendOTP = async (req, res) => {
   try {
     const { email, full_name, fullName } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
 
-    // 1. Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+    // 1. Email Format Validation
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
       return res.status(400).json({
         success: false,
-        error: 'Please enter a valid email address.',
         message: 'Please enter a valid email address.'
       });
     }
 
-    // 2. Duplicate Account Check: If user already exists, show clear message!
-    const existingUser = await getOne('SELECT id FROM users WHERE LOWER(email) = LOWER(?)', [cleanEmail]);
-    if (existingUser) {
+    // 2. Check Database for Existing User BEFORE generating OTP
+    const existingUser = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+    if (existingUser && existingUser.verified !== 0) {
       return res.status(400).json({
         success: false,
-        error: 'An account with this email address already exists. Please login instead.',
-        message: 'An account with this email address already exists. Please login instead.'
+        message: 'An account already exists with this email address.'
       });
     }
 
     const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
 
-    // 3. Generate a NEW 6-digit OTP code and save to database (invalidates old OTPs)
+    // 3. Generate & Save NEW 6-digit OTP
     const code = generateOTP();
     await saveOTP(cleanEmail, code, 'registration');
 
-    // 4. Send email via Resend SDK
+    // 4. Send OTP to User Email via Resend SDK
     const emailResult = await sendOTPEmail(cleanEmail, name, code);
 
-    res.json({
+    if (!emailResult.success) {
+      if (emailResult.isResendTestingError) {
+        return res.status(400).json({
+          success: false,
+          code: 'DOMAIN_NOT_VERIFIED',
+          message: 'The email service is still in testing mode. Verify the sending domain in Resend.'
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        code: 'INVALID_EMAIL',
+        message: 'Unable to deliver OTP. Please check the email address.'
+      });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: 'Verification code sent successfully.',
-      messageId: emailResult.messageId || 'resend-otp-id',
-      devOtp: emailResult.otp || code
+      message: 'OTP sent successfully.',
+      messageId: emailResult.messageId
     });
   } catch (err) {
     const errMsg = err.message || err.toString();
-    res.status(400).json({ success: false, error: errMsg });
+    return res.status(500).json({
+      success: false,
+      message: errMsg
+    });
   }
 };
 
@@ -58,7 +76,12 @@ router.post('/send-otp', handleSendOTP);
 router.post('/resend-otp', handleSendOTP);
 
 /**
- * POST /api/auth/verify-otp - Verify Registration OTP & Complete Account Creation
+ * POST /api/auth/register - Register Endpoint (Validates email & sends OTP)
+ */
+router.post('/register', handleSendOTP);
+
+/**
+ * POST /api/auth/verify-otp - Verify Registration OTP & Create Verified User
  */
 router.post('/verify-otp', async (req, res) => {
   try {
@@ -66,13 +89,26 @@ router.post('/verify-otp', async (req, res) => {
     const inputOtp = otp || code;
     const cleanEmail = (email || '').toLowerCase().trim();
 
-    if (!cleanEmail || !inputOtp) {
-      return res.status(400).json({ success: false, error: 'Email and OTP code are required.' });
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address.'
+      });
+    }
+
+    if (!inputOtp) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP code is required.'
+      });
     }
 
     const isValid = await verifyOTPCode(cleanEmail, inputOtp);
     if (!isValid) {
-      return res.status(401).json({ success: false, error: 'Invalid or expired OTP code. Please request a new code.' });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired OTP code. Please request a new code.'
+      });
     }
 
     const name = full_name || cleanEmail.split('@')[0] || 'Candidate';
@@ -80,14 +116,14 @@ router.post('/verify-otp', async (req, res) => {
 
     if (!user) {
       const result = await run(`
-        INSERT INTO users (email, full_name, password, age, phone, target_domain, experience_years)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (email, full_name, password, age, phone, target_domain, experience_years, verified)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
       `, [
         cleanEmail,
         name,
         password || '',
         age ? parseInt(age) : 26,
-        phone || '+91 98765 43210',
+        phone || '',
         target_domain || 'Software',
         experience_years ? parseInt(experience_years) : 4
       ]);
@@ -97,25 +133,11 @@ router.post('/verify-otp', async (req, res) => {
         UPDATE users SET
           full_name = COALESCE(?, full_name),
           password = COALESCE(?, password),
-          age = COALESCE(?, age),
-          phone = COALESCE(?, phone),
-          target_domain = COALESCE(?, target_domain),
-          experience_years = COALESCE(?, experience_years)
+          verified = 1
         WHERE LOWER(email) = LOWER(?)
-      `, [name, password, age, phone, target_domain, experience_years, cleanEmail]);
+      `, [name, password, cleanEmail]);
       user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
     }
-
-    await run(`
-      UPDATE profile SET
-        full_name = COALESCE(?, full_name),
-        email = ?,
-        phone = COALESCE(?, phone),
-        age = COALESCE(?, age),
-        target_domain = COALESCE(?, target_domain),
-        experience_years = COALESCE(?, experience_years)
-      WHERE id = 1
-    `, [user.full_name, user.email, user.phone, user.age, user.target_domain, user.experience_years]);
 
     res.json({
       success: true,
@@ -124,75 +146,49 @@ router.post('/verify-otp', async (req, res) => {
     });
   } catch (err) {
     console.error('Verify OTP error:', err);
-    res.status(500).json({ success: false, error: 'Authentication failed: ' + err.message });
-  }
-});
-
-/**
- * POST /api/auth/register - Initiate Registration (Sends OTP)
- */
-router.post('/register', async (req, res) => {
-  try {
-    const { full_name, fullName, email, password } = req.body;
-    const cleanEmail = (email || '').toLowerCase().trim();
-    if (!cleanEmail || !cleanEmail.includes('@') || !password) {
-      return res.status(400).json({ success: false, error: 'Valid email and password are required.' });
-    }
-
-    const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
-    const code = generateOTP();
-    await saveOTP(cleanEmail, code, 'registration');
-
-    const emailResult = await sendOTPEmail(cleanEmail, name, code);
-
-    if (!emailResult.success) {
-      return res.status(400).json({
-        success: false,
-        error: emailResult.error || 'Failed to send verification code'
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Email sent successfully.',
-      email: cleanEmail
+    res.status(500).json({
+      success: false,
+      message: 'Authentication failed: ' + err.message
     });
-  } catch (err) {
-    const errMsg = err.message || err.toString();
-    res.status(400).json({ success: false, error: errMsg });
   }
 });
 
 /**
- * POST /api/auth/login - Password Authentication
+ * POST /api/auth/login - Login Authentication (Allowed only when user exists & verified)
  */
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
 
-    if (!cleanEmail || !password) {
-      return res.status(400).json({ success: false, error: 'Email and password are required.' });
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address.'
+      });
     }
 
-    let user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password is required.'
+      });
+    }
 
-    if (user && user.password) {
-      if (user.password !== password) {
-        return res.status(401).json({
-          success: false,
-          error: 'Invalid email or password. Please check your credentials.'
-        });
-      }
-    } else if (!user) {
-      const result = await run(`
-        INSERT INTO users (email, full_name, password, age, phone, target_domain, experience_years)
-        VALUES (?, ?, ?, 26, '+91 98765 43210', 'Software', 4)
-      `, [cleanEmail, cleanEmail.split('@')[0], password]);
-      user = await getOne(`SELECT * FROM users WHERE id = ?`, [result.lastID]);
-    } else if (!user.password) {
-      await run(`UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)`, [password, cleanEmail]);
-      user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+    const user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password. Please check your credentials.'
+      });
+    }
+
+    if (user.password && user.password !== password) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password. Please check your credentials.'
+      });
     }
 
     res.json({
@@ -201,7 +197,10 @@ router.post('/login', async (req, res) => {
       user
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: 'Login failed: ' + err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Login failed: ' + err.message
+    });
   }
 });
 
@@ -212,36 +211,61 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const { email, full_name, fullName } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
-    if (!cleanEmail) {
-      return res.status(400).json({ success: false, error: 'Valid email address is required.' });
+
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address.'
+      });
     }
 
-    const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
+    // Check if user exists
+    const user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'No account found with this email address.'
+      });
+    }
+
+    const name = fullName || full_name || user.full_name || 'Candidate';
     const code = generateOTP();
     await saveOTP(cleanEmail, code, 'forgot_password');
 
     const emailResult = await sendForgotPasswordOTP(cleanEmail, name, code);
 
     if (!emailResult.success) {
+      if (emailResult.isResendTestingError) {
+        return res.status(400).json({
+          success: false,
+          code: 'DOMAIN_NOT_VERIFIED',
+          message: 'The email service is still in testing mode. Verify the sending domain in Resend.'
+        });
+      }
+
       return res.status(400).json({
         success: false,
-        error: emailResult.error || 'Failed to send password reset code'
+        code: 'INVALID_EMAIL',
+        message: 'Unable to deliver OTP. Please check the email address.'
       });
     }
 
     res.json({
       success: true,
-      message: 'Email sent successfully.',
+      message: 'OTP sent successfully.',
       email: cleanEmail
     });
   } catch (err) {
     const errMsg = err.message || err.toString();
-    res.status(400).json({ success: false, error: errMsg });
+    res.status(500).json({
+      success: false,
+      message: errMsg
+    });
   }
 });
 
 /**
- * POST /api/auth/reset-password - Verify OTP & Set New Password (Sends Password Changed Confirmation)
+ * POST /api/auth/reset-password - Verify OTP & Set New Password
  */
 router.post('/reset-password', async (req, res) => {
   try {
@@ -250,19 +274,31 @@ router.post('/reset-password', async (req, res) => {
     const newPass = new_password || password;
     const cleanEmail = (email || '').toLowerCase().trim();
 
-    if (!cleanEmail || !inputOtp || !newPass) {
-      return res.status(400).json({ success: false, error: 'Email, OTP code, and new password are required.' });
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address.'
+      });
+    }
+
+    if (!inputOtp || !newPass) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, OTP code, and new password are required.'
+      });
     }
 
     const isValid = await verifyOTPCode(cleanEmail, inputOtp);
     if (!isValid) {
-      return res.status(401).json({ success: false, error: 'Invalid or expired OTP code. Please request a new code.' });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired OTP code. Please request a new code.'
+      });
     }
 
     await run(`UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)`, [newPass, cleanEmail]);
     const user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
 
-    // Send Password Changed Confirmation Email
     await sendPasswordChangedEmail(cleanEmail, (user && user.full_name) || 'Candidate');
 
     res.json({
@@ -270,7 +306,10 @@ router.post('/reset-password', async (req, res) => {
       message: 'Password updated successfully! Please log in with your new password.'
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: 'Password reset failed: ' + err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Password reset failed: ' + err.message
+    });
   }
 });
 
@@ -282,7 +321,7 @@ router.get('/me', async (req, res) => {
     const user = await getOne(`SELECT * FROM users ORDER BY id DESC LIMIT 1`);
     res.json({ user: user || null });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 

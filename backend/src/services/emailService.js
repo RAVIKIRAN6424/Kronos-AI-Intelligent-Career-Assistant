@@ -11,17 +11,18 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(__dirname, '../../.env');
 dotenv.config({ path: envPath });
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Kronos AI <onboarding@resend.dev>';
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
 
-if (!process.env.RESEND_API_KEY) {
-  console.error('❌ ERROR: RESEND_API_KEY is missing from process.env');
-}
-if (!process.env.RESEND_FROM_EMAIL) {
-  console.warn(`⚠️ WARNING: RESEND_FROM_EMAIL not set in process.env. Using default: ${RESEND_FROM_EMAIL}`);
+if (!RESEND_API_KEY) {
+  throw new Error("RESEND_API_KEY environment variable is required.");
 }
 
-const resend = new Resend(RESEND_API_KEY || '');
+if (!RESEND_FROM_EMAIL) {
+  throw new Error("RESEND_FROM_EMAIL environment variable is required.");
+}
+
+const resend = new Resend(RESEND_API_KEY);
 
 /**
  * Log email dispatch result into SQLite database email_logs table
@@ -39,22 +40,21 @@ export async function logEmail(recipient, subject, templateType, status = 'succe
 }
 
 /**
- * Helper to dispatch emails via Resend SDK with detailed logging & fail-safe return
+ * Pure Resend SDK Email Dispatcher
  */
 async function sendResendMail({ to, subject, html, attachments = [] }) {
   const cleanRecipient = (to || '').trim();
-  const fromSender = RESEND_FROM_EMAIL;
+  const senderEmail = RESEND_FROM_EMAIL;
 
   console.log('\n=========================================');
-  console.log('RESEND EMAIL DISPATCH ATTEMPT');
+  console.log('RESEND EMAIL DISPATCH REQUEST');
   console.log(`Recipient: ${cleanRecipient}`);
-  console.log(`From: ${fromSender}`);
+  console.log(`Sender: ${senderEmail}`);
   console.log(`Subject: ${subject}`);
-  console.log('Calling Resend API...');
 
   try {
     const payload = {
-      from: fromSender,
+      from: senderEmail,
       to: cleanRecipient,
       subject,
       html
@@ -71,26 +71,45 @@ async function sendResendMail({ to, subject, html, attachments = [] }) {
 
     if (error) {
       const errorMsg = error.message || JSON.stringify(error);
-      console.error(`Resend Error: ${errorMsg}`);
-      console.error('=========================================\n');
-      return { success: false, error: errorMsg };
+      console.error('❌ Resend API Error:', errorMsg);
+      console.log('=========================================\n');
+
+      const isResendTestingError = errorMsg.toLowerCase().includes('testing emails');
+
+      return {
+        success: false,
+        error: errorMsg,
+        isResendTestingError,
+        rawError: error
+      };
     }
 
-    const messageId = data?.id || 'resend-id';
-    console.log(`Resend Message ID: ${messageId}`);
-    console.log('Email sent successfully.');
+    const messageId = data?.id || 'resend-message-id';
+    console.log(`✅ Resend Message ID: ${messageId}`);
     console.log('=========================================\n');
-    return { success: true, messageId };
+
+    return {
+      success: true,
+      messageId
+    };
   } catch (err) {
     const errorMsg = err.message || err.toString();
-    console.error(`Resend Error: ${errorMsg}`);
-    console.error('=========================================\n');
-    return { success: false, error: errorMsg };
+    console.error('❌ Resend Exception:', errorMsg);
+    console.log('=========================================\n');
+
+    const isResendTestingError = errorMsg.toLowerCase().includes('testing emails');
+
+    return {
+      success: false,
+      error: errorMsg,
+      isResendTestingError,
+      rawError: err
+    };
   }
 }
 
 /**
- * Reusable Responsive Cyberpunk HTML Template Generator
+ * Reusable Cyberpunk HTML Template Generator
  */
 function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }) {
   return `
@@ -189,10 +208,6 @@ function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }
       color: #64748b;
       border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .footer a {
-      color: #00f2fe;
-      text-decoration: none;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -225,7 +240,6 @@ function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }
       </div>
       <div class="footer">
         <p>⚡ <strong>Kronos AI Intelligent Career Assistant</strong></p>
-        <p>Support Contact: <a href="mailto:support@resend.dev">support@resend.dev</a></p>
         <p>© 2026 Kronos AI Systems. All rights reserved.</p>
       </div>
     </div>
@@ -236,10 +250,9 @@ function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }
 }
 
 /**
- * 1. Registration & Resend OTP Email (sendOTPEmail)
+ * 1. Registration OTP Email
  */
 export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null) {
-  const startTime = Date.now();
   let userName = userNameOrOtp;
   let otp = otpCode;
 
@@ -264,28 +277,26 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     `
   });
 
-  const result = await sendResendMail({
-    to: email,
-    subject,
-    html
-  });
+  const result = await sendResendMail({ to: email, subject, html });
 
   if (result.success) {
     await logEmail(email, subject, 'Registration OTP', 'success');
-    return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
+    return { success: true, message: 'OTP sent successfully.', messageId: result.messageId };
   } else {
-    // Non-blocking: Log the Resend restriction and return success with generated OTP so candidate registration is NEVER blocked!
-    console.warn(`⚠️ Non-blocking notice for candidate ${email}: ${result.error}`);
-    await logEmail(email, subject, 'Registration OTP', 'notice', result.error);
-    return { success: true, message: 'Verification code generated.', messageId: 'resend-notice-id', otp };
+    await logEmail(email, subject, 'Registration OTP', 'failed', result.error);
+    return {
+      success: false,
+      error: result.error,
+      isResendTestingError: result.isResendTestingError,
+      otp
+    };
   }
 }
 
 /**
- * 2. Forgot Password OTP Email (sendForgotPasswordOTP)
+ * 2. Forgot Password OTP Email
  */
 export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
-  const startTime = Date.now();
   const subject = 'Kronos AI - Password Reset Verification Code';
   const html = getEmailHTMLTemplate({
     title: 'Password Reset Request',
@@ -302,27 +313,26 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
     `
   });
 
-  const result = await sendResendMail({
-    to: email,
-    subject,
-    html
-  });
+  const result = await sendResendMail({ to: email, subject, html });
 
   if (result.success) {
     await logEmail(email, subject, 'Forgot Password OTP', 'success');
-    return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
+    return { success: true, message: 'OTP sent successfully.', messageId: result.messageId };
   } else {
-    console.warn(`⚠️ Non-blocking notice for forgot-password ${email}: ${result.error}`);
-    await logEmail(email, subject, 'Forgot Password OTP', 'notice', result.error);
-    return { success: true, message: 'Reset code generated.', messageId: 'resend-notice-id', otp };
+    await logEmail(email, subject, 'Forgot Password OTP', 'failed', result.error);
+    return {
+      success: false,
+      error: result.error,
+      isResendTestingError: result.isResendTestingError,
+      otp
+    };
   }
 }
 
 /**
- * 3. Password Changed Confirmation Email (sendPasswordChangedEmail)
+ * 3. Password Changed Confirmation Email
  */
 export async function sendPasswordChangedEmail(email, userName = 'User') {
-  const startTime = Date.now();
   const subject = 'Security Notification: Your Kronos AI Password Was Changed';
   const html = getEmailHTMLTemplate({
     title: 'Password Successfully Changed',
@@ -337,33 +347,27 @@ export async function sendPasswordChangedEmail(email, userName = 'User') {
     `
   });
 
-  const result = await sendResendMail({
-    to: email,
-    subject,
-    html
-  });
+  const result = await sendResendMail({ to: email, subject, html });
 
   if (result.success) {
     await logEmail(email, subject, 'Password Changed Alert', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    await logEmail(email, subject, 'Password Changed Alert', 'notice', result.error);
-    return { success: true, message: 'Password updated.' };
+    await logEmail(email, subject, 'Password Changed Alert', 'failed', result.error);
+    return { success: false, error: result.error, isResendTestingError: result.isResendTestingError };
   }
 }
 
 /**
- * 4. Daily Automation Job Summary Report & Resume Attached (sendDailyJobReport)
+ * 4. Daily Job Report Email
  */
 export async function sendDailyJobReport(email, userName = 'User', reportData = {}, pdfAttachment = null) {
-  const startTime = Date.now();
   const dateStr = reportData.date || new Date().toLocaleDateString('en-US', { dateStyle: 'medium' });
   const subject = `Kronos AI Daily Job Report - ${dateStr}`;
 
   const jobRows = (reportData.jobs || [
     { portal: 'LinkedIn', company: 'Nexus Cybernetics', role: 'Lead AI Architect', resume: 'Software_Engineer_Resume.pdf', status: 'Applied' },
-    { portal: 'Indeed', company: 'Precision Mech India', role: 'Automation Specialist', resume: 'DevOps_Resume.pdf', status: 'Applied' },
-    { portal: 'Naukri', company: 'Skyscraper Infra Tech', role: 'Structural Engineer', resume: 'Mechanical_Resume.pdf', status: 'Skipped', reason: 'Requires Expected Salary' }
+    { portal: 'Indeed', company: 'Precision Mech India', role: 'Automation Specialist', resume: 'DevOps_Resume.pdf', status: 'Applied' }
   ]).map(j => `
     <tr>
       <td><strong>${j.portal}</strong></td>
@@ -380,17 +384,6 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
     userName,
     bodyContent: `
       <p>Your Kronos AI Autonomous Campaign cycle has completed for <strong>${dateStr}</strong>.</p>
-      
-      <table style="margin-bottom: 20px;">
-        <tr><th>Metric</th><th>Details</th></tr>
-        <tr><td>Campaign Date</td><td>${dateStr}</td></tr>
-        <tr><td>Execution Window</td><td>${reportData.startTime || '09:00 AM'} - ${reportData.stopTime || '06:00 PM'}</td></tr>
-        <tr><td>Total Jobs Found</td><td><strong>${reportData.totalFound || 14}</strong></td></tr>
-        <tr><td>Applications Submitted</td><td><strong style="color: #10b981;">${reportData.totalApplied || 8}</strong></td></tr>
-        <tr><td>Skipped Applications</td><td><strong style="color: #f43f5e;">${reportData.skippedJobs || 2}</strong></td></tr>
-      </table>
-
-      <h3 style="color: #ffffff; font-size: 16px; margin-top: 24px;">Application Details</h3>
       <table>
         <thead>
           <tr>
@@ -401,12 +394,8 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
             <th>Status</th>
           </tr>
         </thead>
-        <tbody>
-          ${jobRows}
-        </tbody>
+        <tbody>${jobRows}</tbody>
       </table>
-
-      <p style="font-size: 13px; color: #94a3b8; margin-top: 16px;">Attached to this email is your compiled performance report document.</p>
     `
   });
 
@@ -419,27 +408,21 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
     });
   }
 
-  const result = await sendResendMail({
-    to: email,
-    subject,
-    html,
-    attachments
-  });
+  const result = await sendResendMail({ to: email, subject, html, attachments });
 
   if (result.success) {
     await logEmail(email, subject, 'Daily Job Report', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    await logEmail(email, subject, 'Daily Job Report', 'notice', result.error);
-    return { success: true, message: 'Daily report processed.' };
+    await logEmail(email, subject, 'Daily Job Report', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
 /**
- * 5. Missing Information Alert Email (sendMissingInformationEmail)
+ * 5. Missing Information Alert Email
  */
-export async function sendMissingInformationEmail(email, userName = 'User', missingFields = ['Expected Salary', 'Portfolio URL'], jobDetails = {}) {
-  const startTime = Date.now();
+export async function sendMissingInformationEmail(email, userName = 'User', missingFields = ['Expected Salary'], jobDetails = {}) {
   const subject = 'Action Required: Missing Profile Information for Application';
   const missingList = missingFields.map(f => `<li style="margin-bottom: 6px; color: #f43f5e; font-weight: 700;">${f}</li>`).join('');
 
@@ -448,43 +431,28 @@ export async function sendMissingInformationEmail(email, userName = 'User', miss
     badge: 'PROFILE COMPLETION ALERT',
     userName,
     bodyContent: `
-      <p>Kronos AI attempted to submit an application for <strong>${jobDetails.title || 'Senior Engineer'}</strong> at <strong>${jobDetails.company || 'Target Employer'}</strong> on <strong>${jobDetails.portal || 'LinkedIn'}</strong>, but required additional profile fields:</p>
-      
+      <p>Kronos AI attempted to submit an application for <strong>${jobDetails.title || 'Senior Engineer'}</strong> at <strong>${jobDetails.company || 'Target Employer'}</strong>, but required additional profile fields:</p>
       <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid #f43f5e; border-radius: 12px; padding: 16px 20px; margin: 20px 0;">
-        <h4 style="color: #f43f5e; margin: 0 0 10px 0;">Required Missing Fields:</h4>
-        <ul style="margin: 0; padding-left: 20px;">
-          ${missingList}
-        </ul>
+        <ul style="margin: 0; padding-left: 20px;">${missingList}</ul>
       </div>
-
-      <p>This single application has been paused to ensure accuracy. Please log into your Kronos AI Dashboard and update your profile preferences.</p>
-    `,
-    ctaButton: {
-      text: 'Update Profile Settings',
-      url: 'https://kronos-ai-intelligent-career-assist.vercel.app/'
-    }
+    `
   });
 
-  const result = await sendResendMail({
-    to: email,
-    subject,
-    html
-  });
+  const result = await sendResendMail({ to: email, subject, html });
 
   if (result.success) {
     await logEmail(email, subject, 'Missing Profile Alert', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    await logEmail(email, subject, 'Missing Profile Alert', 'notice', result.error);
-    return { success: true, message: 'Missing profile alert logged.' };
+    await logEmail(email, subject, 'Missing Profile Alert', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
 /**
- * 6. Successful Application Confirmation Email (sendApplicationSuccessEmail)
+ * 6. Application Success Email
  */
 export async function sendApplicationSuccessEmail(email, userName = 'User', applicationDetails = {}) {
-  const startTime = Date.now();
   const company = applicationDetails.company || 'Target Company';
   const subject = `Application Submitted Successfully - ${company}`;
 
@@ -493,42 +461,26 @@ export async function sendApplicationSuccessEmail(email, userName = 'User', appl
     badge: 'APPLICATION CONFIRMATION',
     userName,
     bodyContent: `
-      <p>Great news! Kronos AI has successfully submitted your job application:</p>
-      
-      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 20px; margin: 20px 0;">
-        <p style="margin: 4px 0;">🏢 <strong>Company:</strong> ${company}</p>
-        <p style="margin: 4px 0;">🎯 <strong>Job Title:</strong> ${applicationDetails.jobTitle || applicationDetails.title || 'Specialist'}</p>
-        <p style="margin: 4px 0;">🌐 <strong>Portal:</strong> ${applicationDetails.portal || 'LinkedIn'}</p>
-        <p style="margin: 4px 0;">📄 <strong>Resume Used:</strong> ${applicationDetails.resumeUsed || 'Software_Engineer_Resume.pdf'}</p>
-        <p style="margin: 4px 0;">⏰ <strong>Submission Time:</strong> ${applicationDetails.time || new Date().toLocaleString()}</p>
-      </div>
-
-      <p style="font-size: 13px; color: #94a3b8;">This opportunity has been logged in your Kronos Jobs CRM Kanban board for real-time response tracking.</p>
+      <p>Great news! Kronos AI has successfully submitted your job application to <strong>${company}</strong>.</p>
     `
   });
 
-  const result = await sendResendMail({
-    to: email,
-    subject,
-    html
-  });
+  const result = await sendResendMail({ to: email, subject, html });
 
   if (result.success) {
     await logEmail(email, subject, 'Application Success', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    await logEmail(email, subject, 'Application Success', 'notice', result.error);
-    return { success: true, message: 'Application success confirmation logged.' };
+    await logEmail(email, subject, 'Application Success', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
 /**
- * 7. Test Email Helper (sendTestEmail)
+ * 7. Test Email Helper
  */
 export async function sendTestEmail(toEmail) {
-  const startTime = Date.now();
   const recipient = toEmail || 'ravikiranmadasu@gmail.com';
-
   const subject = 'Kronos AI Resend SDK Integration Diagnostic';
   const html = getEmailHTMLTemplate({
     title: 'Resend Email Service System Diagnostic',
@@ -536,24 +488,16 @@ export async function sendTestEmail(toEmail) {
     userName: recipient.split('@')[0] || 'User',
     bodyContent: `
       <p>Congratulations! Your <strong>Resend SDK Integration</strong> for Kronos AI is working perfectly.</p>
-      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 16px; margin: 16px 0;">
-        <p style="margin: 0; color: #10b981; font-weight: 700;">✅ Resend Email API Status: Active & Connected</p>
-      </div>
-      <p style="font-size: 13px; color: #94a3b8;">Dispatched via Resend API Key using ${RESEND_FROM_EMAIL}.</p>
     `
   });
 
-  const result = await sendResendMail({
-    to: recipient,
-    subject,
-    html
-  });
+  const result = await sendResendMail({ to: recipient, subject, html });
 
   if (result.success) {
     await logEmail(recipient, subject, 'Test Email', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    await logEmail(recipient, subject, 'Test Email', 'notice', result.error);
-    return { success: true, message: 'Diagnostic test executed.' };
+    await logEmail(recipient, subject, 'Test Email', 'failed', result.error);
+    return { success: false, error: result.error, isResendTestingError: result.isResendTestingError };
   }
 }

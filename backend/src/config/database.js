@@ -28,14 +28,16 @@ export const initDb = () => {
           password TEXT,
           age INTEGER,
           phone TEXT,
+          verified INTEGER DEFAULT 1,
           target_domain TEXT DEFAULT 'Software',
           experience_years INTEGER DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
 
-      // Safely ensure password column exists on existing installations
+      // Safely ensure password and verified columns exist on existing installations
       db.run(`ALTER TABLE users ADD COLUMN password TEXT`, () => {});
+      db.run(`ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 1`, () => {});
 
       // 2. OTP Codes Table (Account Verification & Forgot Password)
       db.run(`
@@ -45,14 +47,18 @@ export const initDb = () => {
           code TEXT NOT NULL,
           type TEXT DEFAULT 'verification',
           expires_at DATETIME NOT NULL,
+          expiry_time DATETIME,
           is_verified INTEGER DEFAULT 0,
+          verified INTEGER DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
 
-      // Safely ensure type and is_verified columns exist on existing database installations
+      // Safely ensure type, verified, and expiry_time columns exist on existing database installations
       db.run(`ALTER TABLE otp_codes ADD COLUMN type TEXT DEFAULT 'registration'`, () => {});
       db.run(`ALTER TABLE otp_codes ADD COLUMN is_verified INTEGER DEFAULT 0`, () => {});
+      db.run(`ALTER TABLE otp_codes ADD COLUMN verified INTEGER DEFAULT 0`, () => {});
+      db.run(`ALTER TABLE otp_codes ADD COLUMN expiry_time DATETIME`, () => {});
 
       // Email Dispatch Logs Table (Step 15)
       db.run(`

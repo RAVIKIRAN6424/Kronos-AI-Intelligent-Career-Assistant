@@ -19,8 +19,8 @@ export const saveOTP = async (email, code, type = 'registration') => {
   // Set 5-minute expiry time
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
   await run(
-    `INSERT INTO otp_codes (email, code, type, expires_at, is_verified) VALUES (?, ?, ?, ?, 0)`,
-    [cleanEmail, code.toString(), type, expiresAt]
+    `INSERT INTO otp_codes (email, code, type, expires_at, expiry_time, is_verified, verified) VALUES (?, ?, ?, ?, ?, 0, 0)`,
+    [cleanEmail, code.toString(), type, expiresAt, expiresAt]
   );
   return { code, expiresAt };
 };
@@ -33,13 +33,13 @@ export const verifyOTPCode = async (email, code) => {
   const inputCode = (code || '').toString().trim();
 
   const rows = await query(
-    `SELECT * FROM otp_codes WHERE LOWER(email) = LOWER(?) AND code = ? AND is_verified = 0 AND expires_at > CURRENT_TIMESTAMP ORDER BY id DESC LIMIT 1`,
+    `SELECT * FROM otp_codes WHERE LOWER(email) = LOWER(?) AND code = ? AND (is_verified = 0 OR verified = 0) AND expires_at > CURRENT_TIMESTAMP ORDER BY id DESC LIMIT 1`,
     [cleanEmail, inputCode]
   );
 
   if (rows && rows.length > 0) {
     // Mark verified and delete used OTP
-    await run(`UPDATE otp_codes SET is_verified = 1 WHERE id = ?`, [rows[0].id]);
+    await run(`UPDATE otp_codes SET is_verified = 1, verified = 1 WHERE id = ?`, [rows[0].id]);
     await run(`DELETE FROM otp_codes WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
     return true;
   }
