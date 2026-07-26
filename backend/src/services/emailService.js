@@ -64,6 +64,34 @@ export async function logEmail(recipient, subject, templateType, status = 'succe
 }
 
 /**
+ * Helper: Retry sending email up to 3 times with a 2-second delay
+ */
+async function sendMailWithRetry(mailOptions, maxRetries = 3, retryDelayMs = 2000) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log('📬 Gmail SMTP Provider Response:', info.response || info);
+      return { success: true, info };
+    } catch (err) {
+      lastError = err;
+      console.error('\n=========================================');
+      console.error('Email Send Failed');
+      console.error(`Reason: ${err.message || err}`);
+      console.error(`Retry: ${attempt}/${maxRetries}`);
+      console.error('=========================================\n');
+
+      if (attempt < maxRetries) {
+        await new Promise(res => setTimeout(res, retryDelayMs));
+      }
+    }
+  }
+
+  return { success: false, error: lastError ? (lastError.message || lastError.toString()) : 'Unknown SMTP Error' };
+}
+
+/**
  * Reusable Responsive Cyberpunk HTML Template Generator
  */
 function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }) {
@@ -210,9 +238,10 @@ function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }
 }
 
 /**
- * 1. Registration OTP Email (sendOTPEmail)
+ * 1. Registration & Resend OTP Email (sendOTPEmail)
  */
 export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null) {
+  const startTime = Date.now();
   let userName = userNameOrOtp;
   let otp = otpCode;
 
@@ -221,7 +250,13 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     userName = email ? email.split('@')[0] : 'Candidate';
   }
 
-  console.log('Sending OTP...');
+  console.log('\n=========================================');
+  console.log('OTP REQUEST RECEIVED');
+  console.log(`Email: ${email}`);
+  console.log(`Generated OTP: ${otp}`);
+  console.log('Saving OTP...');
+  console.log('Calling Email Service...');
+
   const subject = 'Verify your Kronos AI Account';
   const html = getEmailHTMLTemplate({
     title: 'Account Verification',
@@ -238,22 +273,26 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     `
   });
 
-  try {
-    const info = await transporter.sendMail({
-      from: `"Kronos AI System" <${EMAIL_USER}>`,
-      to: email,
-      subject,
-      html
-    });
+  const result = await sendMailWithRetry({
+    from: `"Kronos AI System" <${EMAIL_USER}>`,
+    to: email,
+    subject,
+    html
+  });
 
-    console.log('Email Sent Successfully');
+  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  if (result.success) {
+    console.log('Email sent successfully.');
+    console.log(`Completed in ${durationSec} seconds.`);
+    console.log('=========================================\n');
     await logEmail(email, subject, 'Registration OTP', 'success');
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    const errMsg = err.message || err.toString();
-    console.error('Complete SMTP error details:', err);
-    await logEmail(email, subject, 'Registration OTP', 'failed', errMsg);
-    return { success: false, error: errMsg, otp };
+    return { success: true, message: 'Email sent successfully.', messageId: result.info.messageId };
+  } else {
+    console.log(`OTP Delivery Failed in ${durationSec} seconds.`);
+    console.log('=========================================\n');
+    await logEmail(email, subject, 'Registration OTP', 'failed', result.error);
+    return { success: false, error: result.error, otp };
   }
 }
 
@@ -261,7 +300,14 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
  * 2. Forgot Password OTP Email (sendForgotPasswordOTP)
  */
 export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
-  console.log('Sending OTP...');
+  const startTime = Date.now();
+  console.log('\n=========================================');
+  console.log('FORGOT PASSWORD OTP REQUEST');
+  console.log(`Email: ${email}`);
+  console.log(`Generated OTP: ${otp}`);
+  console.log('Saving OTP...');
+  console.log('Calling Email Service...');
+
   const subject = 'Kronos AI - Password Reset Verification Code';
   const html = getEmailHTMLTemplate({
     title: 'Password Reset Request',
@@ -278,31 +324,87 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
     `
   });
 
-  try {
-    const info = await transporter.sendMail({
-      from: `"Kronos AI Security" <${EMAIL_USER}>`,
-      to: email,
-      subject,
-      html
-    });
+  const result = await sendMailWithRetry({
+    from: `"Kronos AI Security" <${EMAIL_USER}>`,
+    to: email,
+    subject,
+    html
+  });
 
-    console.log('Email Sent Successfully');
+  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  if (result.success) {
+    console.log('Email sent successfully.');
+    console.log(`Completed in ${durationSec} seconds.`);
+    console.log('=========================================\n');
     await logEmail(email, subject, 'Forgot Password OTP', 'success');
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    const errMsg = err.message || err.toString();
-    console.error('Complete SMTP error details:', err);
-    await logEmail(email, subject, 'Forgot Password OTP', 'failed', errMsg);
-    return { success: false, error: errMsg, otp };
+    return { success: true, message: 'Email sent successfully.', messageId: result.info.messageId };
+  } else {
+    console.log(`Password Reset OTP Failed in ${durationSec} seconds.`);
+    console.log('=========================================\n');
+    await logEmail(email, subject, 'Forgot Password OTP', 'failed', result.error);
+    return { success: false, error: result.error, otp };
   }
 }
 
 /**
- * 3. Daily Automation Job Summary Report (sendDailyJobReport)
+ * 3. Password Changed Confirmation Email (sendPasswordChangedEmail)
+ */
+export async function sendPasswordChangedEmail(email, userName = 'User') {
+  const startTime = Date.now();
+  console.log('\n=========================================');
+  console.log('PASSWORD CHANGED CONFIRMATION REQUEST');
+  console.log(`Email: ${email}`);
+  console.log('Calling Email Service...');
+
+  const subject = 'Security Notification: Your Kronos AI Password Was Changed';
+  const html = getEmailHTMLTemplate({
+    title: 'Password Successfully Changed',
+    badge: 'SECURITY ALERT',
+    userName,
+    bodyContent: `
+      <p>This email confirms that your password for your <strong>Kronos AI Account</strong> was updated successfully on <strong>${new Date().toLocaleString()}</strong>.</p>
+      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 16px; margin: 20px 0;">
+        <p style="margin: 0; color: #10b981; font-weight: 700;">✅ Account credentials updated successfully.</p>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8;">If you did not perform this change, please reset your password immediately or contact support.</p>
+    `
+  });
+
+  const result = await sendMailWithRetry({
+    from: `"Kronos AI Security" <${EMAIL_USER}>`,
+    to: email,
+    subject,
+    html
+  });
+
+  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  if (result.success) {
+    console.log('Email sent successfully.');
+    console.log(`Completed in ${durationSec} seconds.`);
+    console.log('=========================================\n');
+    await logEmail(email, subject, 'Password Changed Alert', 'success');
+    return { success: true, message: 'Email sent successfully.', messageId: result.info.messageId };
+  } else {
+    console.log('=========================================\n');
+    await logEmail(email, subject, 'Password Changed Alert', 'failed', result.error);
+    return { success: false, error: result.error };
+  }
+}
+
+/**
+ * 4. Daily Automation Job Summary Report & Resume Attached (sendDailyJobReport)
  */
 export async function sendDailyJobReport(email, userName = 'User', reportData = {}, pdfAttachment = null) {
+  const startTime = Date.now();
   const dateStr = reportData.date || new Date().toLocaleDateString('en-US', { dateStyle: 'medium' });
   const subject = `Kronos AI Daily Job Report - ${dateStr}`;
+
+  console.log('\n=========================================');
+  console.log('DAILY JOB REPORT REQUEST');
+  console.log(`Email: ${email}`);
+  console.log('Calling Email Service...');
 
   const jobRows = (reportData.jobs || [
     { portal: 'LinkedIn', company: 'Nexus Cybernetics', role: 'Lead AI Architect', resume: 'Software_Engineer_Resume.pdf', status: 'Applied' },
@@ -363,31 +465,39 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
     });
   }
 
-  try {
-    console.log('Sending Daily Job Report...');
-    const info = await transporter.sendMail({
-      from: `"Kronos AI Reports" <${EMAIL_USER}>`,
-      to: email,
-      subject,
-      html,
-      attachments
-    });
+  const result = await sendMailWithRetry({
+    from: `"Kronos AI Reports" <${EMAIL_USER}>`,
+    to: email,
+    subject,
+    html,
+    attachments
+  });
 
-    console.log('Email Sent Successfully');
+  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  if (result.success) {
+    console.log('Email sent successfully.');
+    console.log(`Completed in ${durationSec} seconds.`);
+    console.log('=========================================\n');
     await logEmail(email, subject, 'Daily Job Report', 'success');
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    const errMsg = err.message || err.toString();
-    console.error('Complete SMTP error details:', err);
-    await logEmail(email, subject, 'Daily Job Report', 'failed', errMsg);
-    return { success: false, error: errMsg };
+    return { success: true, message: 'Email sent successfully.', messageId: result.info.messageId };
+  } else {
+    console.log('=========================================\n');
+    await logEmail(email, subject, 'Daily Job Report', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
 /**
- * 4. Missing Information Alert Email (sendMissingInformationEmail)
+ * 5. Missing Information Alert Email (sendMissingInformationEmail)
  */
 export async function sendMissingInformationEmail(email, userName = 'User', missingFields = ['Expected Salary', 'Portfolio URL'], jobDetails = {}) {
+  const startTime = Date.now();
+  console.log('\n=========================================');
+  console.log('MISSING INFORMATION ALERT REQUEST');
+  console.log(`Email: ${email}`);
+  console.log('Calling Email Service...');
+
   const subject = 'Action Required: Missing Profile Information for Application';
   const missingList = missingFields.map(f => `<li style="margin-bottom: 6px; color: #f43f5e; font-weight: 700;">${f}</li>`).join('');
 
@@ -413,32 +523,40 @@ export async function sendMissingInformationEmail(email, userName = 'User', miss
     }
   });
 
-  try {
-    console.log('Sending Missing Info Alert...');
-    const info = await transporter.sendMail({
-      from: `"Kronos AI Alerts" <${EMAIL_USER}>`,
-      to: email,
-      subject,
-      html
-    });
+  const result = await sendMailWithRetry({
+    from: `"Kronos AI Alerts" <${EMAIL_USER}>`,
+    to: email,
+    subject,
+    html
+  });
 
-    console.log('Email Sent Successfully');
+  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  if (result.success) {
+    console.log('Email sent successfully.');
+    console.log(`Completed in ${durationSec} seconds.`);
+    console.log('=========================================\n');
     await logEmail(email, subject, 'Missing Profile Alert', 'success');
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    const errMsg = err.message || err.toString();
-    console.error('Complete SMTP error details:', err);
-    await logEmail(email, subject, 'Missing Profile Alert', 'failed', errMsg);
-    return { success: false, error: errMsg };
+    return { success: true, message: 'Email sent successfully.', messageId: result.info.messageId };
+  } else {
+    console.log('=========================================\n');
+    await logEmail(email, subject, 'Missing Profile Alert', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
 /**
- * 5. Successful Application Confirmation Email (sendApplicationSuccessEmail)
+ * 6. Successful Application Confirmation Email (sendApplicationSuccessEmail)
  */
 export async function sendApplicationSuccessEmail(email, userName = 'User', applicationDetails = {}) {
+  const startTime = Date.now();
   const company = applicationDetails.company || 'Target Company';
   const subject = `Application Submitted Successfully - ${company}`;
+
+  console.log('\n=========================================');
+  console.log('APPLICATION SUCCESS CONFIRMATION REQUEST');
+  console.log(`Email: ${email}`);
+  console.log('Calling Email Service...');
 
   const html = getEmailHTMLTemplate({
     title: 'Application Submitted!',
@@ -459,32 +577,39 @@ export async function sendApplicationSuccessEmail(email, userName = 'User', appl
     `
   });
 
-  try {
-    console.log('Sending Application Success Email...');
-    const info = await transporter.sendMail({
-      from: `"Kronos AI Confirmations" <${EMAIL_USER}>`,
-      to: email,
-      subject,
-      html
-    });
+  const result = await sendMailWithRetry({
+    from: `"Kronos AI Confirmations" <${EMAIL_USER}>`,
+    to: email,
+    subject,
+    html
+  });
 
-    console.log('Email Sent Successfully');
+  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  if (result.success) {
+    console.log('Email sent successfully.');
+    console.log(`Completed in ${durationSec} seconds.`);
+    console.log('=========================================\n');
     await logEmail(email, subject, 'Application Success', 'success');
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    const errMsg = err.message || err.toString();
-    console.error('Complete SMTP error details:', err);
-    await logEmail(email, subject, 'Application Success', 'failed', errMsg);
-    return { success: false, error: errMsg };
+    return { success: true, message: 'Email sent successfully.', messageId: result.info.messageId };
+  } else {
+    console.log('=========================================\n');
+    await logEmail(email, subject, 'Application Success', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
 /**
- * 6. Test Email Helper (sendTestEmail)
+ * 7. Test Email Helper (sendTestEmail)
  */
 export async function sendTestEmail(toEmail) {
+  const startTime = Date.now();
   const recipient = toEmail || EMAIL_USER || 'kronosai6424@gmail.com';
-  console.log('Sending Test Email...');
+
+  console.log('\n=========================================');
+  console.log('TEST EMAIL REQUEST');
+  console.log(`Email: ${recipient}`);
+  console.log('Calling Email Service...');
 
   const subject = 'Kronos AI Gmail SMTP Test Email';
   const html = getEmailHTMLTemplate({
@@ -500,21 +625,24 @@ export async function sendTestEmail(toEmail) {
     `
   });
 
-  try {
-    const info = await transporter.sendMail({
-      from: `"Kronos AI Diagnostic" <${EMAIL_USER}>`,
-      to: recipient,
-      subject,
-      html
-    });
+  const result = await sendMailWithRetry({
+    from: `"Kronos AI Diagnostic" <${EMAIL_USER}>`,
+    to: recipient,
+    subject,
+    html
+  });
 
-    console.log('Email Sent Successfully');
+  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  if (result.success) {
+    console.log('Email sent successfully.');
+    console.log(`Completed in ${durationSec} seconds.`);
+    console.log('=========================================\n');
     await logEmail(recipient, subject, 'Test Email', 'success');
-    return { success: true, message: 'Email sent successfully', messageId: info.messageId };
-  } catch (err) {
-    const errMsg = err.message || err.toString();
-    console.error('Complete SMTP error details:', err);
-    await logEmail(recipient, subject, 'Test Email', 'failed', errMsg);
-    return { success: false, error: errMsg };
+    return { success: true, message: 'Email sent successfully.', messageId: result.info.messageId };
+  } else {
+    console.log('=========================================\n');
+    await logEmail(recipient, subject, 'Test Email', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }

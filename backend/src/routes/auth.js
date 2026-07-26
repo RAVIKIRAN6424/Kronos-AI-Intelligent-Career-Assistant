@@ -1,12 +1,12 @@
 import express from 'express';
 import { generateOTP, saveOTP, verifyOTPCode } from '../utils/otpHelper.js';
-import { sendOTPEmail, sendForgotPasswordOTP } from '../services/emailService.js';
+import { sendOTPEmail, sendForgotPasswordOTP, sendPasswordChangedEmail } from '../services/emailService.js';
 import { getOne, run } from '../config/database.js';
 
 const router = express.Router();
 
 /**
- * POST /api/auth/send-otp - Request Account Registration OTP Code
+ * POST /api/auth/send-otp - Request Account Registration & Resend OTP Code
  */
 router.post('/send-otp', async (req, res) => {
   try {
@@ -17,32 +17,28 @@ router.post('/send-otp', async (req, res) => {
     }
 
     const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
-    console.log(`Starting OTP request for: ${cleanEmail}...`);
 
+    // Generate a NEW 6-digit OTP code and invalidate previous OTPs
     const code = generateOTP();
-    console.log(`Generated OTP: ${code}...`);
-    await saveOTP(cleanEmail, code);
+    await saveOTP(cleanEmail, code, 'registration');
 
-    console.log(`Sending Gmail OTP to: ${cleanEmail}...`);
+    // Await immediate email sending from Gmail SMTP
     const emailResult = await sendOTPEmail(cleanEmail, name, code);
 
     if (!emailResult.success) {
-      console.error(`Gmail SMTP Error: ${emailResult.error}`);
       return res.status(400).json({
         success: false,
-        error: emailResult.error || 'Failed to send verification code via Gmail'
+        error: emailResult.error || 'Failed to send verification code'
       });
     }
 
-    console.log(`Email Sent Successfully. Message ID: ${emailResult.messageId}`);
     res.json({
       success: true,
-      message: `OTP dispatched to ${cleanEmail}`,
+      message: 'Email sent successfully.',
       messageId: emailResult.messageId
     });
   } catch (err) {
     const errMsg = err.message || err.toString();
-    console.error(`Gmail SMTP Error: ${errMsg}`);
     res.status(400).json({ success: false, error: errMsg });
   }
 });
@@ -69,7 +65,6 @@ router.post('/verify-otp', async (req, res) => {
     let user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
 
     if (!user) {
-      // Create new user account with password
       const result = await run(`
         INSERT INTO users (email, full_name, password, age, phone, target_domain, experience_years)
         VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -84,7 +79,6 @@ router.post('/verify-otp', async (req, res) => {
       ]);
       user = await getOne(`SELECT * FROM users WHERE id = ?`, [result.lastID]);
     } else {
-      // Update existing user info and password
       await run(`
         UPDATE users SET
           full_name = COALESCE(?, full_name),
@@ -98,7 +92,6 @@ router.post('/verify-otp', async (req, res) => {
       user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
     }
 
-    // Sync profile table
     await run(`
       UPDATE profile SET
         full_name = COALESCE(?, full_name),
@@ -122,7 +115,7 @@ router.post('/verify-otp', async (req, res) => {
 });
 
 /**
- * POST /api/auth/register - Initiate Registration
+ * POST /api/auth/register - Initiate Registration (Sends OTP)
  */
 router.post('/register', async (req, res) => {
   try {
@@ -133,32 +126,25 @@ router.post('/register', async (req, res) => {
     }
 
     const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
-    console.log(`Starting registration OTP request for: ${cleanEmail}...`);
-
     const code = generateOTP();
-    console.log(`Generated OTP: ${code}...`);
-    await saveOTP(cleanEmail, code);
+    await saveOTP(cleanEmail, code, 'registration');
 
-    console.log(`Sending Gmail OTP to: ${cleanEmail}...`);
     const emailResult = await sendOTPEmail(cleanEmail, name, code);
 
     if (!emailResult.success) {
-      console.error(`Gmail SMTP Error: ${emailResult.error}`);
       return res.status(400).json({
         success: false,
-        error: emailResult.error || 'Failed to send registration verification code via Gmail'
+        error: emailResult.error || 'Failed to send verification code'
       });
     }
 
-    console.log(`Email Sent Successfully. Message ID: ${emailResult.messageId}`);
     res.json({
       success: true,
-      message: `Verification code sent to ${cleanEmail}. Check your email inbox.`,
+      message: 'Email sent successfully.',
       email: cleanEmail
     });
   } catch (err) {
     const errMsg = err.message || err.toString();
-    console.error(`Gmail SMTP Error: ${errMsg}`);
     res.status(400).json({ success: false, error: errMsg });
   }
 });
@@ -178,7 +164,6 @@ router.post('/login', async (req, res) => {
     let user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
 
     if (user && user.password) {
-      // Validate stored password match
       if (user.password !== password) {
         return res.status(401).json({
           success: false,
@@ -186,14 +171,12 @@ router.post('/login', async (req, res) => {
         });
       }
     } else if (!user) {
-      // Create user account if logging in for the first time
       const result = await run(`
         INSERT INTO users (email, full_name, password, age, phone, target_domain, experience_years)
         VALUES (?, ?, ?, 26, '+91 98765 43210', 'Software', 4)
       `, [cleanEmail, cleanEmail.split('@')[0], password]);
       user = await getOne(`SELECT * FROM users WHERE id = ?`, [result.lastID]);
     } else if (!user.password) {
-      // Update password on first login
       await run(`UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)`, [password, cleanEmail]);
       user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
     }
@@ -220,38 +203,31 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
-    console.log(`Starting Forgot Password OTP request for: ${cleanEmail}...`);
-
     const code = generateOTP();
-    console.log(`Generated Password Reset OTP: ${code}...`);
-    await saveOTP(cleanEmail, code);
+    await saveOTP(cleanEmail, code, 'forgot_password');
 
-    console.log(`Sending Gmail OTP to: ${cleanEmail}...`);
     const emailResult = await sendForgotPasswordOTP(cleanEmail, name, code);
 
     if (!emailResult.success) {
-      console.error(`Gmail SMTP Error: ${emailResult.error}`);
       return res.status(400).json({
         success: false,
-        error: emailResult.error || 'Failed to send password reset code via Gmail'
+        error: emailResult.error || 'Failed to send password reset code'
       });
     }
 
-    console.log(`Password reset email sent successfully via Gmail. Message ID: ${emailResult.messageId}`);
     res.json({
       success: true,
-      message: `Password reset OTP dispatched to ${cleanEmail}.`,
+      message: 'Email sent successfully.',
       email: cleanEmail
     });
   } catch (err) {
     const errMsg = err.message || err.toString();
-    console.error(`Gmail SMTP Error: ${errMsg}`);
     res.status(400).json({ success: false, error: errMsg });
   }
 });
 
 /**
- * POST /api/auth/reset-password - Verify OTP & Set New Password
+ * POST /api/auth/reset-password - Verify OTP & Set New Password (Sends Password Changed Confirmation)
  */
 router.post('/reset-password', async (req, res) => {
   try {
@@ -269,8 +245,11 @@ router.post('/reset-password', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid or expired OTP code. Please request a new code.' });
     }
 
-    // Update candidate password in database
     await run(`UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)`, [newPass, cleanEmail]);
+    const user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+
+    // Send Password Changed Confirmation Email
+    await sendPasswordChangedEmail(cleanEmail, (user && user.full_name) || 'Candidate');
 
     res.json({
       success: true,

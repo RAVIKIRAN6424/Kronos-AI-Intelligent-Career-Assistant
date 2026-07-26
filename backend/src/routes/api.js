@@ -929,11 +929,11 @@ router.get('/email-logs', async (req, res) => {
 
 /**
  * STEP 16: Test Email Dispatch via Gmail SMTP
- * GET /api/test-email
+ * GET & POST /api/test-email
  */
-router.get('/test-email', async (req, res) => {
+const handleTestEmail = async (req, res) => {
   try {
-    const toEmail = req.query.to || req.query.email || process.env.EMAIL_USER || 'kronosai6424@gmail.com';
+    const toEmail = (req.body && req.body.email) || req.query.to || req.query.email || process.env.EMAIL_USER || 'kronosai6424@gmail.com';
     const result = await sendTestEmail(toEmail);
 
     if (!result.success) {
@@ -945,7 +945,7 @@ router.get('/test-email', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Email sent successfully'
+      message: 'Email sent successfully.'
     });
   } catch (err) {
     res.status(400).json({
@@ -953,6 +953,9 @@ router.get('/test-email', async (req, res) => {
       error: err.message || err.toString()
     });
   }
-});
+};
+
+router.get('/test-email', handleTestEmail);
+router.post('/test-email', handleTestEmail);
 
 export default router;

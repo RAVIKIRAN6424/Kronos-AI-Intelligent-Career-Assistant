@@ -50,6 +50,10 @@ export const initDb = () => {
         )
       `);
 
+      // Safely ensure type and is_verified columns exist on existing database installations
+      db.run(`ALTER TABLE otp_codes ADD COLUMN type TEXT DEFAULT 'registration'`, () => {});
+      db.run(`ALTER TABLE otp_codes ADD COLUMN is_verified INTEGER DEFAULT 0`, () => {});
+
       // Email Dispatch Logs Table (Step 15)
       db.run(`
         CREATE TABLE IF NOT EXISTS email_logs (
