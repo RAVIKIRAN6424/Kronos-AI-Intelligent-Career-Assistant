@@ -214,7 +214,7 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
         {/* REGISTER FORM */}
         {activeTab === 'register' && step === 'form' && (
           <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <h2 style={{ color: '#ffffff', fontSize: '22px', fontWeight: 800 }}>Step 2: Create Account</h2>
+            <h2 style={{ color: '#ffffff', fontSize: '22px', fontWeight: 800 }}>Create Account</h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>

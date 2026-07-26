@@ -165,12 +165,12 @@ export const api = {
       return res;
     }
     return getStorage('kronos_portals', [
-      { id: 1, portal_name: 'LinkedIn', is_connected: 1, is_enabled: 1, account_email: 'alex.vance@linkedin.com' },
-      { id: 2, portal_name: 'Indeed', is_connected: 1, is_enabled: 1, account_email: 'alex.vance@indeed.com' },
-      { id: 3, portal_name: 'Glassdoor', is_connected: 0, is_enabled: 1, account_email: 'alex.vance@glassdoor.com' },
-      { id: 4, portal_name: 'Google Jobs', is_connected: 1, is_enabled: 1, account_email: 'alex.vance@gmail.com' },
-      { id: 5, portal_name: 'Naukri', is_connected: 0, is_enabled: 1, account_email: 'alex.vance@naukri.com' },
-      { id: 6, portal_name: 'Monster', is_connected: 0, is_enabled: 0, account_email: 'alex.vance@monster.com' }
+      { id: 1, portal_name: 'LinkedIn', is_connected: 0, is_enabled: 1, account_email: '' },
+      { id: 2, portal_name: 'Indeed', is_connected: 0, is_enabled: 1, account_email: '' },
+      { id: 3, portal_name: 'Glassdoor', is_connected: 0, is_enabled: 1, account_email: '' },
+      { id: 4, portal_name: 'Google Jobs', is_connected: 0, is_enabled: 1, account_email: '' },
+      { id: 5, portal_name: 'Naukri', is_connected: 0, is_enabled: 1, account_email: '' },
+      { id: 6, portal_name: 'Monster', is_connected: 0, is_enabled: 0, account_email: '' }
     ]);
   },
   updatePortal: async (id, payload) => {

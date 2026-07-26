@@ -4,12 +4,12 @@ import { api } from '../utils/api';
 
 export const ConnectedPortalsView = ({ toast }) => {
   const defaultPortals = [
-    { id: 1, portal_name: 'LinkedIn', is_connected: 1, is_enabled: 1, account_email: 'alex.vance@linkedin.com' },
-    { id: 2, portal_name: 'Indeed', is_connected: 1, is_enabled: 1, account_email: 'alex.vance@indeed.com' },
-    { id: 3, portal_name: 'Glassdoor', is_connected: 0, is_enabled: 1, account_email: 'alex.vance@glassdoor.com' },
-    { id: 4, portal_name: 'Google Jobs', is_connected: 1, is_enabled: 1, account_email: 'alex.vance@gmail.com' },
-    { id: 5, portal_name: 'Naukri', is_connected: 0, is_enabled: 1, account_email: 'alex.vance@naukri.com' },
-    { id: 6, portal_name: 'Monster', is_connected: 0, is_enabled: 0, account_email: 'alex.vance@monster.com' }
+    { id: 1, portal_name: 'LinkedIn', is_connected: 0, is_enabled: 1, account_email: '' },
+    { id: 2, portal_name: 'Indeed', is_connected: 0, is_enabled: 1, account_email: '' },
+    { id: 3, portal_name: 'Glassdoor', is_connected: 0, is_enabled: 1, account_email: '' },
+    { id: 4, portal_name: 'Google Jobs', is_connected: 0, is_enabled: 1, account_email: '' },
+    { id: 5, portal_name: 'Naukri', is_connected: 0, is_enabled: 1, account_email: '' },
+    { id: 6, portal_name: 'Monster', is_connected: 0, is_enabled: 0, account_email: '' }
   ];
 
   const [portals, setPortals] = useState(defaultPortals);
@@ -87,7 +87,7 @@ export const ConnectedPortalsView = ({ toast }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Globe size={24} color="var(--accent-cyan)" /> Step 8: Connect Job Portals
+          <Globe size={24} color="var(--accent-cyan)" /> Connect Job Portals
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
           Manage integrated job search platforms. Connect your accounts and use ON/OFF toggles to control which portals Kronos AI scans for live postings.

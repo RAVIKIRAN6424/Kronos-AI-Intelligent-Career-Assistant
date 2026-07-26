@@ -64,7 +64,7 @@ export const AnalyticsView = ({ jobs, currentUser, onOpenAuthModal }) => {
       <div className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <BarChart3 size={24} color="var(--accent-cyan)" /> Step 13: Analytics & Funnel Intelligence
+            <BarChart3 size={24} color="var(--accent-cyan)" /> Analytics & Funnel Intelligence
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
             Real-time metrics on recruitment conversion, role distribution with unique theme colors, and ATS score improvements.

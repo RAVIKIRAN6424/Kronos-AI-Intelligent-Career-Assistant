@@ -18,10 +18,10 @@ export const ProfileSetupView = ({ onProfileUpdated, toast }) => {
 
   // Job Portal Accounts Credentials state (Step 8 inside Profile Setup)
   const [configuredPortals, setConfiguredPortals] = useState([
-    { id: 1, name: 'LinkedIn', email: 'alex.vance@linkedin.com', password: '••••••••', is_connected: 1, is_enabled: 1 },
-    { id: 2, name: 'Indeed', email: 'alex.vance@indeed.com', password: '••••••••', is_connected: 1, is_enabled: 1 },
-    { id: 3, name: 'Glassdoor', email: 'alex.vance@glassdoor.com', password: '', is_connected: 0, is_enabled: 1 },
-    { id: 4, name: 'Naukri', email: 'alex.vance@naukri.com', password: '', is_connected: 0, is_enabled: 1 }
+    { id: 1, name: 'LinkedIn', email: '', password: '', is_connected: 0, is_enabled: 1 },
+    { id: 2, name: 'Indeed', email: '', password: '', is_connected: 0, is_enabled: 1 },
+    { id: 3, name: 'Glassdoor', email: '', password: '', is_connected: 0, is_enabled: 1 },
+    { id: 4, name: 'Naukri', email: '', password: '', is_connected: 0, is_enabled: 1 }
   ]);
   const [newPortalName, setNewPortalName] = useState('LinkedIn');
   const [customPortalName, setCustomPortalName] = useState('');
@@ -211,7 +211,7 @@ export const ProfileSetupView = ({ onProfileUpdated, toast }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <UserCheck size={24} color="var(--accent-cyan)" /> Step 5: Profile Setup & Role Preferences
+          <UserCheck size={24} color="var(--accent-cyan)" /> Profile Setup & Role Preferences
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
           Select the job roles and geographical locations you want Kronos AI to target. Click any role to enable or disable it, then click Save Profile to sync.

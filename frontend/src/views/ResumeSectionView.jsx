@@ -233,7 +233,7 @@ export const ResumeSectionView = ({ toast }) => {
       <div className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FileText size={24} color="var(--accent-cyan)" /> Steps 6 & 7: Multi-Role Resumes & AI ATS Analyzer
+            <FileText size={24} color="var(--accent-cyan)" /> Multi-Role Resumes & AI ATS Analyzer
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
             Manage role-specific resumes. Add or remove job roles, edit resume content, view ATS scores, and run truthful AI optimizations.

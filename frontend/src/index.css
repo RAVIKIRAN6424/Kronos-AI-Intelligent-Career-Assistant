@@ -313,6 +313,28 @@ body {
   box-shadow: 0 0 14px var(--accent-cyan);
 }
 
+.cyber-textarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--border-cyber);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.cyber-textarea:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 16px var(--accent-cyan), inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.75);
+}
+
 /* Buttons */
 .btn-cyber {
   background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
@@ -355,6 +377,27 @@ body {
   background: rgba(0, 242, 254, 0.12);
   box-shadow: 0 0 18px var(--accent-cyan);
   transform: translateY(-2px);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
 }
 
 /* Status Badges */

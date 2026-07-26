@@ -48,7 +48,7 @@ export const AutomationSettingsView = ({ toast }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sliders size={24} color="var(--accent-cyan)" /> Step 9: Automation Settings Studio
+          <Sliders size={24} color="var(--accent-cyan)" /> Automation Settings Studio
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
           Configure execution modes, daily start and stop time windows, and repeat frequency for autonomous job application queueing.

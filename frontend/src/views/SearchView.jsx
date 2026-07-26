@@ -183,7 +183,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sparkles size={24} color="var(--accent-cyan)" /> Step 14: Dedicated Multi-Portal Job Search
+          <Sparkles size={24} color="var(--accent-cyan)" /> Dedicated Multi-Portal Job Search
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
           Explore and filter live job opportunities verified across <strong>LinkedIn, Indeed, Glassdoor, Naukri, Monster, and Google Jobs</strong>. Direct external job portal links are openable without requiring login.

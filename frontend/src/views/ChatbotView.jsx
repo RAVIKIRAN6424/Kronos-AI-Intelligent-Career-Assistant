@@ -90,8 +90,8 @@ export const ChatbotView = ({ toast }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'calc(100vh - 160px)' }}>
       {/* Header */}
       <div className="glass-panel" style={{ padding: '20px' }}>
-        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Bot size={24} color="var(--accent-cyan)" /> Step 16: AI Career & Interview Chatbot Assistant
+        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Bot size={24} color="var(--accent-cyan)" /> AI Career & Interview Chatbot Assistant
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '2px' }}>
           Get instant career advice, STAR-method interview practice, and resume optimization tips via Text & Voice.
