@@ -1,5 +1,4 @@
 import { Resend } from 'resend';
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,32 +11,17 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(__dirname, '../../.env');
 dotenv.config({ path: envPath });
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
-const EMAIL_USER = process.env.EMAIL_USER || '';
-const EMAIL_PASS = (process.env.EMAIL_PASS || '').replace(/\s+/g, '');
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Kronos AI <onboarding@resend.dev>';
 
-const resend = new Resend(RESEND_API_KEY);
-const FROM_EMAIL = 'Kronos AI <onboarding@resend.dev>';
+if (!RESEND_API_KEY) {
+  console.error('❌ ERROR: RESEND_API_KEY is missing from process.env');
+}
+if (!process.env.RESEND_FROM_EMAIL) {
+  console.warn(`⚠️ WARNING: RESEND_FROM_EMAIL not set in process.env. Using default: ${RESEND_FROM_EMAIL}`);
+}
 
-// Gmail SMTP Fallback Transporter
-const gmailTransporter = nodemailer.createTransport({
-  service: 'gmail',
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  pool: true,
-  maxConnections: 5,
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
-  },
-  connectionTimeout: 4000,
-  greetingTimeout: 3000,
-  socketTimeout: 4000
-});
+const resend = new Resend(RESEND_API_KEY || '');
 
 /**
  * Log email dispatch result into SQLite database email_logs table
@@ -55,15 +39,22 @@ export async function logEmail(recipient, subject, templateType, status = 'succe
 }
 
 /**
- * Universal Non-Blocking Email Dispatcher (Resend API -> HTTPS Relay -> Gmail SMTP)
+ * Helper to dispatch emails via Resend SDK with detailed logging
  */
-async function sendUniversalMail({ to, subject, html, attachments = [] }) {
+async function sendResendMail({ to, subject, html, attachments = [] }) {
   const cleanRecipient = (to || '').trim();
+  const fromSender = RESEND_FROM_EMAIL;
 
-  // Step 1: Attempt Resend API over HTTPS Port 443
+  console.log('\n=========================================');
+  console.log('RESEND EMAIL DISPATCH ATTEMPT');
+  console.log(`Recipient: ${cleanRecipient}`);
+  console.log(`From: ${fromSender}`);
+  console.log(`Subject: ${subject}`);
+  console.log('Calling Resend API...');
+
   try {
     const payload = {
-      from: FROM_EMAIL,
+      from: fromSender,
       to: cleanRecipient,
       subject,
       html
@@ -76,41 +67,26 @@ async function sendUniversalMail({ to, subject, html, attachments = [] }) {
       }));
     }
 
-    console.log(`Calling Resend API for ${cleanRecipient}...`);
     const { data, error } = await resend.emails.send(payload);
 
-    if (!error && data?.id) {
-      console.log('✅ Resend Email sent successfully. MessageID:', data.id);
-      return { success: true, messageId: data.id };
+    if (error) {
+      const errorMsg = error.message || JSON.stringify(error);
+      console.error(`Resend Error: ${errorMsg}`);
+      console.error('=========================================\n');
+      return { success: false, error: errorMsg };
     }
 
-    const resendErrMsg = error ? (error.message || JSON.stringify(error)) : 'Resend returned no ID';
-    console.warn(`⚠️ Resend API Warning (${resendErrMsg}). Switching to fallback delivery...`);
-  } catch (resendErr) {
-    console.warn(`⚠️ Resend SDK Exception (${resendErr.message}). Switching to fallback delivery...`);
+    const messageId = data?.id || 'resend-id';
+    console.log(`Resend Message ID: ${messageId}`);
+    console.log('Email sent successfully.');
+    console.log('=========================================\n');
+    return { success: true, messageId };
+  } catch (err) {
+    const errorMsg = err.message || err.toString();
+    console.error(`Resend Error: ${errorMsg}`);
+    console.error('=========================================\n');
+    return { success: false, error: errorMsg };
   }
-
-  // Step 2: Attempt Nodemailer Gmail SMTP (with fast 4s timeout)
-  try {
-    console.log(`Calling Gmail SMTP Fallback for ${cleanRecipient}...`);
-    const mailOptions = {
-      from: `"Kronos AI System" <${EMAIL_USER}>`,
-      to: cleanRecipient,
-      subject,
-      html,
-      attachments
-    };
-
-    const info = await gmailTransporter.sendMail(mailOptions);
-    console.log('✅ Gmail SMTP Email sent successfully. Response:', info.response || info.messageId);
-    return { success: true, messageId: info.messageId || 'gmail-smtp-id' };
-  } catch (gmailErr) {
-    console.warn('⚠️ External Email Delivery Notice (Cloud SMTP Port Restricted):', gmailErr.message || gmailErr);
-  }
-
-  // Step 3: Unblock Candidate Account Setup: Return success so registration step advances cleanly!
-  console.log(`✅ Account verification code generated & saved for ${cleanRecipient}. Advancing registration step.`);
-  return { success: true, message: 'Verification code generated successfully.', messageId: `internal-otp-${Date.now()}` };
 }
 
 /**
@@ -249,7 +225,7 @@ function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }
       </div>
       <div class="footer">
         <p>⚡ <strong>Kronos AI Intelligent Career Assistant</strong></p>
-        <p>Support Contact: <a href="mailto:kronosai6424@gmail.com">kronosai6424@gmail.com</a></p>
+        <p>Support Contact: <a href="mailto:support@resend.dev">support@resend.dev</a></p>
         <p>© 2026 Kronos AI Systems. All rights reserved.</p>
       </div>
     </div>
@@ -272,12 +248,6 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     userName = email ? email.split('@')[0] : 'Candidate';
   }
 
-  console.log('\n=========================================');
-  console.log('OTP REQUEST RECEIVED');
-  console.log(`Email: ${email}`);
-  console.log(`Generated OTP: ${otp}`);
-  console.log('Saving OTP...');
-
   const subject = 'Verify your Kronos AI Account';
   const html = getEmailHTMLTemplate({
     title: 'Account Verification',
@@ -294,7 +264,7 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
     `
   });
 
-  const result = await sendUniversalMail({
+  const result = await sendResendMail({
     to: email,
     subject,
     html
@@ -303,15 +273,11 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
   const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
 
   if (result.success) {
-    console.log(`Completed in ${durationSec} seconds.`);
-    console.log('=========================================\n');
     await logEmail(email, subject, 'Registration OTP', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    console.log(`OTP Delivery Notice in ${durationSec} seconds.`);
-    console.log('=========================================\n');
-    await logEmail(email, subject, 'Registration OTP', 'notice', result.error);
-    return { success: true, message: 'Verification code generated.', messageId: 'internal-id', otp };
+    await logEmail(email, subject, 'Registration OTP', 'failed', result.error);
+    return { success: false, error: result.error, otp };
   }
 }
 
@@ -320,12 +286,6 @@ export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null
  */
 export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
   const startTime = Date.now();
-  console.log('\n=========================================');
-  console.log('FORGOT PASSWORD OTP REQUEST');
-  console.log(`Email: ${email}`);
-  console.log(`Generated OTP: ${otp}`);
-  console.log('Saving OTP...');
-
   const subject = 'Kronos AI - Password Reset Verification Code';
   const html = getEmailHTMLTemplate({
     title: 'Password Reset Request',
@@ -342,7 +302,7 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
     `
   });
 
-  const result = await sendUniversalMail({
+  const result = await sendResendMail({
     to: email,
     subject,
     html
@@ -351,15 +311,11 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
   const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
 
   if (result.success) {
-    console.log(`Completed in ${durationSec} seconds.`);
-    console.log('=========================================\n');
     await logEmail(email, subject, 'Forgot Password OTP', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    console.log(`Password Reset OTP Notice in ${durationSec} seconds.`);
-    console.log('=========================================\n');
-    await logEmail(email, subject, 'Forgot Password OTP', 'notice', result.error);
-    return { success: true, message: 'Reset code generated.', messageId: 'internal-id', otp };
+    await logEmail(email, subject, 'Forgot Password OTP', 'failed', result.error);
+    return { success: false, error: result.error, otp };
   }
 }
 
@@ -368,10 +324,6 @@ export async function sendForgotPasswordOTP(email, userName = 'User', otp) {
  */
 export async function sendPasswordChangedEmail(email, userName = 'User') {
   const startTime = Date.now();
-  console.log('\n=========================================');
-  console.log('PASSWORD CHANGED CONFIRMATION REQUEST');
-  console.log(`Email: ${email}`);
-
   const subject = 'Security Notification: Your Kronos AI Password Was Changed';
   const html = getEmailHTMLTemplate({
     title: 'Password Successfully Changed',
@@ -386,23 +338,18 @@ export async function sendPasswordChangedEmail(email, userName = 'User') {
     `
   });
 
-  const result = await sendUniversalMail({
+  const result = await sendResendMail({
     to: email,
     subject,
     html
   });
 
-  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
-
   if (result.success) {
-    console.log(`Completed in ${durationSec} seconds.`);
-    console.log('=========================================\n');
     await logEmail(email, subject, 'Password Changed Alert', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    console.log('=========================================\n');
-    await logEmail(email, subject, 'Password Changed Alert', 'notice', result.error);
-    return { success: true, message: 'Password updated.' };
+    await logEmail(email, subject, 'Password Changed Alert', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
@@ -413,10 +360,6 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
   const startTime = Date.now();
   const dateStr = reportData.date || new Date().toLocaleDateString('en-US', { dateStyle: 'medium' });
   const subject = `Kronos AI Daily Job Report - ${dateStr}`;
-
-  console.log('\n=========================================');
-  console.log('DAILY JOB REPORT REQUEST');
-  console.log(`Email: ${email}`);
 
   const jobRows = (reportData.jobs || [
     { portal: 'LinkedIn', company: 'Nexus Cybernetics', role: 'Lead AI Architect', resume: 'Software_Engineer_Resume.pdf', status: 'Applied' },
@@ -477,24 +420,19 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
     });
   }
 
-  const result = await sendUniversalMail({
+  const result = await sendResendMail({
     to: email,
     subject,
     html,
     attachments
   });
 
-  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
-
   if (result.success) {
-    console.log(`Completed in ${durationSec} seconds.`);
-    console.log('=========================================\n');
     await logEmail(email, subject, 'Daily Job Report', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    console.log('=========================================\n');
-    await logEmail(email, subject, 'Daily Job Report', 'notice', result.error);
-    return { success: true, message: 'Daily report processed.' };
+    await logEmail(email, subject, 'Daily Job Report', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
@@ -503,10 +441,6 @@ export async function sendDailyJobReport(email, userName = 'User', reportData = 
  */
 export async function sendMissingInformationEmail(email, userName = 'User', missingFields = ['Expected Salary', 'Portfolio URL'], jobDetails = {}) {
   const startTime = Date.now();
-  console.log('\n=========================================');
-  console.log('MISSING INFORMATION ALERT REQUEST');
-  console.log(`Email: ${email}`);
-
   const subject = 'Action Required: Missing Profile Information for Application';
   const missingList = missingFields.map(f => `<li style="margin-bottom: 6px; color: #f43f5e; font-weight: 700;">${f}</li>`).join('');
 
@@ -532,23 +466,18 @@ export async function sendMissingInformationEmail(email, userName = 'User', miss
     }
   });
 
-  const result = await sendUniversalMail({
+  const result = await sendResendMail({
     to: email,
     subject,
     html
   });
 
-  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
-
   if (result.success) {
-    console.log(`Completed in ${durationSec} seconds.`);
-    console.log('=========================================\n');
     await logEmail(email, subject, 'Missing Profile Alert', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    console.log('=========================================\n');
-    await logEmail(email, subject, 'Missing Profile Alert', 'notice', result.error);
-    return { success: true, message: 'Missing profile alert logged.' };
+    await logEmail(email, subject, 'Missing Profile Alert', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
@@ -559,10 +488,6 @@ export async function sendApplicationSuccessEmail(email, userName = 'User', appl
   const startTime = Date.now();
   const company = applicationDetails.company || 'Target Company';
   const subject = `Application Submitted Successfully - ${company}`;
-
-  console.log('\n=========================================');
-  console.log('APPLICATION SUCCESS CONFIRMATION REQUEST');
-  console.log(`Email: ${email}`);
 
   const html = getEmailHTMLTemplate({
     title: 'Application Submitted!',
@@ -583,23 +508,18 @@ export async function sendApplicationSuccessEmail(email, userName = 'User', appl
     `
   });
 
-  const result = await sendUniversalMail({
+  const result = await sendResendMail({
     to: email,
     subject,
     html
   });
 
-  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
-
   if (result.success) {
-    console.log(`Completed in ${durationSec} seconds.`);
-    console.log('=========================================\n');
     await logEmail(email, subject, 'Application Success', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    console.log('=========================================\n');
-    await logEmail(email, subject, 'Application Success', 'notice', result.error);
-    return { success: true, message: 'Application success confirmation logged.' };
+    await logEmail(email, subject, 'Application Success', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }
 
@@ -608,42 +528,33 @@ export async function sendApplicationSuccessEmail(email, userName = 'User', appl
  */
 export async function sendTestEmail(toEmail) {
   const startTime = Date.now();
-  const recipient = toEmail || '6424ravikiran@gmail.com';
+  const recipient = toEmail || 'ravikiranmadasu@gmail.com';
 
-  console.log('\n=========================================');
-  console.log('TEST EMAIL REQUEST');
-  console.log(`Email: ${recipient}`);
-
-  const subject = 'Kronos AI Email Service System Diagnostic';
+  const subject = 'Kronos AI Resend SDK Integration Diagnostic';
   const html = getEmailHTMLTemplate({
-    title: 'Resend & Non-Blocking Universal Fail-Safe Diagnostic',
+    title: 'Resend Email Service System Diagnostic',
     badge: 'SYSTEM INTEGRATION TEST',
     userName: recipient.split('@')[0] || 'User',
     bodyContent: `
-      <p>Congratulations! Your <strong>Kronos AI Non-Blocking Email Engine</strong> is working perfectly for all candidate email addresses.</p>
+      <p>Congratulations! Your <strong>Resend SDK Integration</strong> for Kronos AI is working perfectly.</p>
       <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 16px; margin: 16px 0;">
-        <p style="margin: 0; color: #10b981; font-weight: 700;">✅ Email API Status: Active & Operational</p>
+        <p style="margin: 0; color: #10b981; font-weight: 700;">✅ Resend Email API Status: Active & Connected</p>
       </div>
-      <p style="font-size: 13px; color: #94a3b8;">Dispatched via Non-Blocking Universal Fail-Safe Engine.</p>
+      <p style="font-size: 13px; color: #94a3b8;">Dispatched via Resend API Key using ${RESEND_FROM_EMAIL}.</p>
     `
   });
 
-  const result = await sendUniversalMail({
+  const result = await sendResendMail({
     to: recipient,
     subject,
     html
   });
 
-  const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
-
   if (result.success) {
-    console.log(`Completed in ${durationSec} seconds.`);
-    console.log('=========================================\n');
     await logEmail(recipient, subject, 'Test Email', 'success');
     return { success: true, message: 'Email sent successfully.', messageId: result.messageId };
   } else {
-    console.log('=========================================\n');
-    await logEmail(recipient, subject, 'Test Email', 'notice', result.error);
-    return { success: true, message: 'Diagnostic test executed.' };
+    await logEmail(recipient, subject, 'Test Email', 'failed', result.error);
+    return { success: false, error: result.error };
   }
 }

@@ -25,6 +25,7 @@ async function performSystemAudit() {
   console.log('--- 1. ENVIRONMENT VARIABLES AUDIT ---');
   const requiredEnvVars = [
     { name: 'RESEND_API_KEY', val: process.env.RESEND_API_KEY, req: true },
+    { name: 'RESEND_FROM_EMAIL', val: process.env.RESEND_FROM_EMAIL || 'Kronos AI <onboarding@resend.dev>', req: false },
     { name: 'PORT', val: process.env.PORT || '8080 (Default)', req: false },
     { name: 'JWT_SECRET', val: process.env.JWT_SECRET || 'kronos-secret-key-2026', req: false }
   ];
@@ -58,7 +59,7 @@ async function performSystemAudit() {
     });
   }
 
-  const testEmail = '6424ravikiran@gmail.com';
+  const testEmail = 'ravikiranmadasu@gmail.com';
   const name = 'Alex Vance Audit';
 
   // STEP 3: OTP Generation, Invalidation & Expiry Audit
