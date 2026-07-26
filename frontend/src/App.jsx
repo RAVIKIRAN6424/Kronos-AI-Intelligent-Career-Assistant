@@ -10,6 +10,7 @@ import { LandingView } from './views/LandingView';
 import { DashboardView } from './views/DashboardView';
 import { JobsCrmView } from './views/JobsCrmView';
 import { ProfileSetupView } from './views/ProfileSetupView';
+import { ProfileView } from './views/ProfileView';
 import { ResumeSectionView } from './views/ResumeSectionView';
 import { ConnectedPortalsView } from './views/ConnectedPortalsView';
 import { AutomationSettingsView } from './views/AutomationSettingsView';
@@ -32,6 +33,13 @@ export function App() {
   const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
   const [authMode, setAuthMode] = useState('register');
   const [backendOnline, setBackendOnline] = useState(true);
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('kronos_user');
+    setActiveTab('landing');
+    addToast('Logged out successfully.', 'info');
+  };
 
   // CRM Data
   const [jobs, setJobs] = useState([]);
@@ -126,6 +134,9 @@ export function App() {
             onOpenAuthModal={handleOpenAuth}
             activeTheme={activeTheme}
             setTheme={setActiveTheme}
+            currentUser={currentUser}
+            onNavigate={setActiveTab}
+            onLogout={handleLogout}
           />
         )}
 
@@ -181,16 +192,18 @@ export function App() {
         )}
 
         {activeTab === 'profile' && (
-          <ProfileSetupView
+          <ProfileView
             onProfileUpdated={(updated) => {
               if (updated && updated.deleted) {
                 setCurrentUser(null);
                 localStorage.removeItem('kronos_user');
+                addToast('Account deleted successfully! You can now create a new account.', 'info');
                 handleOpenAuth('register');
               } else if (updated && updated.full_name) {
                 setCurrentUser(updated);
               }
             }}
+            onLogout={handleLogout}
             toast={addToast}
           />
         )}

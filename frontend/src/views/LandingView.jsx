@@ -1,8 +1,8 @@
 import React from 'react';
-import { Sparkles, Shield, Rocket, ArrowRight, Sun, Moon, Info, Mail, UserPlus, LogIn } from 'lucide-react';
+import { Sparkles, Shield, Rocket, ArrowRight, Sun, Moon, Info, Mail, UserPlus, LogIn, LayoutDashboard, User, LogOut } from 'lucide-react';
 import { KronosAppLogo } from '../components/KronosAppLogo';
 
-export const LandingView = ({ onOpenAuthModal, activeTheme, setTheme }) => {
+export const LandingView = ({ onOpenAuthModal, activeTheme, setTheme, currentUser, onNavigate, onLogout }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '40px', padding: '20px 0 60px' }}>
       {/* Hero Section */}
@@ -26,12 +26,28 @@ export const LandingView = ({ onOpenAuthModal, activeTheme, setTheme }) => {
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button className="btn-cyber" style={{ padding: '14px 28px', fontSize: '15px' }} onClick={() => onOpenAuthModal('register')}>
-              <UserPlus size={18} /> Create Account <ArrowRight size={18} />
-            </button>
-            <button className="btn-cyber" style={{ background: 'rgba(157, 78, 221, 0.15)', borderColor: 'rgba(157, 78, 221, 0.4)', color: '#d8b4fe', padding: '14px 28px', fontSize: '15px' }} onClick={() => onOpenAuthModal('login')}>
-              <LogIn size={18} /> Sign In
-            </button>
+            {currentUser ? (
+              <>
+                <button className="btn-cyber" style={{ padding: '14px 28px', fontSize: '15px' }} onClick={() => onNavigate && onNavigate('dashboard')}>
+                  <LayoutDashboard size={18} /> Launch Dashboard <ArrowRight size={18} />
+                </button>
+                <button className="btn-cyber" style={{ background: 'rgba(157, 78, 221, 0.15)', borderColor: 'rgba(157, 78, 221, 0.4)', color: '#d8b4fe', padding: '14px 28px', fontSize: '15px' }} onClick={() => onNavigate && onNavigate('profile')}>
+                  <User size={18} /> Candidate Profile
+                </button>
+                <button className="btn-cyber-outline" style={{ padding: '14px 20px', fontSize: '15px', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)' }} onClick={onLogout}>
+                  <LogOut size={18} /> Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="btn-cyber" style={{ padding: '14px 28px', fontSize: '15px' }} onClick={() => onOpenAuthModal('register')}>
+                  <UserPlus size={18} /> Create Account <ArrowRight size={18} />
+                </button>
+                <button className="btn-cyber" style={{ background: 'rgba(157, 78, 221, 0.15)', borderColor: 'rgba(157, 78, 221, 0.4)', color: '#d8b4fe', padding: '14px 28px', fontSize: '15px' }} onClick={() => onOpenAuthModal('login')}>
+                  <LogIn size={18} /> Sign In
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Save, FileText, Globe, MapPin, Award, BookOpen, Briefcase, Trash2 } from 'lucide-react';
+import { UserCheck, Save, FileText, Globe, MapPin, Award, BookOpen, Briefcase, Trash2, LogOut } from 'lucide-react';
 import { api } from '../utils/api';
 
-export const ProfileView = ({ onProfileUpdated, toast }) => {
+export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -166,6 +166,11 @@ export const ProfileView = ({ onProfileUpdated, toast }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          {onLogout && (
+            <button type="button" onClick={onLogout} style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.2)', color: '#ffffff', padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '13px' }}>
+              <LogOut size={16} /> Sign Out
+            </button>
+          )}
           <button type="button" onClick={() => setShowDeleteConfirm(true)} style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ef4444', padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '13px' }}>
             <Trash2 size={16} /> Delete Account
           </button>

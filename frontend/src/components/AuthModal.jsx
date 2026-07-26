@@ -47,6 +47,14 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
   const currentTime = now.toLocaleTimeString();
 
   useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode || 'login');
+      setStep(initialMode || 'login');
+      setOtpCode('');
+    }
+  }, [isOpen, initialMode]);
+
+  useEffect(() => {
     let timer;
     if (cooldown > 0) {
       timer = setInterval(() => setCooldown(c => c - 1), 1000);

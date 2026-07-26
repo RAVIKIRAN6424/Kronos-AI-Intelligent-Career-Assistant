@@ -146,7 +146,7 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
         {/* User Auth Button */}
         {currentUser ? (
           <div
-            onClick={onOpenAuthModal}
+            onClick={() => setActiveTab('profile')}
             style={{
               display: 'flex',
               alignItems: 'center',
