@@ -35,22 +35,9 @@ const handleSendOTP = async (req, res) => {
       });
     }
 
-    // 2. Check duplicate email in database
-    const existingUser = await getOne(
-      `SELECT * FROM users WHERE LOWER(email) = LOWER(?) AND (verified = 1 OR verified IS NULL)`,
-      [cleanEmail]
-    );
-
-    if (existingUser && existingUser.verified !== 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'An account already exists with this email.'
-      });
-    }
-
     const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
 
-    // 3. Generate secure 6-digit OTP and save
+    // 2. Generate secure 6-digit OTP and save to database
     const code = generateOTP();
     await saveOTP(cleanEmail, code, 'registration');
 
