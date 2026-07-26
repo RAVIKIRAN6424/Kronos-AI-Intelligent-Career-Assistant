@@ -10,6 +10,8 @@ backend/dist/
 
 # Environment files
 .env
+.env.local
+.env.production
 .env.*
 !.env.example
 
@@ -24,9 +26,3 @@ yarn-error.log*
 .idea/
 .DS_Store
 Thumbs.db
-
-# IIS Installers & Generated Launchers
-*.msi
-Install-IIS-UrlRewrite.bat
-Fix-IIS-Permissions.bat
-Launch-Kronos-AI-CRM.html
