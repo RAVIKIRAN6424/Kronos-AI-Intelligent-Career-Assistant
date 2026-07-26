@@ -13,31 +13,41 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 const handleSendOTP = async (req, res) => {
   try {
+    console.log('\n=========================================');
+    console.log('OTP REQUEST RECEIVED');
     const { email, full_name, fullName } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
 
     // 1. Email Format Validation
     if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      console.log('❌ INVALID EMAIL FORMAT');
+      console.log('=========================================\n');
       return res.status(400).json({
         success: false,
         message: 'Please enter a valid email address.'
       });
     }
+    console.log(`EMAIL VALIDATED: ${cleanEmail}`);
 
     // 2. Check Database for Existing User BEFORE generating OTP
     const existingUser = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
     if (existingUser && existingUser.verified !== 0) {
+      console.log(`❌ USER EXISTS: ${cleanEmail}`);
+      console.log('=========================================\n');
       return res.status(400).json({
         success: false,
-        message: 'An account already exists with this email address.'
+        message: 'An account with this email already exists.'
       });
     }
 
+    console.log('NEW USER DETECTED');
     const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
 
     // 3. Generate & Save NEW 6-digit OTP
     const code = generateOTP();
+    console.log(`OTP GENERATED: ${code}`);
     await saveOTP(cleanEmail, code, 'registration');
+    console.log('OTP SAVED');
 
     // 4. Send OTP to User Email via Resend SDK
     const emailResult = await sendOTPEmail(cleanEmail, name, code);
@@ -65,6 +75,8 @@ const handleSendOTP = async (req, res) => {
     });
   } catch (err) {
     const errMsg = err.message || err.toString();
+    console.error('❌ SEND OTP EXCEPTION:', errMsg);
+    console.log('=========================================\n');
     return res.status(500).json({
       success: false,
       message: errMsg
@@ -74,10 +86,6 @@ const handleSendOTP = async (req, res) => {
 
 router.post('/send-otp', handleSendOTP);
 router.post('/resend-otp', handleSendOTP);
-
-/**
- * POST /api/auth/register - Register Endpoint (Validates email & sends OTP)
- */
 router.post('/register', handleSendOTP);
 
 /**
@@ -110,6 +118,8 @@ router.post('/verify-otp', async (req, res) => {
         message: 'Invalid or expired OTP code. Please request a new code.'
       });
     }
+
+    console.log(`OTP VERIFIED: ${cleanEmail}`);
 
     const name = full_name || cleanEmail.split('@')[0] || 'Candidate';
     let user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
@@ -154,7 +164,7 @@ router.post('/verify-otp', async (req, res) => {
 });
 
 /**
- * POST /api/auth/login - Login Authentication (Allowed only when user exists & verified)
+ * POST /api/auth/login - Login Authentication
  */
 router.post('/login', async (req, res) => {
   try {
@@ -209,19 +219,25 @@ router.post('/login', async (req, res) => {
  */
 router.post('/forgot-password', async (req, res) => {
   try {
+    console.log('\n=========================================');
+    console.log('FORGOT PASSWORD REQUEST');
     const { email, full_name, fullName } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
 
     if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      console.log('❌ INVALID EMAIL FORMAT');
+      console.log('=========================================\n');
       return res.status(400).json({
         success: false,
         message: 'Please enter a valid email address.'
       });
     }
+    console.log(`EMAIL VALIDATED: ${cleanEmail}`);
 
-    // Check if user exists
     const user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
     if (!user) {
+      console.log(`❌ USER NOT FOUND: ${cleanEmail}`);
+      console.log('=========================================\n');
       return res.status(400).json({
         success: false,
         message: 'No account found with this email address.'
@@ -230,7 +246,9 @@ router.post('/forgot-password', async (req, res) => {
 
     const name = fullName || full_name || user.full_name || 'Candidate';
     const code = generateOTP();
+    console.log(`OTP GENERATED: ${code}`);
     await saveOTP(cleanEmail, code, 'forgot_password');
+    console.log('OTP SAVED');
 
     const emailResult = await sendForgotPasswordOTP(cleanEmail, name, code);
 
@@ -257,6 +275,8 @@ router.post('/forgot-password', async (req, res) => {
     });
   } catch (err) {
     const errMsg = err.message || err.toString();
+    console.error('❌ FORGOT PASSWORD EXCEPTION:', errMsg);
+    console.log('=========================================\n');
     res.status(500).json({
       success: false,
       message: errMsg
@@ -265,7 +285,7 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 /**
- * POST /api/auth/reset-password - Verify OTP & Set New Password
+ * POST /api/auth/reset-password - Verify OTP & Update Password
  */
 router.post('/reset-password', async (req, res) => {
   try {
@@ -297,6 +317,7 @@ router.post('/reset-password', async (req, res) => {
     }
 
     await run(`UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)`, [newPass, cleanEmail]);
+    console.log(`PASSWORD UPDATED: ${cleanEmail}`);
     const user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
 
     await sendPasswordChangedEmail(cleanEmail, (user && user.full_name) || 'Candidate');

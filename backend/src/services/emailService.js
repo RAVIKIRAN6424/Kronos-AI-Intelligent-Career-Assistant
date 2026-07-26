@@ -55,7 +55,7 @@ async function sendResendMail({ to, subject, html, attachments = [] }) {
   }
 
   console.log('\n=========================================');
-  console.log('RESEND EMAIL DISPATCH REQUEST');
+  console.log('SENDING EMAIL USING RESEND');
   console.log(`Sender: ${senderEmail}`);
   console.log(`Recipient: ${cleanRecipient}`);
   console.log(`Subject: ${subject}`);
@@ -79,10 +79,10 @@ async function sendResendMail({ to, subject, html, attachments = [] }) {
 
     if (error) {
       const errorMsg = error.message || JSON.stringify(error);
-      console.error('❌ Resend API Error:', errorMsg);
+      console.error('❌ RESEND ERROR:', errorMsg);
       console.log('=========================================\n');
 
-      const isResendTestingError = errorMsg.toLowerCase().includes('testing emails');
+      const isResendTestingError = errorMsg.toLowerCase().includes('testing emails') || errorMsg.toLowerCase().includes('domain is not verified');
 
       return {
         success: false,
@@ -93,7 +93,8 @@ async function sendResendMail({ to, subject, html, attachments = [] }) {
     }
 
     const messageId = data?.id || 'resend-message-id';
-    console.log(`✅ Resend Message ID: ${messageId}`);
+    console.log('✅ EMAIL SENT SUCCESSFULLY');
+    console.log(`MESSAGE ID: ${messageId}`);
     console.log('=========================================\n');
 
     return {
@@ -102,10 +103,10 @@ async function sendResendMail({ to, subject, html, attachments = [] }) {
     };
   } catch (err) {
     const errorMsg = err.message || err.toString();
-    console.error('❌ Resend Exception:', errorMsg);
+    console.error('❌ RESEND EXCEPTION:', errorMsg);
     console.log('=========================================\n');
 
-    const isResendTestingError = errorMsg.toLowerCase().includes('testing emails');
+    const isResendTestingError = errorMsg.toLowerCase().includes('testing emails') || errorMsg.toLowerCase().includes('domain is not verified');
 
     return {
       success: false,
@@ -195,18 +196,6 @@ function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }
       font-weight: 900;
       color: #00f2fe;
       letter-spacing: 8px;
-    }
-    .btn {
-      display: inline-block;
-      padding: 14px 28px;
-      background: linear-gradient(135deg, #00f2fe, #9d4edd);
-      color: #040814;
-      font-weight: 800;
-      text-decoration: none;
-      border-radius: 8px;
-      margin: 20px 0;
-      font-size: 14px;
-      letter-spacing: 0.5px;
     }
     .footer {
       background-color: #030712;
