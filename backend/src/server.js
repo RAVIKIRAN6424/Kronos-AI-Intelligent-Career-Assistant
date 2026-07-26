@@ -23,7 +23,7 @@ if (!process.env.RESEND_API_KEY) {
 }
 
 if (!process.env.RESEND_FROM_EMAIL) {
-  console.warn('⚠️ WARNING: RESEND_FROM_EMAIL is not set in environment variables! Defaulting to "Kronos AI <onboarding@resend.dev>". For production custom domain sending, set RESEND_FROM_EMAIL=no-reply@yourdomain.com');
+  throw new Error("RESEND_FROM_EMAIL is not configured.");
 } else {
   console.log(`✅ RESEND_FROM_EMAIL configured: ${process.env.RESEND_FROM_EMAIL}`);
 }

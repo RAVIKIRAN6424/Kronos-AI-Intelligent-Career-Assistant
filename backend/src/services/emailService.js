@@ -15,11 +15,11 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
 
 if (!RESEND_API_KEY) {
-  throw new Error("RESEND_API_KEY environment variable is required.");
+  throw new Error("RESEND_API_KEY is not configured.");
 }
 
 if (!RESEND_FROM_EMAIL) {
-  throw new Error("RESEND_FROM_EMAIL environment variable is required.");
+  throw new Error("RESEND_FROM_EMAIL is not configured.");
 }
 
 const resend = new Resend(RESEND_API_KEY);
@@ -44,12 +44,20 @@ export async function logEmail(recipient, subject, templateType, status = 'succe
  */
 async function sendResendMail({ to, subject, html, attachments = [] }) {
   const cleanRecipient = (to || '').trim();
-  const senderEmail = RESEND_FROM_EMAIL;
+  const senderEmail = process.env.RESEND_FROM_EMAIL;
+
+  if (!senderEmail) {
+    throw new Error("RESEND_FROM_EMAIL is not configured.");
+  }
+
+  if (senderEmail.toLowerCase().includes('onboarding@resend.dev')) {
+    throw new Error("Invalid sender: onboarding@resend.dev is disallowed. Please configure a verified domain sender in RESEND_FROM_EMAIL.");
+  }
 
   console.log('\n=========================================');
   console.log('RESEND EMAIL DISPATCH REQUEST');
-  console.log(`Recipient: ${cleanRecipient}`);
   console.log(`Sender: ${senderEmail}`);
+  console.log(`Recipient: ${cleanRecipient}`);
   console.log(`Subject: ${subject}`);
 
   try {
