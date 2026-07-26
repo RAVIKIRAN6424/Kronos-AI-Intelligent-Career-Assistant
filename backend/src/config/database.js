@@ -25,6 +25,7 @@ export const initDb = () => {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           email TEXT UNIQUE NOT NULL,
           full_name TEXT,
+          password TEXT,
           age INTEGER,
           phone TEXT,
           target_domain TEXT DEFAULT 'Software',
@@ -32,6 +33,9 @@ export const initDb = () => {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
+
+      // Safely ensure password column exists on existing installations
+      db.run(`ALTER TABLE users ADD COLUMN password TEXT`, () => {});
 
       // 2. OTP Codes Table (Account Verification & Forgot Password)
       db.run(`

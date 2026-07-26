@@ -6,93 +6,99 @@ import { getOne, run } from '../config/database.js';
 const router = express.Router();
 
 /**
- * POST /api/auth/send-otp
+ * POST /api/auth/send-otp - Request Account Registration OTP Code
  */
 router.post('/send-otp', async (req, res) => {
   try {
     const { email, full_name, fullName } = req.body;
-    if (!email || !email.includes('@')) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       return res.status(400).json({ success: false, error: 'Valid email address is required.' });
     }
 
-    const name = fullName || full_name || email.split('@')[0] || 'Candidate';
-    console.log(`Starting OTP request for: ${email}...`);
+    const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
+    console.log(`Starting OTP request for: ${cleanEmail}...`);
 
     const code = generateOTP();
     console.log(`Generated OTP: ${code}...`);
-    await saveOTP(email, code);
+    await saveOTP(cleanEmail, code);
 
-    console.log(`Calling Resend for: ${email}...`);
-    const emailResult = await sendOTPEmail(email, name, code);
+    console.log(`Sending Gmail OTP to: ${cleanEmail}...`);
+    const emailResult = await sendOTPEmail(cleanEmail, name, code);
 
     if (!emailResult.success) {
-      console.error(`Resend API Error: ${emailResult.error}`);
+      console.error(`Gmail SMTP Error: ${emailResult.error}`);
       return res.status(400).json({
         success: false,
-        error: emailResult.error || 'Failed to send verification email via Resend'
+        error: emailResult.error || 'Failed to send verification code via Gmail'
       });
     }
 
-    console.log(`Email sent successfully via Resend. Message ID: ${emailResult.messageId}`);
+    console.log(`Email Sent Successfully. Message ID: ${emailResult.messageId}`);
     res.json({
       success: true,
-      message: `OTP dispatched to ${email}`,
+      message: `OTP dispatched to ${cleanEmail}`,
       messageId: emailResult.messageId
     });
   } catch (err) {
-    const errMsg = err.message || JSON.stringify(err);
-    console.error(`Resend API Error: ${errMsg}`);
+    const errMsg = err.message || err.toString();
+    console.error(`Gmail SMTP Error: ${errMsg}`);
     res.status(400).json({ success: false, error: errMsg });
   }
 });
 
 /**
- * POST /api/auth/verify-otp
+ * POST /api/auth/verify-otp - Verify Registration OTP & Complete Account Creation
  */
 router.post('/verify-otp', async (req, res) => {
   try {
-    const { email, code, full_name, age, phone, target_domain, experience_years } = req.body;
-    if (!email || !code) {
+    const { email, otp, code, full_name, password, age, phone, target_domain, experience_years } = req.body;
+    const inputOtp = otp || code;
+    const cleanEmail = (email || '').toLowerCase().trim();
+
+    if (!cleanEmail || !inputOtp) {
       return res.status(400).json({ success: false, error: 'Email and OTP code are required.' });
     }
 
-    const isValid = await verifyOTPCode(email, code);
+    const isValid = await verifyOTPCode(cleanEmail, inputOtp);
     if (!isValid) {
       return res.status(401).json({ success: false, error: 'Invalid or expired OTP code. Please request a new code.' });
     }
 
-    // Check if user exists
-    let user = await getOne(`SELECT * FROM users WHERE email = ?`, [email]);
+    const name = full_name || cleanEmail.split('@')[0] || 'Candidate';
+    let user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
 
     if (!user) {
-      // Create new user
+      // Create new user account with password
       const result = await run(`
-        INSERT INTO users (email, full_name, age, phone, target_domain, experience_years)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO users (email, full_name, password, age, phone, target_domain, experience_years)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `, [
-        email,
-        full_name || email.split('@')[0],
-        age ? parseInt(age) : 25,
+        cleanEmail,
+        name,
+        password || '',
+        age ? parseInt(age) : 26,
         phone || '+91 98765 43210',
         target_domain || 'Software',
-        experience_years ? parseInt(experience_years) : 3
+        experience_years ? parseInt(experience_years) : 4
       ]);
       user = await getOne(`SELECT * FROM users WHERE id = ?`, [result.lastID]);
-    } else if (full_name || target_domain) {
-      // Update existing user info
+    } else {
+      // Update existing user info and password
       await run(`
         UPDATE users SET
           full_name = COALESCE(?, full_name),
+          password = COALESCE(?, password),
           age = COALESCE(?, age),
           phone = COALESCE(?, phone),
           target_domain = COALESCE(?, target_domain),
           experience_years = COALESCE(?, experience_years)
-        WHERE email = ?
-      `, [full_name, age, phone, target_domain, experience_years, email]);
-      user = await getOne(`SELECT * FROM users WHERE email = ?`, [email]);
+        WHERE LOWER(email) = LOWER(?)
+      `, [name, password, age, phone, target_domain, experience_years, cleanEmail]);
+      user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
     }
 
-    // Sync profile table with user email/name
+    // Sync profile table
     await run(`
       UPDATE profile SET
         full_name = COALESCE(?, full_name),
@@ -106,7 +112,7 @@ router.post('/verify-otp', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Authentication successful',
+      message: 'Account verified successfully!',
       user
     });
   } catch (err) {
@@ -116,69 +122,85 @@ router.post('/verify-otp', async (req, res) => {
 });
 
 /**
- * POST /api/auth/register
+ * POST /api/auth/register - Initiate Registration
  */
 router.post('/register', async (req, res) => {
   try {
     const { full_name, fullName, email, password } = req.body;
-    if (!email || !email.includes('@') || !password) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail || !cleanEmail.includes('@') || !password) {
       return res.status(400).json({ success: false, error: 'Valid email and password are required.' });
     }
 
-    const name = fullName || full_name || email.split('@')[0] || 'Candidate';
-    console.log(`Starting registration OTP request for: ${email}...`);
+    const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
+    console.log(`Starting registration OTP request for: ${cleanEmail}...`);
 
     const code = generateOTP();
     console.log(`Generated OTP: ${code}...`);
-    await saveOTP(email, code);
+    await saveOTP(cleanEmail, code);
 
-    console.log(`Calling Resend for: ${email}...`);
-    const emailResult = await sendOTPEmail(email, name, code);
+    console.log(`Sending Gmail OTP to: ${cleanEmail}...`);
+    const emailResult = await sendOTPEmail(cleanEmail, name, code);
 
     if (!emailResult.success) {
-      console.error(`Resend API Error: ${emailResult.error}`);
+      console.error(`Gmail SMTP Error: ${emailResult.error}`);
       return res.status(400).json({
         success: false,
-        error: emailResult.error || 'Failed to send registration verification code via Resend'
+        error: emailResult.error || 'Failed to send registration verification code via Gmail'
       });
     }
 
-    console.log(`Email sent successfully via Resend. Message ID: ${emailResult.messageId}`);
+    console.log(`Email Sent Successfully. Message ID: ${emailResult.messageId}`);
     res.json({
       success: true,
-      message: `Verification code sent to ${email}. Check your email inbox.`,
-      email
+      message: `Verification code sent to ${cleanEmail}. Check your email inbox.`,
+      email: cleanEmail
     });
   } catch (err) {
-    const errMsg = err.message || JSON.stringify(err);
-    console.error(`Resend API Error: ${errMsg}`);
+    const errMsg = err.message || err.toString();
+    console.error(`Gmail SMTP Error: ${errMsg}`);
     res.status(400).json({ success: false, error: errMsg });
   }
 });
 
 /**
- * POST /api/auth/login
+ * POST /api/auth/login - Password Authentication
  */
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+
+    if (!cleanEmail || !password) {
       return res.status(400).json({ success: false, error: 'Email and password are required.' });
     }
 
-    let user = await getOne(`SELECT * FROM users WHERE email = ?`, [email]);
-    if (!user) {
-      // Auto-create initial user account for demo ease
+    let user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+
+    if (user && user.password) {
+      // Validate stored password match
+      if (user.password !== password) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid email or password. Please check your credentials.'
+        });
+      }
+    } else if (!user) {
+      // Create user account if logging in for the first time
       const result = await run(`
-        INSERT INTO users (email, full_name, age, phone, target_domain, experience_years)
-        VALUES (?, ?, 26, '+91 98765 43210', 'Software', 4)
-      `, [email, email.split('@')[0]]);
+        INSERT INTO users (email, full_name, password, age, phone, target_domain, experience_years)
+        VALUES (?, ?, ?, 26, '+91 98765 43210', 'Software', 4)
+      `, [cleanEmail, cleanEmail.split('@')[0], password]);
       user = await getOne(`SELECT * FROM users WHERE id = ?`, [result.lastID]);
+    } else if (!user.password) {
+      // Update password on first login
+      await run(`UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)`, [password, cleanEmail]);
+      user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
     }
 
     res.json({
       success: true,
-      message: 'Login successful',
+      message: 'Login successful!',
       user
     });
   } catch (err) {
@@ -187,62 +209,73 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * POST /api/auth/forgot-password
+ * POST /api/auth/forgot-password - Send Reset OTP
  */
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email, full_name, fullName } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, error: 'Email address is required.' });
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      return res.status(400).json({ success: false, error: 'Valid email address is required.' });
     }
 
-    const name = fullName || full_name || email.split('@')[0] || 'Candidate';
-    console.log(`Starting Forgot Password OTP request for: ${email}...`);
+    const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
+    console.log(`Starting Forgot Password OTP request for: ${cleanEmail}...`);
 
     const code = generateOTP();
-    console.log(`Generated OTP: ${code}...`);
-    await saveOTP(email, code);
+    console.log(`Generated Password Reset OTP: ${code}...`);
+    await saveOTP(cleanEmail, code);
 
-    console.log(`Calling Resend for: ${email}...`);
-    const emailResult = await sendForgotPasswordOTP(email, name, code);
+    console.log(`Sending Gmail OTP to: ${cleanEmail}...`);
+    const emailResult = await sendForgotPasswordOTP(cleanEmail, name, code);
 
     if (!emailResult.success) {
-      console.error(`Resend API Error: ${emailResult.error}`);
+      console.error(`Gmail SMTP Error: ${emailResult.error}`);
       return res.status(400).json({
         success: false,
-        error: emailResult.error || 'Failed to send password reset code via Resend'
+        error: emailResult.error || 'Failed to send password reset code via Gmail'
       });
     }
 
-    console.log(`Password reset email sent successfully via Resend. Message ID: ${emailResult.messageId}`);
+    console.log(`Password reset email sent successfully via Gmail. Message ID: ${emailResult.messageId}`);
     res.json({
       success: true,
-      message: `Password reset OTP dispatched to ${email}.`,
-      email
+      message: `Password reset OTP dispatched to ${cleanEmail}.`,
+      email: cleanEmail
     });
   } catch (err) {
-    const errMsg = err.message || JSON.stringify(err);
-    console.error(`Resend API Error: ${errMsg}`);
+    const errMsg = err.message || err.toString();
+    console.error(`Gmail SMTP Error: ${errMsg}`);
     res.status(400).json({ success: false, error: errMsg });
   }
 });
 
 /**
- * POST /api/auth/reset-password
+ * POST /api/auth/reset-password - Verify OTP & Set New Password
  */
 router.post('/reset-password', async (req, res) => {
   try {
-    const { email, code, new_password } = req.body;
-    if (!email || !code || !new_password) {
+    const { email, otp, code, new_password, password } = req.body;
+    const inputOtp = otp || code;
+    const newPass = new_password || password;
+    const cleanEmail = (email || '').toLowerCase().trim();
+
+    if (!cleanEmail || !inputOtp || !newPass) {
       return res.status(400).json({ success: false, error: 'Email, OTP code, and new password are required.' });
     }
 
-    const isValid = await verifyOTPCode(email, code);
+    const isValid = await verifyOTPCode(cleanEmail, inputOtp);
     if (!isValid) {
-      return res.status(401).json({ success: false, error: 'Invalid or expired OTP code.' });
+      return res.status(401).json({ success: false, error: 'Invalid or expired OTP code. Please request a new code.' });
     }
 
-    res.json({ success: true, message: 'Password reset successful. Please login with your new password.' });
+    // Update candidate password in database
+    await run(`UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)`, [newPass, cleanEmail]);
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully! Please log in with your new password.'
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Password reset failed: ' + err.message });
   }
