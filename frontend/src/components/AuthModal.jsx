@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
 import { api } from '../utils/api';
 
-export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
+export function AuthModal({ isOpen, initialMode = 'login', onClose, onAuthSuccess, toast }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login', 'register', 'forgot'
   const [step, setStep] = useState('form'); // 'form', 'otp'
   
@@ -48,8 +48,8 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
 
   useEffect(() => {
     if (isOpen) {
-      setMode(initialMode || 'login');
-      setStep(initialMode || 'login');
+      setActiveTab(initialMode || 'login');
+      setStep('form');
       setOtpCode('');
     }
   }, [isOpen, initialMode]);
