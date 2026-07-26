@@ -41,7 +41,7 @@ function patchHtmlForFileProtocol(filePath, distAssetsDir) {
 
   if (!html.includes('__kronos_file_protocol_loader__')) {
     const loaderScript = `
-    <!-- Universal Lightweight SystemJS & File-Protocol Execution Engine -->
+    <!-- Universal Lightweight SystemJS Execution Engine -->
     <script id="__kronos_file_protocol_loader__">
       (function() {
         var modules = {};
@@ -129,11 +129,11 @@ function patchHtmlForFileProtocol(filePath, distAssetsDir) {
 }
 
 try {
-  console.log('🔄 Synchronizing build outputs for Root, Dist, and IIS...');
+  console.log('🔄 Synchronizing build outputs for Frontend & Dist...');
 
   const frontendDist = path.join(rootDir, 'frontend', 'dist');
   const rootDist = path.join(rootDir, 'dist');
-  const webConfigPath = path.join(rootDir, 'web.config');
+  const deploymentWebConfig = path.join(rootDir, 'deployment', 'web.config');
 
   if (!fs.existsSync(frontendDist)) {
     console.error('❌ frontend/dist directory does not exist. Run vite build first.');
@@ -142,32 +142,13 @@ try {
 
   const distAssets = path.join(frontendDist, 'assets');
 
-  // 1. Patch frontend/dist/index.html first
+  // 1. Patch frontend/dist/index.html
   patchHtmlForFileProtocol(path.join(frontendDist, 'index.html'), distAssets);
 
   // 2. Copy frontend/dist to root/dist
   copyDirRecursive(frontendDist, rootDist);
 
-  // 3. Copy frontend/dist/index.html to root/index.html
-  const distIndexHtml = path.join(frontendDist, 'index.html');
-  const rootIndexHtml = path.join(rootDir, 'index.html');
-  if (fs.existsSync(distIndexHtml)) {
-    fs.copyFileSync(distIndexHtml, rootIndexHtml);
-    patchHtmlForFileProtocol(rootIndexHtml, distAssets);
-    console.log('✅ Synchronized root index.html with file-protocol support.');
-  }
-
-  // 4. Copy frontend/dist/assets to root/assets and frontend/assets
-  const rootAssets = path.join(rootDir, 'assets');
-  const frontendAssets = path.join(rootDir, 'frontend', 'assets');
-
-  if (fs.existsSync(distAssets)) {
-    copyDirRecursive(distAssets, rootAssets);
-    copyDirRecursive(distAssets, frontendAssets);
-    console.log('✅ Synchronized root and frontend assets directories with production build.');
-  }
-
-  // 5. Update frontend/index.html with current production asset hashes for IIS mode
+  // 3. Update frontend/index.html with production asset hashes
   const frontendSourceIndex = path.join(rootDir, 'frontend', 'index.html');
   if (fs.existsSync(frontendSourceIndex) && fs.existsSync(distAssets)) {
     let srcHtml = fs.readFileSync(frontendSourceIndex, 'utf8');
@@ -178,18 +159,18 @@ try {
     srcHtml = srcHtml.replace(/['"](?:\.\/|\.\.\/|\/)*assets\/index-[^'"]+\.js['"]/g, `'./assets/${modernJs}'`);
     srcHtml = srcHtml.replace(/['"](?:\.\/|\.\.\/|\/)*assets\/index-[^'"]+\.css['"]/g, `'./assets/${mainCss}'`);
     fs.writeFileSync(frontendSourceIndex, srcHtml, 'utf8');
-    console.log('✅ Synchronized frontend/index.html IIS asset hashes.');
+    console.log('✅ Synchronized frontend/index.html asset hashes.');
   }
 
-  // 6. Ensure web.config exists in root, dist, frontend, and frontend/dist
-  if (fs.existsSync(webConfigPath)) {
-    fs.copyFileSync(webConfigPath, path.join(rootDist, 'web.config'));
-    fs.copyFileSync(webConfigPath, path.join(frontendDist, 'web.config'));
-    fs.copyFileSync(webConfigPath, path.join(rootDir, 'frontend', 'web.config'));
-    console.log('✅ Synchronized web.config to dist/, frontend/, and frontend/dist/.');
+  // 4. Ensure deployment/web.config is synchronized to dist/ & frontend/
+  if (fs.existsSync(deploymentWebConfig)) {
+    fs.copyFileSync(deploymentWebConfig, path.join(rootDist, 'web.config'));
+    fs.copyFileSync(deploymentWebConfig, path.join(frontendDist, 'web.config'));
+    fs.copyFileSync(deploymentWebConfig, path.join(rootDir, 'frontend', 'web.config'));
+    console.log('✅ Synchronized deployment/web.config to dist/ and frontend/.');
   }
 
-  console.log('🎉 Production build sync complete! Ready for IIS, EC2, Localhost:8080, and Direct Double-Click.');
+  console.log('🎉 Build sync complete!');
 } catch (err) {
   console.error('❌ Error during dist sync:', err);
   process.exit(1);
