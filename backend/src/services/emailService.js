@@ -12,17 +12,13 @@ const envPath = path.resolve(__dirname, '../../.env');
 dotenv.config({ path: envPath });
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Kronos AI <onboarding@resend.dev>';
 
 if (!RESEND_API_KEY) {
-  throw new Error("RESEND_API_KEY is not configured.");
+  console.warn("⚠️ RESEND_API_KEY is not configured.");
 }
 
-if (!RESEND_FROM_EMAIL) {
-  throw new Error("RESEND_FROM_EMAIL is not configured.");
-}
-
-const resend = new Resend(RESEND_API_KEY);
+const resend = new Resend(RESEND_API_KEY || '');
 
 /**
  * Log email dispatch result into SQLite database email_logs table
@@ -44,11 +40,7 @@ export async function logEmail(recipient, subject, templateType, status = 'succe
  */
 async function sendResendMail({ to, subject, html, attachments = [] }) {
   const cleanRecipient = (to || '').trim();
-  const senderEmail = process.env.RESEND_FROM_EMAIL;
-
-  if (!senderEmail) {
-    throw new Error("RESEND_FROM_EMAIL is not configured.");
-  }
+  const senderEmail = process.env.RESEND_FROM_EMAIL || RESEND_FROM_EMAIL;
 
 
 

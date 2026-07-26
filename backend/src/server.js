@@ -22,11 +22,8 @@ if (!process.env.RESEND_API_KEY) {
   console.log('✅ RESEND_API_KEY validated.');
 }
 
-if (!process.env.RESEND_FROM_EMAIL) {
-  throw new Error("RESEND_FROM_EMAIL is not configured.");
-} else {
-  console.log(`✅ RESEND_FROM_EMAIL configured: ${process.env.RESEND_FROM_EMAIL}`);
-}
+const fromEmail = process.env.RESEND_FROM_EMAIL || 'Kronos AI <onboarding@resend.dev>';
+console.log(`✅ RESEND_FROM_EMAIL configured: ${fromEmail}`);
 
 import fs from 'fs';
 
