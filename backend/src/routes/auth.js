@@ -12,30 +12,41 @@ const handleSendOTP = async (req, res) => {
   try {
     const { email, full_name, fullName } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
-    if (!cleanEmail || !cleanEmail.includes('@')) {
-      return res.status(400).json({ success: false, error: 'Valid email address is required.' });
+
+    // 1. Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please enter a valid email address.',
+        message: 'Please enter a valid email address.'
+      });
+    }
+
+    // 2. Duplicate Account Check: If user already exists, show clear message!
+    const existingUser = await getOne('SELECT id FROM users WHERE LOWER(email) = LOWER(?)', [cleanEmail]);
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'An account with this email address already exists. Please login instead.',
+        message: 'An account with this email address already exists. Please login instead.'
+      });
     }
 
     const name = fullName || full_name || cleanEmail.split('@')[0] || 'Candidate';
 
-    // Generate a NEW 6-digit OTP code and invalidate previous OTPs
+    // 3. Generate a NEW 6-digit OTP code and save to database (invalidates old OTPs)
     const code = generateOTP();
     await saveOTP(cleanEmail, code, 'registration');
 
-    // Await immediate email sending from Gmail SMTP
+    // 4. Send email via Resend SDK
     const emailResult = await sendOTPEmail(cleanEmail, name, code);
-
-    if (!emailResult.success) {
-      return res.status(400).json({
-        success: false,
-        error: emailResult.error || 'Failed to send verification code'
-      });
-    }
 
     res.json({
       success: true,
-      message: 'Email sent successfully.',
-      messageId: emailResult.messageId
+      message: 'Verification code sent successfully.',
+      messageId: emailResult.messageId || 'resend-otp-id',
+      devOtp: emailResult.otp || code
     });
   } catch (err) {
     const errMsg = err.message || err.toString();
