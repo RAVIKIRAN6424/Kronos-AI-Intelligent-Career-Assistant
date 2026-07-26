@@ -200,7 +200,16 @@ function getEmailHTMLTemplate({ title, badge, userName, bodyContent, ctaButton }
 /**
  * 1. STEP 4: Account Registration Verification Email (sendOTPEmail)
  */
-export async function sendOTPEmail(email, userName = 'User', otp) {
+export async function sendOTPEmail(email, userNameOrOtp = 'User', otpCode = null) {
+  let userName = userNameOrOtp;
+  let otp = otpCode;
+
+  // Handle both (email, otp) and (email, userName, otp) invocations
+  if (!otpCode) {
+    otp = userNameOrOtp;
+    userName = email ? email.split('@')[0] : 'Candidate';
+  }
+
   const subject = 'Verify your Kronos AI Account';
   const html = getEmailHTMLTemplate({
     title: 'Account Verification',

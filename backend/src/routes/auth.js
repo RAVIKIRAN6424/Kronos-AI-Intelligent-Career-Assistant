@@ -18,7 +18,10 @@ router.post('/send-otp', async (req, res) => {
     const code = generateOTP();
     await saveOTP(email, code);
 
-    const emailResult = await sendOTPEmail(email, code);
+    const userName = (req.body && req.body.full_name) || email.split('@')[0] || 'Candidate';
+    console.log('🔑 Generating & Dispatched OTP for:', email, '| Code:', code);
+
+    const emailResult = await sendOTPEmail(email, userName, code);
 
     res.json({
       message: `OTP dispatched to ${email}`,
@@ -112,7 +115,7 @@ router.post('/register', async (req, res) => {
 
     const code = generateOTP();
     await saveOTP(email, code);
-    await sendOTPEmail(email, code);
+    await sendOTPEmail(email, full_name || email.split('@')[0], code);
 
     res.json({
       message: `Verification code sent to ${email}. Check your email inbox.`,
