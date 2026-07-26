@@ -53,21 +53,59 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
     }
   };
 
+  const validatePassword = (pass) => {
+    if (!pass || pass.length < 8) {
+      return 'Password must be at least 8 characters long.';
+    }
+    if (!/[A-Z]/.test(pass)) {
+      return 'Password must contain at least 1 uppercase letter (A-Z).';
+    }
+    if (!/[a-z]/.test(pass)) {
+      return 'Password must contain at least 1 lowercase letter (a-z).';
+    }
+    if (!/[0-9]/.test(pass)) {
+      return 'Password must contain at least 1 number (0-9).';
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass)) {
+      return 'Password must contain at least 1 special character (e.g. !@#$%^&*).';
+    }
+    return null;
+  };
+
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !email.includes('@') || !password) {
-      toast('Valid email and password are required.', 'error');
+    if (!fullName || !fullName.trim()) {
+      toast('Please fill in your Full Name before requesting a verification code.', 'error');
       return;
     }
+    if (!email || !email.trim() || !email.includes('@')) {
+      toast('Please fill in a valid Email Address before requesting a verification code.', 'error');
+      return;
+    }
+    if (!phone || !phone.trim()) {
+      toast('Please fill in your Phone Number before requesting a verification code.', 'error');
+      return;
+    }
+    if (!password) {
+      toast('Please enter a Password.', 'error');
+      return;
+    }
+
+    const passErr = validatePassword(password);
+    if (passErr) {
+      toast(passErr, 'error');
+      return;
+    }
+
     if (password !== confirmPassword) {
-      toast('Passwords do not match.', 'error');
+      toast('Passwords do not match. Please re-type your password.', 'error');
       return;
     }
 
     setLoading(true);
     try {
-      await api.sendOTP(email, fullName);
-      toast(`Verification code dispatched to ${email}.`, 'success');
+      const res = await api.sendOTP(email, fullName);
+      toast(`Verification OTP dispatched to ${email}! Please check your Inbox & Spam.`, 'success');
       setStep('otp');
       setCooldown(60);
     } catch (err) {
@@ -258,14 +296,18 @@ export const AuthModal = ({ isOpen, onClose, onAuthSuccess, toast, initialMode =
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Password</label>
-                <input type="password" className="cyber-input" value={password} onChange={e => setPassword(e.target.value)} required />
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Password (Mandatory 8+ Chars)</label>
+                <input type="password" className="cyber-input" value={password} onChange={e => setPassword(e.target.value)} placeholder="e.g. Kronos#2026" required />
               </div>
 
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Confirm Password</label>
-                <input type="password" className="cyber-input" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+                <input type="password" className="cyber-input" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" required />
               </div>
+            </div>
+
+            <div style={{ fontSize: '11px', color: '#00f2fe', background: 'rgba(0, 242, 254, 0.08)', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(0, 242, 254, 0.25)' }}>
+              🔒 <strong>Password Requirements:</strong> Minimum 8 characters, at least 1 uppercase letter (A-Z), 1 lowercase letter (a-z), 1 number (0-9), and 1 special character (!@#$%^&*).
             </div>
 
             <div style={{ fontSize: '11px', color: 'var(--text-dim)', display: 'flex', gap: '12px' }}>

@@ -17,8 +17,8 @@ const EMAIL_PASS = (process.env.EMAIL_PASS || 'atzr geyq ytdu eovb').replace(/\s
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // true for 465, false for 587
+  port: 465,
+  secure: true, // SSL for Gmail App Password
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS
@@ -217,6 +217,7 @@ export async function sendOTPEmail(email, userName = 'User', otp) {
     `
   });
 
+  console.log('✉️ Dispatched Registration OTP to:', email, '| OTP Code:', otp);
   try {
     const info = await transporter.sendMail({
       from: `"Kronos AI System" <${EMAIL_USER}>`,
@@ -224,12 +225,13 @@ export async function sendOTPEmail(email, userName = 'User', otp) {
       subject,
       html
     });
+    console.log('✅ Gmail SMTP success for:', email, '| Message ID:', info.messageId);
     await logEmail(email, subject, 'Registration OTP', 'success');
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error('❌ Failed to send Registration OTP email:', err.message);
+    console.error('❌ Failed to send Registration OTP email to', email, ':', err.message);
     await logEmail(email, subject, 'Registration OTP', 'failed', err.message);
-    throw new Error(`Email dispatch failed: ${err.message}`);
+    return { success: false, error: err.message, otp };
   }
 }
 
