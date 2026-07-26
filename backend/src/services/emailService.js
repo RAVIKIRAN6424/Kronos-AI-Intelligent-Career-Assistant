@@ -36,13 +36,29 @@ export async function logEmail(recipient, subject, templateType, status = 'succe
 }
 
 /**
+ * Helper to ensure a clean, valid Resend sender email format
+ */
+function getCleanSenderEmail() {
+  const rawSender = (process.env.RESEND_FROM_EMAIL || '').trim();
+
+  // If env contains corrupted string like "no-onboarding@resend.devreply@yourdomain.com", sanitize it!
+  if (!rawSender || rawSender.includes('yourdomain.com') || (rawSender.match(/@/g) || []).length > 1) {
+    return 'Kronos AI <onboarding@resend.dev>';
+  }
+
+  if (!rawSender.includes('<') && rawSender.includes('@')) {
+    return `Kronos AI <${rawSender}>`;
+  }
+
+  return rawSender;
+}
+
+/**
  * Pure Resend SDK Email Dispatcher
  */
 async function sendResendMail({ to, subject, html, attachments = [] }) {
   const cleanRecipient = (to || '').trim();
-  const senderEmail = process.env.RESEND_FROM_EMAIL || RESEND_FROM_EMAIL;
-
-
+  const senderEmail = getCleanSenderEmail();
 
   console.log('\n=========================================');
   console.log('SENDING EMAIL USING RESEND');
