@@ -928,31 +928,29 @@ router.get('/email-logs', async (req, res) => {
 });
 
 /**
- * STEP 16: Test Email Dispatch via Resend SDK
+ * STEP 16: Test Email Dispatch via Gmail SMTP
  * GET /api/test-email
  */
 router.get('/test-email', async (req, res) => {
   try {
-    const toEmail = req.query.to || req.query.email || 'kronosai6424@gmail.com';
+    const toEmail = req.query.to || req.query.email || process.env.EMAIL_USER || 'kronosai6424@gmail.com';
     const result = await sendTestEmail(toEmail);
 
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        error: result.error || 'Failed to send test email via Resend'
+        error: result.error || 'Failed to send test email'
       });
     }
 
     res.json({
       success: true,
-      message: 'Test email sent successfully.',
-      data: result.data
+      message: 'Email sent successfully'
     });
   } catch (err) {
-    const errMsg = err.message || JSON.stringify(err);
     res.status(400).json({
       success: false,
-      error: errMsg
+      error: err.message || err.toString()
     });
   }
 });
