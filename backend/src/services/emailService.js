@@ -25,12 +25,12 @@ if (!EMAIL_PASS) {
 console.log('Loading Gmail SMTP...');
 console.log('Connecting...');
 
-// Configure Nodemailer with Gmail SMTP (Port 465 SSL)
+// Configure Nodemailer with Gmail SMTP (Port 587 STARTTLS)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false,
+  requireTLS: true,
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS
