@@ -431,9 +431,15 @@ const seedDefaults = () => {
 };
 
 // Helper async DB wrappers
+function sanitizeParams(params) {
+  if (!Array.isArray(params)) return [];
+  return params.map(p => (p === undefined ? null : p));
+}
+
 export const query = (sql, params = []) => {
+  const cleanParams = sanitizeParams(params);
   return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
+    db.all(sql, cleanParams, (err, rows) => {
       if (err) reject(err);
       else resolve(rows);
     });
@@ -441,8 +447,9 @@ export const query = (sql, params = []) => {
 };
 
 export const getOne = (sql, params = []) => {
+  const cleanParams = sanitizeParams(params);
   return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
+    db.get(sql, cleanParams, (err, row) => {
       if (err) reject(err);
       else resolve(row);
     });
@@ -450,8 +457,9 @@ export const getOne = (sql, params = []) => {
 };
 
 export const run = (sql, params = []) => {
+  const cleanParams = sanitizeParams(params);
   return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
+    db.run(sql, cleanParams, function (err) {
       if (err) reject(err);
       else resolve({ lastID: this.lastID, changes: this.changes });
     });

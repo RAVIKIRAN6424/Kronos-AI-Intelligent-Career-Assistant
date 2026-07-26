@@ -125,13 +125,24 @@ router.post('/verify-otp', async (req, res) => {
     } else {
       await run(`
         UPDATE users SET
-          full_name = COALESCE(?, full_name),
-          password = COALESCE(?, password),
+          full_name = COALESCE(NULLIF(?, ''), full_name),
+          password = COALESCE(NULLIF(?, ''), password),
+          phone = COALESCE(NULLIF(?, ''), phone),
           verified = 1
         WHERE LOWER(email) = LOWER(?)
-      `, [name, password, cleanEmail]);
+      `, [name || '', password || '', phone || '', cleanEmail]);
       user = await getOne(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
     }
+
+    // Sync profile table
+    await run(`
+      UPDATE profile SET
+        full_name = COALESCE(NULLIF(?, ''), full_name),
+        email = ?,
+        phone = COALESCE(NULLIF(?, ''), phone),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = 1
+    `, [name || '', cleanEmail, phone || '']);
 
     res.json({
       success: true,
