@@ -1,12 +1,14 @@
 # ⚡ Kronos AI - Intelligent Career Assistant & CRM
 
-[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Deployment-00f2fe?style=for-the-badge&logo=vercel)](https://kronos-ai-intelligent-career-assist.vercel.app/)
-[![Production Status](https://img.shields.io/badge/Status-Live%20%26%20Active-10b981?style=for-the-badge)](https://kronos-ai-intelligent-career-assist.vercel.app/)
+[![Frontend (Vercel)](https://img.shields.io/badge/Frontend-Vercel%20Live-00f2fe?style=for-the-badge&logo=vercel)](https://kronos-ai-intelligent-career-assist.vercel.app/)
+[![Backend (Render)](https://img.shields.io/badge/Backend-Render%20API-d94ede?style=for-the-badge&logo=render)](https://kronos-ai-intelligent-career-assistant.onrender.com/health)
 [![Node.js CI/CD](https://img.shields.io/badge/CI%2FCD-Node.js%20Pipeline-9d4edd?style=for-the-badge&logo=githubactions)](https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant/actions)
 [![License](https://img.shields.io/badge/License-MIT-fbbf24?style=for-the-badge)](LICENSE)
 
-> **Live Hosted URL**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)  
-> **GitHub Repository**: [https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git](https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git)
+> 🌐 **Live Frontend Application (Vercel)**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)  
+> ⚡ **Live Backend REST API (Render)**: [https://kronos-ai-intelligent-career-assistant.onrender.com](https://kronos-ai-intelligent-career-assistant.onrender.com)  
+> 🩺 **Backend Health Check**: [https://kronos-ai-intelligent-career-assistant.onrender.com/health](https://kronos-ai-intelligent-career-assistant.onrender.com/health)  
+> 🐙 **GitHub Repository**: [https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git](https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git)
 
 ---
 
@@ -199,16 +201,21 @@ The SQLite database (`database.db`) manages 11 normalized tables:
 
 ---
 
-## ⚙️ CI/CD Pipeline & Deployment
+## ⚙️ CI/CD Pipeline & Live Deployments
 
-### GitHub Actions Pipeline ([.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml))
+### 🌐 1. Frontend Web Application (Vercel)
+- **Live Frontend URL**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)
+- **Hosting Platform**: Vercel Serverless Edge Network with automatic continuous deployment on `main` branch push.
+
+### ⚡ 2. Backend REST API Server (Render)
+- **Live Backend API**: [https://kronos-ai-intelligent-career-assistant.onrender.com](https://kronos-ai-intelligent-career-assistant.onrender.com)
+- **Health Check Endpoint**: [https://kronos-ai-intelligent-career-assistant.onrender.com/health](https://kronos-ai-intelligent-career-assistant.onrender.com/health)
+- **Environment Stack**: Node.js v18 LTS / Express.js REST API with CORS configured for Vercel frontend.
+
+### 🐙 3. GitHub Actions CI/CD Pipeline ([.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml))
 - Triggered on `push` and `pull_request` to `main` branch.
 - Matrix testing across Node.js `18.x` and `20.x`.
 - Executes dependency installation, Vite compilation, and build verification.
-
-### Live Vercel Deployment
-- **Live Hosted URL**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)
-- **Reverse Proxy & Edge Network**: Vercel Serverless Edge Network forwarding static assets and API routes (`/api`).
 
 ---
 

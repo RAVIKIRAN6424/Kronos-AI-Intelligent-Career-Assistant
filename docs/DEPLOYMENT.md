@@ -1,7 +1,9 @@
 # Kronos AI CRM - Deployment Guide
 
-## Live Vercel Deployment
-- **Live Hosted Application URL**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)
+## Live Production Environments
+- **Frontend Live Application (Vercel)**: [https://kronos-ai-intelligent-career-assist.vercel.app/](https://kronos-ai-intelligent-career-assist.vercel.app/)
+- **Backend REST API (Render)**: [https://kronos-ai-intelligent-career-assistant.onrender.com](https://kronos-ai-intelligent-career-assistant.onrender.com)
+- **Backend Health Check**: [https://kronos-ai-intelligent-career-assistant.onrender.com/health](https://kronos-ai-intelligent-career-assistant.onrender.com/health)
 - **GitHub Repository**: [https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git](https://github.com/RAVIKIRAN6424/Kronos-AI-Intelligent-Career-Assistant.git)
 
 ---
