@@ -108,9 +108,10 @@ router.post('/verify-otp', async (req, res) => {
 
     const isValid = await verifyOTPCode(cleanEmail, inputOtp);
     if (!isValid) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
-        message: 'Invalid or expired OTP code. Please request a new code.'
+        error: 'Invalid or expired verification code. Please check the 6-digit code sent to your email and try again.',
+        message: 'Invalid or expired verification code. Please check the 6-digit code sent to your email and try again.'
       });
     }
 
@@ -325,15 +326,46 @@ router.post('/reset-password', async (req, res) => {
 });
 
 /**
- * GET /api/auth/me
+ * DELETE /api/auth/account - Delete candidate user account & reset profile
  */
-router.get('/me', async (req, res) => {
+const handleDeleteAccount = async (req, res) => {
   try {
-    const user = await getOne(`SELECT * FROM users ORDER BY id DESC LIMIT 1`);
-    res.json({ user: user || null });
+    const email = req.body?.email || req.query?.email;
+    const cleanEmail = email ? (email || '').toLowerCase().trim() : null;
+
+    if (cleanEmail) {
+      await run(`DELETE FROM users WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+      await run(`DELETE FROM otp_codes WHERE LOWER(email) = LOWER(?)`, [cleanEmail]);
+    } else {
+      await run(`DELETE FROM users`);
+      await run(`DELETE FROM otp_codes`);
+    }
+
+    // Reset profile table so new candidate can register cleanly
+    await run(`
+      UPDATE profile SET
+        full_name = '',
+        email = '',
+        phone = '',
+        resume_text = '',
+        resume_summary = '',
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = 1
+    `);
+
+    res.json({
+      success: true,
+      message: 'Account deleted successfully. You can now create a new account.'
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete account: ' + err.message
+    });
   }
-});
+};
+
+router.delete('/account', handleDeleteAccount);
+router.post('/delete-account', handleDeleteAccount);
 
 export default router;

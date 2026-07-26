@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Save, FileText, Globe, MapPin, Award, BookOpen, Briefcase } from 'lucide-react';
+import { UserCheck, Save, FileText, Globe, MapPin, Award, BookOpen, Briefcase, Trash2 } from 'lucide-react';
 import { api } from '../utils/api';
 
 export const ProfileView = ({ onProfileUpdated, toast }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [countryCode, setCountryCode] = useState('+91');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -18,6 +20,18 @@ export const ProfileView = ({ onProfileUpdated, toast }) => {
   const [preferredLocations, setPreferredLocations] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [expectedSalary, setExpectedSalary] = useState('');
+
+  const COUNTRY_CODES = [
+    { code: '+91', label: '🇮🇳 +91 (India)' },
+    { code: '+1', label: '🇺🇸 +1 (US/Canada)' },
+    { code: '+44', label: '🇬🇧 +44 (UK)' },
+    { code: '+61', label: '🇦🇺 +61 (Australia)' },
+    { code: '+971', label: '🇦🇪 +971 (UAE)' },
+    { code: '+49', label: '🇩🇪 +49 (Germany)' },
+    { code: '+33', label: '🇫🇷 +33 (France)' },
+    { code: '+65', label: '🇸🇬 +65 (Singapore)' },
+    { code: '+81', label: '🇯🇵 +81 (Japan)' }
+  ];
 
   // Resume Breakdown Sections
   const [resumeSummary, setResumeSummary] = useState('');
@@ -101,12 +115,45 @@ export const ProfileView = ({ onProfileUpdated, toast }) => {
     }
   };
 
+  const handleDeleteAccountConfirm = async () => {
+    setShowDeleteConfirm(false);
+    try {
+      await api.deleteAccount({ email });
+      if (toast) toast('Account deleted successfully! You can now create a new account.', 'info');
+      if (onProfileUpdated) onProfileUpdated({ full_name: '', email: '', deleted: true });
+    } catch (err) {
+      if (toast) toast(err.message || 'Failed to delete account', 'error');
+    }
+  };
+
   if (loading) {
     return <div style={{ textAlign: 'center', color: 'var(--accent-cyan)', padding: '50px' }}>Loading candidate profile data...</div>;
   }
 
   return (
     <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Delete Account Modal Dialog */}
+      {showDeleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(4, 8, 20, 0.88)', backdropFilter: 'blur(12px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#081020', border: '1px solid #ef4444', borderRadius: '16px', maxWidth: '440px', width: '100%', padding: '28px', color: '#fff', boxShadow: '0 0 40px rgba(239, 68, 68, 0.25)' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#ef4444', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Trash2 size={22} /> Confirm Account Deletion
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
+              Are you sure you want to delete your candidate account? This action will reset your active session profile data so you can register a new account again.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" className="btn-cyber-outline" onClick={() => setShowDeleteConfirm(false)} style={{ padding: '8px 16px', fontSize: '13px' }}>
+                Cancel
+              </button>
+              <button type="button" onClick={handleDeleteAccountConfirm} style={{ background: '#ef4444', color: '#ffffff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '13px' }}>
+                Yes, Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
@@ -118,9 +165,14 @@ export const ProfileView = ({ onProfileUpdated, toast }) => {
           </p>
         </div>
 
-        <button type="submit" className="btn-cyber" disabled={saving}>
-          <Save size={16} /> Save Profile Changes
-        </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button type="button" onClick={() => setShowDeleteConfirm(true)} style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ef4444', padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '13px' }}>
+            <Trash2 size={16} /> Delete Account
+          </button>
+          <button type="submit" className="btn-cyber" disabled={saving}>
+            <Save size={16} /> Save Profile Changes
+          </button>
+        </div>
       </div>
 
       {/* Main Grid */}
@@ -149,7 +201,14 @@ export const ProfileView = ({ onProfileUpdated, toast }) => {
             </div>
             <div>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Phone Number</label>
-              <input type="text" className="cyber-input" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <select className="cyber-select" value={countryCode} onChange={e => setCountryCode(e.target.value)} style={{ width: '110px', flexShrink: 0, padding: '6px' }}>
+                  {COUNTRY_CODES.map(c => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
+                </select>
+                <input type="text" className="cyber-input" value={phone} onChange={(e) => setPhone(e.target.value)} style={{ flex: 1 }} />
+              </div>
             </div>
           </div>
 

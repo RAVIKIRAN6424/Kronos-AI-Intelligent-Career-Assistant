@@ -183,7 +183,13 @@ export function App() {
         {activeTab === 'profile' && (
           <ProfileSetupView
             onProfileUpdated={(updated) => {
-              if (updated.full_name) setCurrentUser(updated);
+              if (updated && updated.deleted) {
+                setCurrentUser(null);
+                localStorage.removeItem('kronos_user');
+                handleOpenAuth('register');
+              } else if (updated && updated.full_name) {
+                setCurrentUser(updated);
+              }
             }}
             toast={addToast}
           />

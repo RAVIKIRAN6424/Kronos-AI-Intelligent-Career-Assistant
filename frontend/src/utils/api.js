@@ -93,12 +93,20 @@ export const api = {
   verifyOTP: async (payload) => {
     const res = await request('/auth/verify-otp', { method: 'POST', body: payload });
     if (res && res.success === false) {
-      throw new Error(res.message || res.error || 'Invalid or expired verification code');
+      throw new Error(res.message || res.error || 'Invalid or expired verification code. Please check your code and try again.');
+    }
+    if (!res) {
+      throw new Error('Verification failed. Please check the 6-digit verification code sent to your email.');
     }
     if (res && res.user) {
       setStorage('kronos_user', res.user);
     }
-    return res || { success: true, user: { email: payload.email, full_name: payload.full_name || 'User' } };
+    return res;
+  },
+  deleteAccount: async (payload = {}) => {
+    const res = await request('/auth/account', { method: 'DELETE', body: payload });
+    localStorage.removeItem('kronos_user');
+    return res || { success: true, message: 'Account deleted successfully' };
   },
   register: async (payload) => {
     const res = await request('/auth/register', { method: 'POST', body: payload });
@@ -130,7 +138,7 @@ export const api = {
   resetPassword: async (payload) => {
     const res = await request('/auth/reset-password', { method: 'POST', body: payload });
     if (res && res.success === false) {
-      throw new Error(res.message || res.error || 'Password reset failed');
+      throw new Error(res.message || res.error || 'Password reset failed. Please check your code.');
     }
     if (!res) {
       throw new Error('Server connection error. Please check your network or try again.');

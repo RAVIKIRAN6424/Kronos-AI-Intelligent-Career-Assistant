@@ -28,6 +28,18 @@ export const ProfileSetupView = ({ onProfileUpdated, toast }) => {
   const [newPortalEmail, setNewPortalEmail] = useState('');
   const [newPortalPassword, setNewPortalPassword] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeleteAccountConfirm = async () => {
+    setShowDeleteConfirm(false);
+    try {
+      await api.deleteAccount();
+      if (toast) toast('Account deleted successfully! You can create a new account now.', 'info');
+      if (onProfileUpdated) onProfileUpdated({ full_name: '', deleted: true });
+    } catch (err) {
+      if (toast) toast(err.message || 'Failed to delete account', 'error');
+    }
+  };
 
   useEffect(() => {
     loadProfileData();
@@ -209,13 +221,40 @@ export const ProfileSetupView = ({ onProfileUpdated, toast }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div className="glass-panel" style={{ padding: '24px' }}>
-        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <UserCheck size={24} color="var(--accent-cyan)" /> Profile Setup & Role Preferences
-        </h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
-          Select the job roles and geographical locations you want Kronos AI to target. Click any role to enable or disable it, then click Save Profile to sync.
-        </p>
+      {showDeleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(4, 8, 20, 0.88)', backdropFilter: 'blur(12px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#081020', border: '1px solid #ef4444', borderRadius: '16px', maxWidth: '440px', width: '100%', padding: '28px', color: '#fff', boxShadow: '0 0 40px rgba(239, 68, 68, 0.25)' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#ef4444', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Trash2 size={22} /> Confirm Account Deletion
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
+              Are you sure you want to delete your candidate account? This action will reset your active session profile data so you can register a new account again.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" className="btn-cyber-outline" onClick={() => setShowDeleteConfirm(false)} style={{ padding: '8px 16px', fontSize: '13px' }}>
+                Cancel
+              </button>
+              <button type="button" onClick={handleDeleteAccountConfirm} style={{ background: '#ef4444', color: '#ffffff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '13px' }}>
+                Yes, Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <UserCheck size={24} color="var(--accent-cyan)" /> Profile Setup & Role Preferences
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
+            Select the job roles and geographical locations you want Kronos AI to target. Click any role to enable or disable it, then click Save Profile to sync.
+          </p>
+        </div>
+
+        <button type="button" onClick={() => setShowDeleteConfirm(true)} style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ef4444', padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '13px' }}>
+          <Trash2 size={16} /> Delete Account
+        </button>
       </div>
 
       {/* Roles Selector */}

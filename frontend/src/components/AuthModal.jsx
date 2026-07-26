@@ -6,6 +6,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login', 'register', 'forgot'
   const [step, setStep] = useState('form'); // 'form', 'otp'
   
+  const [countryCode, setCountryCode] = useState('+91');
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState('Male');
   const [age, setAge] = useState('');
@@ -21,11 +22,29 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
+  const COUNTRY_CODES = [
+    { code: '+91', label: '🇮🇳 +91 (India)' },
+    { code: '+1', label: '🇺🇸 +1 (US/Canada)' },
+    { code: '+44', label: '🇬🇧 +44 (UK)' },
+    { code: '+61', label: '🇦🇺 +61 (Australia)' },
+    { code: '+971', label: '🇦🇪 +971 (UAE)' },
+    { code: '+49', label: '🇩🇪 +49 (Germany)' },
+    { code: '+33', label: '🇫🇷 +33 (France)' },
+    { code: '+65', label: '🇸🇬 +65 (Singapore)' },
+    { code: '+81', label: '🇯🇵 +81 (Japan)' }
+  ];
+
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [now, setNow] = useState(new Date());
 
-  const currentDate = '2026-07-26';
-  const currentTime = '16:16:41';
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentDate = now.toISOString().split('T')[0];
+  const currentTime = now.toLocaleTimeString();
 
   useEffect(() => {
     let timer;
@@ -129,31 +148,32 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
 
   const handleVerifyRegisterOTP = async (e) => {
     e.preventDefault();
-    if (!otpCode) {
+    if (!otpCode || !otpCode.trim()) {
       toast('Please enter the 6-digit verification code sent to your email.', 'error');
       return;
     }
 
     setLoading(true);
     try {
+      const fullPhone = phone.startsWith('+') ? phone : `${countryCode} ${phone.trim()}`;
       const res = await api.verifyOTP({
         email,
-        code: otpCode,
+        code: otpCode.trim(),
         full_name: fullName,
         password,
-        age: parseInt(age),
-        phone,
+        age: parseInt(age) || 26,
+        phone: fullPhone,
         target_domain: 'Software'
       });
       if (res && res.success === false) {
-        toast(res.error || 'Invalid verification code', 'error');
+        toast(res.error || res.message || 'Invalid verification code. Please check your email code and try again.', 'error');
         return;
       }
       toast('Account created and verified successfully!', 'success');
       onAuthSuccess(res.user);
       onClose();
     } catch (err) {
-      toast(err.message || 'Invalid verification code', 'error');
+      toast(err.message || 'Invalid verification code. Please check your code and try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -385,7 +405,26 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, toast }) {
 
             <div>
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Phone Number</label>
-              <input className="cyber-input" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="e.g. +91 98765 43210" />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select
+                  className="cyber-select"
+                  value={countryCode}
+                  onChange={e => setCountryCode(e.target.value)}
+                  style={{ width: '135px', flexShrink: 0, padding: '8px' }}
+                >
+                  {COUNTRY_CODES.map(c => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
+                </select>
+                <input
+                  className="cyber-input"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  required
+                  placeholder="e.g. 98765 43210"
+                  style={{ flex: 1 }}
+                />
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
