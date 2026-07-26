@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Eye, EyeOff } from 'lucide-react';
+import { X, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { api } from '../utils/api';
 
 export function AuthModal({ isOpen, initialMode = 'login', onClose, onAuthSuccess, toast }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login', 'register', 'forgot'
   const [step, setStep] = useState('form'); // 'form', 'otp'
+  const [errorMessage, setErrorMessage] = useState('');
   
   const [countryCode, setCountryCode] = useState('+91');
   const [fullName, setFullName] = useState('');
@@ -109,31 +110,43 @@ export function AuthModal({ isOpen, initialMode = 'login', onClose, onAuthSucces
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage('');
     if (!fullName || !fullName.trim()) {
-      toast('Please fill in your Full Name before requesting a verification code.', 'error');
+      const msg = 'Please fill in your Full Name before requesting a verification code.';
+      setErrorMessage(msg);
+      toast(msg, 'error');
       return;
     }
     if (!email || !email.trim() || !email.includes('@')) {
-      toast('Please fill in a valid Email Address before requesting a verification code.', 'error');
+      const msg = 'Please fill in a valid Email Address before requesting a verification code.';
+      setErrorMessage(msg);
+      toast(msg, 'error');
       return;
     }
     if (!phone || !phone.trim()) {
-      toast('Please fill in your Phone Number before requesting a verification code.', 'error');
+      const msg = 'Please fill in your Phone Number before requesting a verification code.';
+      setErrorMessage(msg);
+      toast(msg, 'error');
       return;
     }
     if (!password) {
-      toast('Please enter a Password.', 'error');
+      const msg = 'Please enter a Password.';
+      setErrorMessage(msg);
+      toast(msg, 'error');
       return;
     }
 
     const passErr = validatePassword(password);
     if (passErr) {
+      setErrorMessage(passErr);
       toast(passErr, 'error');
       return;
     }
 
     if (password !== confirmPassword) {
-      toast('Passwords do not match. Please re-type your password.', 'error');
+      const msg = 'Passwords do not match. Please re-type your password.';
+      setErrorMessage(msg);
+      toast(msg, 'error');
       return;
     }
 
@@ -141,14 +154,19 @@ export function AuthModal({ isOpen, initialMode = 'login', onClose, onAuthSucces
     try {
       const res = await api.sendOTP(email, fullName);
       if (res && res.success === false) {
-        toast(res.error || 'Failed to dispatch verification code', 'error');
+        const msg = res.message || res.error || 'Failed to dispatch verification code';
+        setErrorMessage(msg);
+        toast(msg, 'error');
         return;
       }
       toast(`Verification OTP dispatched to ${email}! Please check your Inbox & Spam.`, 'success');
       setStep('otp');
       setCooldown(60);
+      setErrorMessage('');
     } catch (err) {
-      toast(err.message || 'Failed to dispatch verification code', 'error');
+      const msg = err.message || 'Failed to dispatch verification code';
+      setErrorMessage(msg);
+      toast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -495,6 +513,25 @@ export function AuthModal({ isOpen, initialMode = 'login', onClose, onAuthSucces
               <span>📅 Date: {currentDate}</span>
               <span>⏰ Time: {currentTime}</span>
             </div>
+
+            {errorMessage && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid #ef4444',
+                borderRadius: '10px',
+                padding: '12px 16px',
+                color: '#f87171',
+                fontSize: '13px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                marginTop: '4px'
+              }}>
+                <AlertCircle size={18} color="#ef4444" style={{ flexShrink: 0 }} />
+                <span>{errorMessage}</span>
+              </div>
+            )}
 
             <button className="btn-cyber" type="submit" disabled={loading} style={{ padding: '14px', justifyContent: 'center', fontSize: '15px' }}>
               {loading ? 'Sending Verification Code...' : 'Send Verification Code'}

@@ -402,12 +402,24 @@ export const api = {
   // Auth OTP & Password Reset Methods (Step 14)
   sendOTP: async (email, full_name) => {
     const res = await request('/auth/send-otp', { method: 'POST', body: { email, full_name } });
-    return res || { success: true, message: `Verification code sent to ${email}` };
+    if (res && res.success === false) {
+      throw new Error(res.message || res.error || 'This email address is already registered.');
+    }
+    if (!res) {
+      throw new Error('Server connection error. Please check your network or try again.');
+    }
+    return res;
   },
 
   forgotPassword: async (email) => {
     const res = await request('/auth/forgot-password', { method: 'POST', body: { email } });
-    return res || { success: true, message: `Reset code sent to ${email}` };
+    if (res && res.success === false) {
+      throw new Error(res.message || res.error || 'No account found with this email address.');
+    }
+    if (!res) {
+      throw new Error('Server connection error. Please check your network or try again.');
+    }
+    return res;
   },
   resetPassword: async (email, otp, new_password) => {
     const res = await request('/auth/reset-password', { method: 'POST', body: { email, otp, new_password } });
