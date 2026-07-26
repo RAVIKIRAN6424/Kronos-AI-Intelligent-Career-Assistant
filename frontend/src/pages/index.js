@@ -1,0 +1,11 @@
+export { LandingView } from '../views/LandingView';
+export { DashboardView } from '../views/DashboardView';
+export { JobsCrmView } from '../views/JobsCrmView';
+export { ConnectedPortalsView } from '../views/ConnectedPortalsView';
+export { ResumeSectionView } from '../views/ResumeSectionView';
+export { AutomationSettingsView } from '../views/AutomationSettingsView';
+export { SearchView } from '../views/SearchView';
+export { AnalyticsView } from '../views/AnalyticsView';
+export { ChatbotView } from '../views/ChatbotView';
+export { ProfileSetupView } from '../views/ProfileSetupView';
+export { SettingsView } from '../views/SettingsView';

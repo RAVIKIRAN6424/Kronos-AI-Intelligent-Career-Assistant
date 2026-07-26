@@ -1,0 +1,3 @@
+# Kronos AI Public Robots File
+User-agent: *
+Allow: /
