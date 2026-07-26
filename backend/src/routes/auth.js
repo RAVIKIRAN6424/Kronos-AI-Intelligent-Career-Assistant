@@ -6,9 +6,9 @@ import { getOne, run } from '../config/database.js';
 const router = express.Router();
 
 /**
- * POST /api/auth/send-otp - Request Account Registration & Resend OTP Code
+ * POST /api/auth/send-otp & POST /api/auth/resend-otp - Request Account Registration & Resend OTP Code
  */
-router.post('/send-otp', async (req, res) => {
+const handleSendOTP = async (req, res) => {
   try {
     const { email, full_name, fullName } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
@@ -41,7 +41,10 @@ router.post('/send-otp', async (req, res) => {
     const errMsg = err.message || err.toString();
     res.status(400).json({ success: false, error: errMsg });
   }
-});
+};
+
+router.post('/send-otp', handleSendOTP);
+router.post('/resend-otp', handleSendOTP);
 
 /**
  * POST /api/auth/verify-otp - Verify Registration OTP & Complete Account Creation
