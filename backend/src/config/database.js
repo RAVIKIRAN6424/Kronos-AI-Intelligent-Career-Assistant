@@ -91,6 +91,7 @@ export const initDb = () => {
           salary TEXT,
           posted_date TEXT,
           posted_at DATETIME,
+          experience_level TEXT,
           status TEXT DEFAULT 'Saved',
           recruiter_name TEXT,
           recruiter_email TEXT,
@@ -100,8 +101,9 @@ export const initDb = () => {
         )
       `);
 
-      // Ensure posted_at column exists on existing installations
+      // Ensure posted_at and experience_level columns exist on existing installations
       db.run(`ALTER TABLE jobs ADD COLUMN posted_at DATETIME`, () => {});
+      db.run(`ALTER TABLE jobs ADD COLUMN experience_level TEXT`, () => {});
 
       // 4. Candidate Profile Table
       db.run(`

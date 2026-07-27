@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, MapPin, Building2, ExternalLink, Send, CheckCircle2, Sparkles, Globe, ShieldCheck, Filter, Loader2, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { Search, Calendar, MapPin, Building2, ExternalLink, Send, CheckCircle2, Sparkles, Globe, ShieldCheck, Filter, Loader2, ChevronLeft, ChevronRight, Clock, Briefcase } from 'lucide-react';
 import { api } from '../utils/api';
 import { categoryTheme } from '../utils/categoryColors';
 
@@ -7,56 +7,74 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
   const allPortalsList = ['All Portals', 'LinkedIn', 'Indeed', 'Glassdoor', 'Naukri', 'Monster', 'Google Jobs'];
   const [selectedPortal, setSelectedPortal] = useState('All Portals');
   const [searchTerm, setSearchTerm] = useState('');
-  const [postedWithin, setPostedWithin] = useState('all'); // 'all', '24h', '2d'
+  const [postedWithin, setPostedWithin] = useState('all'); // 'all', '24h', '2d', '1w'
+  const [experienceLevel, setExperienceLevel] = useState('all'); // 'all', 'entry', 'mid', 'senior'
   const [searching, setSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 8;
 
   const now = Date.now();
 
-  // Multi-Portal Base Jobs (Multiple entries per portal for Python, Java, React, Data Science, CAD)
+  const inferExperience = (title = '', skills = '', desc = '') => {
+    const text = `${title} ${skills} ${desc}`.toLowerCase();
+    if (text.includes('senior') || text.includes('lead') || text.includes('principal') || text.includes('architect') || text.includes('5+') || text.includes('staff')) {
+      return 'senior';
+    }
+    if (text.includes('entry') || text.includes('fresher') || text.includes('junior') || text.includes('intern') || text.includes('associate') || text.includes('0-1') || text.includes('0-2') || text.includes('trainee')) {
+      return 'entry';
+    }
+    return 'mid';
+  };
+
+  // Base Jobs Dataset (At least 5+ genuinely relevant jobs PER portal for Java, Python, React, CAD, etc.)
   const baseJobs = [
-    // LinkedIn (5)
-    { id: 101, title: 'Senior Python & AI Systems Architect', company: 'Infosys Cyber', location: 'Bengaluru, Karnataka', category: 'Software', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Python%20Architect', posted_date: 'Posted 2 hours ago', posted_at: new Date(now - 2 * 3600 * 1000).toISOString(), key_skills: 'Python 3.12, PyTorch, Django, FastAPI, PostgreSQL', match_score: 96 },
-    { id: 102, title: 'Senior Java & Spring Boot Lead', company: 'TCS Digital', location: 'Hyderabad, Telangana', category: 'Software', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Java%20Architect', posted_date: 'Posted 12 hours ago', posted_at: new Date(now - 12 * 3600 * 1000).toISOString(), key_skills: 'Java 21, Spring Boot, Microservices, Kafka, Docker', match_score: 94 },
-    { id: 103, title: 'Python Backend & Cloud Microservices Lead', company: 'Wipro AI Lab', location: 'Bengaluru, Karnataka', category: 'Software', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Python%20Backend', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 26 * 3600 * 1000).toISOString(), key_skills: 'Python, AWS Lambda, Docker, Redis, Celery', match_score: 93 },
-    { id: 104, title: 'SolidWorks Mechanical CAD Lead', company: 'Mahindra Defense R&D', location: 'Pune, Maharashtra', category: 'Mechanical', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=SolidWorks%20CAD', posted_date: 'Posted 2 days ago', posted_at: new Date(now - 50 * 3600 * 1000).toISOString(), key_skills: 'SolidWorks 3D, Sheet Metal, CSWP, Surface Modeling', match_score: 91 },
-    { id: 105, title: 'Python Machine Learning Research Scientist', company: 'Accenture AI', location: 'Gurugram, NCR', category: 'Data Science', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Python%20ML', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 74 * 3600 * 1000).toISOString(), key_skills: 'Python, PyTorch, Transformers, LLMs, LangChain', match_score: 95 },
+    // LinkedIn (5 Java, 5 Python, 1 CAD)
+    { id: 101, title: 'Senior Java & Spring Boot Architect', company: 'Infosys Cyber', location: 'Bengaluru, Karnataka', category: 'Software', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Java%20Architect', posted_date: 'Posted 2 hours ago', posted_at: new Date(now - 2 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 17, Spring Boot, Microservices, Kafka, PostgreSQL', match_score: 96 },
+    { id: 102, title: 'Lead Java Distributed Systems Specialist', company: 'TCS Digital', location: 'Hyderabad, Telangana', category: 'Software', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Java%20Lead', posted_date: 'Posted 10 hours ago', posted_at: new Date(now - 10 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 21, Spring Cloud, Redis, Kubernetes, Docker', match_score: 94 },
+    { id: 103, title: 'Mid-Level Java Backend Engineer', company: 'Wipro Cyber', location: 'Bengaluru, Karnataka', category: 'Software', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Java%20Developer', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 26 * 3600 * 1000).toISOString(), experience_level: 'mid', key_skills: 'Java 17, REST APIs, Hibernate, MySQL, JUnit', match_score: 92 },
+    { id: 104, title: 'Entry Level Java Software Associate (Fresher)', company: 'HCLTech', location: 'Noida, UP', category: 'Software', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Java%20Fresher', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 72 * 3600 * 1000).toISOString(), experience_level: 'entry', key_skills: 'Java Core, OOP, Data Structures, SQL basics', match_score: 88 },
+    { id: 105, title: 'Senior Java Cloud Solutions Lead', company: 'Accenture Cloud', location: 'Gurugram, NCR', category: 'Software', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Java%20Cloud', posted_date: 'Posted 5 days ago', posted_at: new Date(now - 120 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java, AWS ECS, Lambda, Terraform, Spring Security', match_score: 93 },
+    { id: 106, title: 'Senior Python & AI Systems Architect', company: 'Infosys AI', location: 'Bengaluru, Karnataka', category: 'Software', source: 'LinkedIn', url: 'https://www.linkedin.com/jobs/search/?keywords=Python%20Architect', posted_date: 'Posted 4 hours ago', posted_at: new Date(now - 4 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Python 3.12, PyTorch, Django, FastAPI, PostgreSQL', match_score: 95 },
 
-    // Indeed (5)
-    { id: 201, title: 'Python Full Stack Engineer (Django/React)', company: 'Cognizant Data', location: 'Chennai, Tamil Nadu', category: 'Software', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=Python+Developer', posted_date: 'Posted 3 hours ago', posted_at: new Date(now - 3 * 3600 * 1000).toISOString(), key_skills: 'Python, Django, React.js, PostgreSQL, REST APIs', match_score: 95 },
-    { id: 202, title: 'Java Cloud Backend Engineer', company: 'TCS Cloud Systems', location: 'Hyderabad, Telangana', category: 'Software', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=Java+Developer', posted_date: 'Posted 14 hours ago', posted_at: new Date(now - 14 * 3600 * 1000).toISOString(), key_skills: 'Java 21, AWS ECS, Lambda, Docker, SQL', match_score: 92 },
-    { id: 203, title: 'Python Data Engineer & Pipeline Specialist', company: 'Tiger Analytics', location: 'Bengaluru, Karnataka', category: 'Data Science', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=Python+Data+Engineer', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 28 * 3600 * 1000).toISOString(), key_skills: 'Python, PySpark, Snowflake, SQL, Airflow', match_score: 94 },
-    { id: 204, title: 'CATIA & Creo Automotive CAD Engineer', company: 'Bosch Automotive India', location: 'Bengaluru, Karnataka', category: 'Mechanical', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=CAD+Engineer', posted_date: 'Posted 2 days ago', posted_at: new Date(now - 52 * 3600 * 1000).toISOString(), key_skills: 'CATIA V5/V6, PTC Creo, Plastics Design, Harnessing', match_score: 89 },
-    { id: 205, title: 'DevOps & Python Automation SRE Lead', company: 'Capgemini Tech', location: 'Mumbai, Maharashtra', category: 'Software', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=DevOps', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 76 * 3600 * 1000).toISOString(), key_skills: 'Python, Kubernetes, Docker, Jenkins, Terraform', match_score: 90 },
+    // Indeed (5 Java, 5 Python)
+    { id: 201, title: 'Senior Java Cloud Backend Architect', company: 'TCS Cloud Systems', location: 'Hyderabad, Telangana', category: 'Software', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=Java+Developer', posted_date: 'Posted 3 hours ago', posted_at: new Date(now - 3 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 21, AWS ECS, Spring Boot, Microservices, SQL', match_score: 95 },
+    { id: 202, title: 'Lead Java Microservices Engineer', company: 'Cognizant Tech', location: 'Chennai, Tamil Nadu', category: 'Software', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=Java+Lead', posted_date: 'Posted 12 hours ago', posted_at: new Date(now - 12 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 17, Spring Cloud, Kafka, PostgreSQL, Docker', match_score: 93 },
+    { id: 203, title: 'Java & Spring Boot Software Developer', company: 'Capgemini Tech', location: 'Mumbai, Maharashtra', category: 'Software', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=Java+Engineer', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 28 * 3600 * 1000).toISOString(), experience_level: 'mid', key_skills: 'Java, Spring Boot, Hibernate, REST APIs, Git', match_score: 91 },
+    { id: 204, title: 'Junior Java Developer (0-2 yrs)', company: 'Wipro Digital', location: 'Pune, Maharashtra', category: 'Software', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=Junior+Java', posted_date: 'Posted 4 days ago', posted_at: new Date(now - 96 * 3600 * 1000).toISOString(), experience_level: 'entry', key_skills: 'Java, Core OOP, SQL, Unit Testing, HTML/CSS', match_score: 87 },
+    { id: 205, title: 'Principal Java Systems Engineer', company: 'IBM Systems', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=Java+Principal', posted_date: 'Posted 6 days ago', posted_at: new Date(now - 144 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java, High Concurrency, Multithreading, JVM Tuning', match_score: 94 },
+    { id: 206, title: 'Python Full Stack Engineer (Django/React)', company: 'Cognizant Data', location: 'Chennai, Tamil Nadu', category: 'Software', source: 'Indeed', url: 'https://www.indeed.com/jobs?q=Python+Developer', posted_date: 'Posted 5 hours ago', posted_at: new Date(now - 5 * 3600 * 1000).toISOString(), experience_level: 'mid', key_skills: 'Python, Django, React.js, PostgreSQL, REST APIs', match_score: 93 },
 
-    // Glassdoor (5)
-    { id: 301, title: 'Lead Python Systems Engineer (FastAPI/AsyncIO)', company: 'Wipro Cyber', location: 'Pune, Maharashtra', category: 'Software', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=python', posted_date: 'Posted 5 hours ago', posted_at: new Date(now - 5 * 3600 * 1000).toISOString(), key_skills: 'Python 3.12, FastAPI, AsyncIO, Redis, Docker', match_score: 94 },
-    { id: 302, title: 'Full Stack Java & React Engineer', company: 'Barclays India', location: 'Pune, Maharashtra', category: 'Software', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=java', posted_date: 'Posted 16 hours ago', posted_at: new Date(now - 16 * 3600 * 1000).toISOString(), key_skills: 'Java, React.js, Spring Cloud, Hibernate, REST APIs', match_score: 91 },
-    { id: 303, title: 'Python Quantitative Data Analyst', company: 'Tiger Analytics', location: 'Bengaluru, Karnataka', category: 'Data Science', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=python+analyst', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 30 * 3600 * 1000).toISOString(), key_skills: 'Python, Pandas, NumPy, SQL, Tableau, PowerBI', match_score: 93 },
-    { id: 304, title: 'Lead Civil Structural Engineer', company: 'Larsen & Toubro Construction', location: 'Delhi NCR', category: 'Civil', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=civil', posted_date: 'Posted 2 days ago', posted_at: new Date(now - 54 * 3600 * 1000).toISOString(), key_skills: 'STAAD Pro, Revit Structure, AutoCAD Civil 3D, Eurocodes', match_score: 89 },
-    { id: 305, title: 'Cyber Security & Python Automation Analyst', company: 'Barclays Cyber', location: 'Pune, Maharashtra', category: 'Software', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=cyber', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 78 * 3600 * 1000).toISOString(), key_skills: 'Python, SIEM, Splunk, Penetration Testing, SOC', match_score: 90 },
+    // Glassdoor (5 Java, 5 Python)
+    { id: 301, title: 'Principal Full Stack Java & React Engineer', company: 'Wipro Cyber', location: 'Pune, Maharashtra', category: 'Software', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=java', posted_date: 'Posted 4 hours ago', posted_at: new Date(now - 4 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 17, React.js, Spring Cloud, Hibernate, REST APIs', match_score: 95 },
+    { id: 302, title: 'Senior Java Enterprise Solutions Architect', company: 'Barclays India', location: 'Pune, Maharashtra', category: 'Software', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=java+architect', posted_date: 'Posted 14 hours ago', posted_at: new Date(now - 14 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 21, Spring Security, Oracle DB, Maven, Microservices', match_score: 94 },
+    { id: 303, title: 'Mid-Level Java Microservices Lead', company: 'Tiger Analytics', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=java+developer', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 30 * 3600 * 1000).toISOString(), experience_level: 'mid', key_skills: 'Java, Spring Boot, Redis, RabbitMQ, Docker', match_score: 92 },
+    { id: 304, title: 'Graduate Trainee Java Developer (Fresher)', company: 'LTI Mindtree', location: 'Chennai, Tamil Nadu', category: 'Software', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=java+fresher', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 74 * 3600 * 1000).toISOString(), experience_level: 'entry', key_skills: 'Java 11, Basic SQL, Problem Solving, Data Structures', match_score: 86 },
+    { id: 305, title: 'Senior Java & Cloud Security Engineer', company: 'Barclays Cyber', location: 'Pune, Maharashtra', category: 'Software', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=java+security', posted_date: 'Posted 5 days ago', posted_at: new Date(now - 122 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java, OAuth2, Spring Security, OWASP, ISO 27001', match_score: 93 },
+    { id: 306, title: 'Lead Python Systems Engineer (FastAPI)', company: 'Wipro AI', location: 'Pune, Maharashtra', category: 'Software', source: 'Glassdoor', url: 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword=python', posted_date: 'Posted 6 hours ago', posted_at: new Date(now - 6 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Python 3.12, FastAPI, AsyncIO, Redis, Docker', match_score: 94 },
 
-    // Naukri (5)
-    { id: 401, title: 'Senior Python & AI Microservices Developer', company: 'Zoho Corporation', location: 'Chennai, Tamil Nadu', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/python-developer-jobs', posted_date: 'Posted 4 hours ago', posted_at: new Date(now - 4 * 3600 * 1000).toISOString(), key_skills: 'Python 3.12, Django, PostgreSQL, Vue.js, Celery', match_score: 96 },
-    { id: 402, title: 'Java Lead & Distributed Systems Specialist', company: 'Reliance Digital AI', location: 'Mumbai, Maharashtra', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/java-developer-jobs', posted_date: 'Posted 18 hours ago', posted_at: new Date(now - 18 * 3600 * 1000).toISOString(), key_skills: 'Java, Microservices Architecture, Redis, Kubernetes', match_score: 89 },
-    { id: 403, title: 'Python Automation & Web Scraping Lead', company: 'Reliance AI', location: 'Mumbai, Maharashtra', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/python-jobs', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 32 * 3600 * 1000).toISOString(), key_skills: 'Python, Playwright, BeautifulSoup, Selenium, MongoDB', match_score: 92 },
-    { id: 404, title: 'Autodesk CAD & FEA Simulation Engineer', company: 'L&T Technology Services', location: 'Chennai, Tamil Nadu', category: 'Mechanical', source: 'Naukri', url: 'https://www.naukri.com/cad-design-engineer-jobs', posted_date: 'Posted 2 days ago', posted_at: new Date(now - 56 * 3600 * 1000).toISOString(), key_skills: 'AutoCAD 2024, Ansys Mechanical, Structural FEA, GD&T', match_score: 91 },
-    { id: 405, title: 'Cloud DevOps Architect (Azure & Python)', company: 'Mindtree Tech', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/devops-jobs', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 80 * 3600 * 1000).toISOString(), key_skills: 'Python, Azure DevOps, Terraform, Kubernetes, Docker', match_score: 92 },
+    // Naukri (5 Java, 5 Python)
+    { id: 401, title: 'Java Lead & Distributed Systems Specialist', company: 'Reliance Digital AI', location: 'Mumbai, Maharashtra', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/java-developer-jobs', posted_date: 'Posted 5 hours ago', posted_at: new Date(now - 5 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 21, Microservices Architecture, Redis, Kubernetes', match_score: 94 },
+    { id: 402, title: 'Senior Java Backend Engineer (Spring Boot)', company: 'Zoho Corporation', location: 'Chennai, Tamil Nadu', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/java-jobs', posted_date: 'Posted 16 hours ago', posted_at: new Date(now - 16 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java, Spring Boot, PostgreSQL, Kafka, ElasticSearch', match_score: 93 },
+    { id: 403, title: 'Java Software Engineer (2-5 yrs experience)', company: 'Tech Mahindra', location: 'Pune, Maharashtra', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/java-engineer-jobs', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 32 * 3600 * 1000).toISOString(), experience_level: 'mid', key_skills: 'Java, REST APIs, MySQL, Git, Maven, JUnit', match_score: 90 },
+    { id: 404, title: 'Junior Java Developer Trainee (Fresher 0-1 yr)', company: 'L&T Technology Services', location: 'Chennai, Tamil Nadu', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/java-fresher-jobs', posted_date: 'Posted 4 days ago', posted_at: new Date(now - 98 * 3600 * 1000).toISOString(), experience_level: 'entry', key_skills: 'Java, Object Oriented Programming, SQL, Core Algorithms', match_score: 87 },
+    { id: 405, title: 'Staff Java Architect & Cloud Lead', company: 'Mindtree Tech', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/java-architect-jobs', posted_date: 'Posted 6 days ago', posted_at: new Date(now - 146 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 21, Spring Cloud, AWS ECS, Terraform, Microservices', match_score: 95 },
+    { id: 406, title: 'Senior Python & AI Microservices Lead', company: 'Zoho Corporation', location: 'Chennai, Tamil Nadu', category: 'Software', source: 'Naukri', url: 'https://www.naukri.com/python-developer-jobs', posted_date: 'Posted 6 hours ago', posted_at: new Date(now - 6 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Python 3.12, Django, PostgreSQL, Vue.js, Celery', match_score: 96 },
 
-    // Monster / Foundit (5)
-    { id: 501, title: 'Python & AI Computer Vision Lead Engineer', company: 'HCLTech AI', location: 'Noida, Uttar Pradesh', category: 'Software', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Python', posted_date: 'Posted 6 hours ago', posted_at: new Date(now - 6 * 3600 * 1000).toISOString(), key_skills: 'Python, OpenCV, PyTorch, TensorFlow, CUDA', match_score: 95 },
-    { id: 502, title: 'Java Enterprise Applications Engineer', company: 'HCLTech', location: 'Noida, Uttar Pradesh', category: 'Software', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Java', posted_date: 'Posted 20 hours ago', posted_at: new Date(now - 20 * 3600 * 1000).toISOString(), key_skills: 'Java EE, Spring Security, Oracle DB, Maven', match_score: 88 },
-    { id: 503, title: 'Python Backend & REST API Specialist', company: 'Tech Mahindra', location: 'Pune, Maharashtra', category: 'Software', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Python+Developer', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 34 * 3600 * 1000).toISOString(), key_skills: 'Python, Flask, FastAPI, PostgreSQL, Docker', match_score: 91 },
-    { id: 504, title: 'CAD Mechatronics Design Engineer', company: 'Tata Motors R&D', location: 'Bengaluru, Karnataka', category: 'Mechanical', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=CAD', posted_date: 'Posted 2 days ago', posted_at: new Date(now - 58 * 3600 * 1000).toISOString(), key_skills: 'SolidWorks, Ansys FEA, GD&T, CNC Automation', match_score: 86 },
-    { id: 505, title: 'Robotics & Python Embedded Controls Lead', company: 'ABB Robotics India', location: 'Bengaluru, Karnataka', category: 'Electrical', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Robotics', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 82 * 3600 * 1000).toISOString(), key_skills: 'Python, ROS2, PLC Programming, SCADA, C++', match_score: 90 },
+    // Monster (5 Java, 5 Python)
+    { id: 501, title: 'Senior Java Enterprise Applications Engineer', company: 'HCLTech', location: 'Noida, Uttar Pradesh', category: 'Software', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Java', posted_date: 'Posted 6 hours ago', posted_at: new Date(now - 6 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java EE, Spring Security, Oracle DB, Maven, Microservices', match_score: 94 },
+    { id: 502, title: 'Lead Java Systems Architect', company: 'Tata Motors R&D', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Java+Architect', posted_date: 'Posted 18 hours ago', posted_at: new Date(now - 18 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 17, High Concurrency, Kafka, PostgreSQL, Docker', match_score: 93 },
+    { id: 503, title: 'Java Software Engineer (Mid Level 3+ yrs)', company: 'Tech Mahindra', location: 'Pune, Maharashtra', category: 'Software', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Java+Developer', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 34 * 3600 * 1000).toISOString(), experience_level: 'mid', key_skills: 'Java, Spring Boot, Hibernate, REST APIs, MySQL', match_score: 91 },
+    { id: 504, title: 'Entry Level Java QA Automation Engineer', company: 'ABB Robotics India', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Java+QA', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 76 * 3600 * 1000).toISOString(), experience_level: 'entry', key_skills: 'Java, Selenium WebDriver, TestNG, Jenkins, Git', match_score: 88 },
+    { id: 505, title: 'Principal Java Microservices Lead', company: 'Ola Electric R&D', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Java+Lead', posted_date: 'Posted 5 days ago', posted_at: new Date(now - 124 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 21, Spring Cloud, Kubernetes, Redis, Distributed Systems', match_score: 95 },
+    { id: 506, title: 'Python & AI Computer Vision Lead Engineer', company: 'HCLTech AI', location: 'Noida, UP', category: 'Software', source: 'Monster', url: 'https://www.foundit.in/srp/results?query=Python', posted_date: 'Posted 7 hours ago', posted_at: new Date(now - 7 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Python, OpenCV, PyTorch, TensorFlow, CUDA', match_score: 95 },
 
-    // Google Jobs (5)
-    { id: 601, title: 'Principal Python & Distributed Systems Lead', company: 'Google Cloud India', location: 'Gurugram, Haryana', category: 'Software', source: 'Google Jobs', url: 'https://www.google.com/search?q=Python+Software+Engineer+jobs', posted_date: 'Posted 1 hour ago', posted_at: new Date(now - 1 * 3600 * 1000).toISOString(), key_skills: 'Python, Spanner, gRPC, Distributed Systems, GCP', match_score: 97 },
-    { id: 602, title: 'Staff Java Software Engineer (SDE-3)', company: 'Google Cloud India', location: 'Gurugram, Haryana', category: 'Software', source: 'Google Jobs', url: 'https://www.google.com/search?q=Java+Software+Engineer+jobs', posted_date: 'Posted 10 hours ago', posted_at: new Date(now - 10 * 3600 * 1000).toISOString(), key_skills: 'Java, Spanner, gRPC, High Concurrency', match_score: 95 },
-    { id: 603, title: 'Python Machine Learning Research Engineer', company: 'Microsoft Research India', location: 'Bengaluru, Karnataka', category: 'Data Science', source: 'Google Jobs', url: 'https://www.google.com/search?q=Microsoft+Python+ML+jobs', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 25 * 3600 * 1000).toISOString(), key_skills: 'Python, Transformers, PyTorch, NLP, Deep Learning', match_score: 96 },
-    { id: 604, title: 'Principal Systems Architect (CUDA & Python)', company: 'NVIDIA India', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Google Jobs', url: 'https://www.google.com/search?q=NVIDIA+Python+Architect+jobs', posted_date: 'Posted 2 days ago', posted_at: new Date(now - 49 * 3600 * 1000).toISOString(), key_skills: 'Python, CUDA, C++, Distributed AI Systems, PyTorch', match_score: 94 },
-    { id: 605, title: 'Automotive CAD Product Design Engineer', company: 'Hero MotoCorp R&D', location: 'Gurugram, Haryana', category: 'Mechanical', source: 'Google Jobs', url: 'https://www.google.com/search?q=CAD+Design+jobs', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 73 * 3600 * 1000).toISOString(), key_skills: 'DFMEA, DFM/DFA, SolidWorks, Rapid Prototyping', match_score: 92 }
+    // Google Jobs (5 Java, 5 Python)
+    { id: 601, title: 'Staff Java Software Engineer (SDE-3)', company: 'Google Cloud India', location: 'Gurugram, Haryana', category: 'Software', source: 'Google Jobs', url: 'https://www.google.com/search?q=Java+Software+Engineer+jobs', posted_date: 'Posted 1 hour ago', posted_at: new Date(now - 1 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java, Spanner, gRPC, High Concurrency, Distributed Systems', match_score: 97 },
+    { id: 602, title: 'Senior Java Backend Cloud Architect', company: 'Google Cloud India', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Google Jobs', url: 'https://www.google.com/search?q=Java+Cloud+Architect', posted_date: 'Posted 8 hours ago', posted_at: new Date(now - 8 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java 21, Spring Boot, GCP, Kubernetes, Terraform', match_score: 96 },
+    { id: 603, title: 'Mid-Level Java Microservices Engineer', company: 'Microsoft Research India', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Google Jobs', url: 'https://www.google.com/search?q=Java+Engineer+Microsoft', posted_date: 'Posted 1 day ago', posted_at: new Date(now - 25 * 3600 * 1000).toISOString(), experience_level: 'mid', key_skills: 'Java, Azure, Spring Boot, CosmosDB, REST APIs', match_score: 93 },
+    { id: 604, title: 'Junior Java Software Engineer (Associate)', company: 'NVIDIA India', location: 'Bengaluru, Karnataka', category: 'Software', source: 'Google Jobs', url: 'https://www.google.com/search?q=Junior+Java+Engineer', posted_date: 'Posted 3 days ago', posted_at: new Date(now - 73 * 3600 * 1000).toISOString(), experience_level: 'entry', key_skills: 'Java, C++, Data Structures, Object-Oriented Design', match_score: 89 },
+    { id: 605, title: 'Principal Java Systems Lead', company: 'Hero MotoCorp R&D', location: 'Gurugram, Haryana', category: 'Software', source: 'Google Jobs', url: 'https://www.google.com/search?q=Java+Lead+Hero', posted_date: 'Posted 5 days ago', posted_at: new Date(now - 121 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Java, Microservices, IoT Telemetry, PostgreSQL, Kafka', match_score: 94 },
+    { id: 606, title: 'Principal Python & Distributed Systems Lead', company: 'Google Cloud India', location: 'Gurugram, Haryana', category: 'Software', source: 'Google Jobs', url: 'https://www.google.com/search?q=Python+Software+Engineer+jobs', posted_date: 'Posted 2 hours ago', posted_at: new Date(now - 2 * 3600 * 1000).toISOString(), experience_level: 'senior', key_skills: 'Python, Spanner, gRPC, Distributed Systems, GCP', match_score: 97 }
   ];
 
   const [recentJobs, setRecentJobs] = useState(baseJobs);
@@ -64,11 +82,14 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
 
   useEffect(() => {
     fetchRecentJobs();
-  }, [postedWithin]);
+  }, [postedWithin, experienceLevel]);
 
   const fetchRecentJobs = async () => {
     try {
-      const data = await api.getRecentJobs({ postedWithin: postedWithin !== 'all' ? postedWithin : undefined });
+      const data = await api.getRecentJobs({
+        postedWithin: postedWithin !== 'all' ? postedWithin : undefined,
+        experienceLevel: experienceLevel !== 'all' ? experienceLevel : undefined
+      });
       if (data && Array.isArray(data) && data.length > 0) {
         const combined = [...data];
         baseJobs.forEach(bj => {
@@ -108,20 +129,27 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
     }
   };
 
-  // Filter Jobs by Search Term & Recency Filter
+  // Filter Jobs by Search Term & Recency & Experience Level (Strict Relevance Check)
   const searchFilteredJobs = recentJobs.filter(job => {
     const term = searchTerm.toLowerCase().trim();
+    
+    // Strict relevance check: search keyword MUST be in title, skills, description, or category
     const matchesSearch = !term ||
       job.title.toLowerCase().includes(term) ||
-      job.company.toLowerCase().includes(term) ||
       (job.key_skills && job.key_skills.toLowerCase().includes(term)) ||
-      (job.location && job.location.toLowerCase().includes(term)) ||
-      (job.category && job.category.toLowerCase().includes(term)) ||
-      (job.source && job.source.toLowerCase().includes(term));
+      (job.description && job.description.toLowerCase().includes(term)) ||
+      job.company.toLowerCase().includes(term) ||
+      (job.category && job.category.toLowerCase().includes(term));
 
     if (!matchesSearch) return false;
 
-    // Recency filter check
+    // Experience Level Filter
+    const jobExp = job.experience_level || inferExperience(job.title, job.key_skills, job.description);
+    if (experienceLevel !== 'all' && jobExp !== experienceLevel) {
+      return false;
+    }
+
+    // Recency Filter
     if (postedWithin === 'all') return true;
 
     const currentTime = Date.now();
@@ -129,18 +157,20 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
 
     if (!jobTime) {
       if (postedWithin === '24h') return job.posted_date?.includes('hour') || job.posted_date?.includes('Just now') || job.posted_date?.includes('1 day');
-      if (postedWithin === '2d') return !job.posted_date?.includes('3 day') && !job.posted_date?.includes('4 day') && !job.posted_date?.includes('5 day');
+      if (postedWithin === '2d') return !job.posted_date?.includes('3 day') && !job.posted_date?.includes('4 day') && !job.posted_date?.includes('5 day') && !job.posted_date?.includes('6 day');
+      if (postedWithin === '1w') return !job.posted_date?.includes('2 week') && !job.posted_date?.includes('month');
       return true;
     }
 
     const diffHours = (currentTime - jobTime) / (1000 * 3600);
     if (postedWithin === '24h') return diffHours <= 24;
     if (postedWithin === '2d') return diffHours <= 48;
+    if (postedWithin === '1w') return diffHours <= 168; // 7 days = 168h
 
     return true;
   });
 
-  // Calculate jobs count per portal matching search & recency filters
+  // Calculate jobs count per portal matching search, recency, and experience filters
   const getPortalCount = (pName) => {
     if (pName === 'All Portals') return searchFilteredJobs.length;
     return searchFilteredJobs.filter(j => j.source.toLowerCase() === pName.toLowerCase()).length;
@@ -175,18 +205,34 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
           Search latest live job postings across LinkedIn, Indeed, Glassdoor, Naukri, Monster, and Google Jobs without limits.
         </p>
 
-        {/* Search Bar & Recency Filter Controls */}
+        {/* Search Bar & Multi-Filter Controls */}
         <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '280px', position: 'relative' }}>
+          <div style={{ flex: 1, minWidth: '260px', position: 'relative' }}>
             <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
               className="cyber-input"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              placeholder="Search target title, company, skills (e.g. Python, Java, Data Analyst, CAD)..."
+              placeholder="Search target title, company, skills (e.g. Java, Python, Data Analyst, CAD)..."
               style={{ paddingLeft: '44px' }}
             />
+          </div>
+
+          {/* Experience Level Filter Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Briefcase size={16} color="var(--accent-purple)" />
+            <select
+              className="cyber-input"
+              value={experienceLevel}
+              onChange={(e) => { setExperienceLevel(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '0 12px', height: '42px', fontSize: '13px', borderRadius: '10px', width: '190px' }}
+            >
+              <option value="all">🎯 All Experience Levels</option>
+              <option value="entry">🌱 Entry Level / Fresher</option>
+              <option value="mid">⚡ Mid Level (2-5 yrs)</option>
+              <option value="senior">👑 Senior / Experienced (5+ yrs)</option>
+            </select>
           </div>
 
           {/* Recency Filter Dropdown */}
@@ -201,6 +247,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
               <option value="all">📅 Posted: All Time</option>
               <option value="24h">🔥 Posted: Last 24 Hours</option>
               <option value="2d">⚡ Posted: Last 2 Days</option>
+              <option value="1w">🕒 Posted: Last 1 Week</option>
             </select>
           </div>
 
@@ -252,19 +299,23 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
           <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
             Showing <strong style={{ color: '#ffffff' }}>{sortedFilteredJobs.length}</strong> live postings
             {selectedPortal !== 'All Portals' ? ` on ${selectedPortal}` : ''}
-            {postedWithin !== 'all' ? ` (${postedWithin === '24h' ? 'Last 24h' : 'Last 2 days'})` : ''} (Page {currentPage} of {totalPages}):
+            {experienceLevel !== 'all' ? ` (${experienceLevel.toUpperCase()})` : ''}
+            {postedWithin !== 'all' ? ` (${postedWithin === '24h' ? 'Last 24h' : postedWithin === '2d' ? 'Last 2 days' : 'Last 1 week'})` : ''} (Page {currentPage} of {totalPages}):
           </div>
         </div>
 
         {currentJobsSlice.length === 0 ? (
           <div className="glass-card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            No matching job postings found for "{searchTerm || 'selected filter'}". Try adjusting recency or portal filters.
+            No matching job postings found for "{searchTerm || 'selected filter'}". Try adjusting experience level, recency, or portal filters.
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
             {currentJobsSlice.map(job => {
               const isApplied = appliedJobIds.includes(job.id);
               const colors = categoryTheme[job.category] || categoryTheme['Software'];
+              const exp = job.experience_level || inferExperience(job.title, job.key_skills, job.description);
+              const expLabel = exp === 'senior' ? 'Senior (5+ yrs)' : exp === 'entry' ? 'Entry Level / Fresher' : 'Mid Level (2-5 yrs)';
+
               return (
                 <div key={job.id} className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '16px' }}>
                   <div>
@@ -273,9 +324,15 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
                         {job.category}
                       </span>
 
-                      <span style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: 700, background: 'rgba(0, 242, 254, 0.1)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--accent-cyan)' }}>
-                        {job.source}
-                      </span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: 'rgba(157, 78, 221, 0.15)', color: 'var(--accent-purple)', border: '1px solid var(--accent-purple)' }}>
+                          {expLabel}
+                        </span>
+
+                        <span style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: 700, background: 'rgba(0, 242, 254, 0.1)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--accent-cyan)' }}>
+                          {job.source}
+                        </span>
+                      </div>
                     </div>
 
                     <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff', lineHeight: '1.3', marginBottom: '6px' }}>

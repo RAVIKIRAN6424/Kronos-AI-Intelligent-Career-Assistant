@@ -24,15 +24,15 @@ const router = express.Router();
  */
 router.get('/jobs', async (req, res) => {
   try {
-    const { search, status, category, country, min_score, postedWithin } = req.query;
+    const { search, status, category, country, min_score, postedWithin, experienceLevel } = req.query;
 
     let sql = `SELECT * FROM jobs WHERE 1=1`;
     const params = [];
 
     if (search) {
-      sql += ` AND (title LIKE ? OR company LIKE ? OR location LIKE ? OR key_skills LIKE ? OR notes LIKE ? OR source LIKE ?)`;
+      sql += ` AND (title LIKE ? OR company LIKE ? OR location LIKE ? OR key_skills LIKE ? OR notes LIKE ? OR source LIKE ? OR description LIKE ?)`;
       const term = `%${search}%`;
-      params.push(term, term, term, term, term, term);
+      params.push(term, term, term, term, term, term, term);
     }
 
     if (status && status !== 'All') {
@@ -55,6 +55,12 @@ router.get('/jobs', async (req, res) => {
       params.push(parseInt(min_score));
     }
 
+    if (experienceLevel && experienceLevel !== 'all') {
+      sql += ` AND (experience_level = ? OR LOWER(title) LIKE ? OR LOWER(key_skills) LIKE ?)`;
+      const expTerm = `%${experienceLevel}%`;
+      params.push(experienceLevel, expTerm, expTerm);
+    }
+
     if (postedWithin === '24h') {
       const past24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       sql += ` AND (posted_at >= ? OR created_at >= datetime('now', '-24 hours'))`;
@@ -63,6 +69,10 @@ router.get('/jobs', async (req, res) => {
       const past48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       sql += ` AND (posted_at >= ? OR created_at >= datetime('now', '-48 hours'))`;
       params.push(past48h);
+    } else if (postedWithin === '1w') {
+      const past7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      sql += ` AND (posted_at >= ? OR created_at >= datetime('now', '-7 days'))`;
+      params.push(past7d);
     }
 
     sql += ` ORDER BY COALESCE(posted_at, created_at) DESC, id DESC`;
