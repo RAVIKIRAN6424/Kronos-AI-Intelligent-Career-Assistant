@@ -444,3 +444,80 @@ body {
 .animate-pulse-glow {
   animation: pulseGlow 3s infinite ease-in-out;
 }
+
+/* Cyber primary button definition (Fixes theme consistency audit) */
+.btn-cyber-primary {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  color: #040814;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: var(--glow-cyan);
+}
+
+.btn-cyber-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px var(--accent-cyan);
+  filter: brightness(1.1);
+}
+
+/* =========================================================
+   RESPONSIVE MEDIA QUERIES (320px Phones to Large Desktops)
+   ========================================================= */
+
+/* Navigation Header Breakdown (< 1024px) */
+@media (max-width: 1024px) {
+  .hamburger-toggle-btn {
+    display: inline-flex !important;
+  }
+  .desktop-nav {
+    display: none !important;
+  }
+  header.kronos-navbar {
+    padding: 10px 16px !important;
+    margin: 8px 8px 16px 8px !important;
+  }
+}
+
+/* Tablets (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  main {
+    padding: 0 16px !important;
+  }
+}
+
+/* Large Phones (481px - 767px) */
+@media (max-width: 767px) {
+  .glass-card, .glass-panel {
+    padding: 16px !important;
+    border-radius: 12px !important;
+  }
+  
+  .desktop-utils {
+    gap: 8px !important;
+  }
+}
+
+/* Small Phones (320px - 480px) */
+@media (max-width: 480px) {
+  body {
+    font-size: 13px;
+  }
+  
+  h1 { font-size: 18px !important; }
+  h2 { font-size: 18px !important; }
+  h3 { font-size: 15px !important; }
+
+  .cyber-input, .cyber-select, .cyber-textarea {
+    font-size: 13px !important;
+    padding: 10px 12px !important;
+  }
+}
+

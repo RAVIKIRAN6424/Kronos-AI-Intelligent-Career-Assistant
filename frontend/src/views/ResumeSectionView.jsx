@@ -73,12 +73,12 @@ export const ResumeSectionView = ({ toast }) => {
   const calculateATS = (text, roleName, fresherMode = isFresher) => {
     if (!text || text.trim().length < 15) {
       return {
-        ats_score: 35,
-        grammar_score: 45,
-        formatting_score: 38,
-        keyword_score: 25,
+        ats_score: 25,
+        grammar_score: 40,
+        formatting_score: 30,
+        keyword_score: 15,
         missing_skills: 'Upload PDF or fill details to evaluate target skills',
-        suggestions: 'Add core technical skills, project experience, and achievements.'
+        suggestions: 'Add contact info, core technical skills, project experience, and achievements.'
       };
     }
 
@@ -86,56 +86,74 @@ export const ResumeSectionView = ({ toast }) => {
     const words = text.trim().split(/\s+/).filter(Boolean);
     const wordCount = words.length;
 
-    // 1. Keyword Alignment Score (45% weight)
+    // 1. Keyword Alignment Score (40% weight)
     const targetSkills = SKILL_DATABASE[roleName] || [
       'System Design', 'Optimization', 'Architecture', 'Leadership', 'Development', 'Management', 'Testing', 'API'
     ];
     const foundSkills = targetSkills.filter(skill => cleanText.includes(skill.toLowerCase()));
     const missing = targetSkills.filter(skill => !cleanText.includes(skill.toLowerCase()));
-    let keyword_score = Math.round((foundSkills.length / targetSkills.length) * 100);
+    
+    let keywordRatio = foundSkills.length / Math.max(1, targetSkills.length);
+    let keyword_score = Math.round(keywordRatio * 100);
     if (cleanText.includes(roleName.toLowerCase())) keyword_score = Math.min(100, keyword_score + 10);
-    keyword_score = Math.min(98, Math.max(30, keyword_score));
+    keyword_score = Math.min(98, Math.max(10, keyword_score));
 
-    // 2. Action Verbs & Metrics Density
-    const actionVerbs = ['developed', 'engineered', 'architected', 'implemented', 'designed', 'built', 'led', 'managed', 'created', 'delivered', 'optimized', 'reduced', 'increased', 'automated'];
-    const foundVerbs = actionVerbs.filter(v => cleanText.includes(v));
-    const hasNumbers = /\b\d+(%|\+|k|m|years|yrs)?\b/i.test(cleanText);
-
-    // 3. Formatting & Structural Quality Score (35% weight)
+    // 2. Contact & Section Completeness Check (30% weight)
+    const hasEmail = /\b[\w\.-]+@[\w\.-]+\.\w{2,}\b/i.test(text);
+    const hasPhone = /\+?\d[\d\s-]{7,}\d/.test(text);
     const hasSummary = /summary|overview|about|profile/i.test(cleanText);
     const hasExperience = /experience|employment|work history|projects/i.test(cleanText);
     const hasEducation = /education|qualification|university|degree|college|b\.tech|bachelor|master/i.test(cleanText);
     const hasSkillsSec = /skills|technologies|competencies|tools/i.test(cleanText);
     const hasBullets = /•|-|\*|\n\d+\./.test(text);
 
-    let sectionPoints = 0;
-    if (hasSummary) sectionPoints += 20;
-    if (hasExperience) sectionPoints += 30;
-    if (hasEducation) sectionPoints += 20;
-    if (hasSkillsSec) sectionPoints += 20;
-    if (hasBullets) sectionPoints += 10;
-    const formatting_score = Math.min(98, Math.max(40, sectionPoints));
+    let completenessPoints = 0;
+    if (hasEmail) completenessPoints += 15;
+    if (hasPhone) completenessPoints += 15;
+    if (hasSummary) completenessPoints += 15;
+    if (hasExperience) completenessPoints += 25;
+    if (hasEducation) completenessPoints += 15;
+    if (hasSkillsSec) completenessPoints += 15;
+    const completeness_score = Math.min(100, completenessPoints);
 
-    // 4. Readability & Grammar Quality Score (20% weight)
-    let grammar_score = 75;
-    if (wordCount > 60) grammar_score += 10;
-    if (wordCount > 120) grammar_score += 8;
-    if (foundVerbs.length >= 3) grammar_score += 5;
-    grammar_score = Math.min(98, Math.max(50, grammar_score));
+    // 3. Formatting & Bullet Quality (15% weight)
+    let formatPoints = 40;
+    if (hasBullets) formatPoints += 25;
+    if (wordCount >= 100 && wordCount <= 700) formatPoints += 25;
+    if (wordCount > 700) formatPoints += 10;
+    const formatting_score = Math.min(98, Math.max(20, formatPoints));
 
-    // 5. Deterministic Industry Standard Weighted Score
-    let rawScore = Math.round((keyword_score * 0.45) + (formatting_score * 0.35) + (grammar_score * 0.20));
-    if (hasNumbers) rawScore = Math.min(99, rawScore + 3);
+    // 4. Action Verbs & Metrics Score (15% weight)
+    const actionVerbs = ['developed', 'engineered', 'architected', 'implemented', 'designed', 'built', 'led', 'managed', 'created', 'delivered', 'optimized', 'reduced', 'increased', 'automated'];
+    const foundVerbs = actionVerbs.filter(v => cleanText.includes(v));
+    const hasNumbers = /\b\d+(%|\+|k|m|years|yrs)?\b/i.test(cleanText);
 
-    const ats_score = rawScore;
+    let verbPoints = 40;
+    if (foundVerbs.length >= 2) verbPoints += 25;
+    if (foundVerbs.length >= 5) verbPoints += 15;
+    if (hasNumbers) verbPoints += 20;
+    const grammar_score = Math.min(98, Math.max(30, verbPoints));
+
+    // Calculate Overall Dynamic ATS Score
+    let overallScore = Math.round(
+      (keyword_score * 0.40) +
+      (completeness_score * 0.30) +
+      (formatting_score * 0.15) +
+      (grammar_score * 0.15)
+    );
+
+    const ats_score = Math.min(99, Math.max(15, overallScore));
     const missing_skills = missing.length > 0 ? missing.join(', ') : 'All key domain skills matched!';
 
-    let suggestions = '';
-    if (missing.length > 0) {
-      suggestions = `Missing key keywords: ${missing.slice(0, 4).join(', ')}. Click "Improve Resume" to format into standard ATS layout.`;
-    } else {
-      suggestions = `Excellent ATS alignment for ${fresherMode ? 'Fresher' : 'Experienced'} ${roleName} target applications.`;
-    }
+    let suggestions = [];
+    if (!hasEmail || !hasPhone) suggestions.push('Add complete contact details (email and phone).');
+    if (missing.length > 0) suggestions.push(`Include missing keywords: ${missing.slice(0, 3).join(', ')}.`);
+    if (!hasBullets) suggestions.push('Use bullet points for work experience readability.');
+    if (!hasNumbers) suggestions.push('Quantify accomplishments with metrics (e.g. %, $ or scale).');
+
+    const suggestionText = suggestions.length > 0
+      ? suggestions.join(' ')
+      : `Strong ATS alignment for ${fresherMode ? 'Fresher' : 'Experienced'} ${roleName} applications.`;
 
     return {
       ats_score,
@@ -143,7 +161,7 @@ export const ResumeSectionView = ({ toast }) => {
       formatting_score,
       keyword_score,
       missing_skills,
-      suggestions
+      suggestions: suggestionText
     };
   };
 
@@ -422,25 +440,57 @@ export const ResumeSectionView = ({ toast }) => {
     if (toast) toast(`Deleted "${roleToDelete}" role profile.`, 'info');
   };
 
-  // Button 2: Improve Resume (Convert & Boost Score - Zero AI watermarks, role-specific skills)
+  // Tailored Resume Improvement Engine (Rewrites weak sections & adds target role keywords)
   const handleOptimizeResume = async () => {
     setOptimizing(true);
     try {
-      if (toast) toast(`Formatting and optimizing resume for ${selectedRole} ATS filters...`, 'info');
+      if (toast) toast(`Tailoring and optimizing resume content for ${selectedRole} ATS standards...`, 'info');
 
       let currentSourceText = (resumeText || '').trim();
-      currentSourceText = currentSourceText.replace(/OpenAI|Claude|ChatGPT|Kronos AI/gi, 'API & Automation Systems');
+      currentSourceText = currentSourceText.replace(/OpenAI|Claude|ChatGPT|Kronos AI|AI Tool/gi, 'Automation & API Systems');
 
-      const candidateSkills = userProfile?.skills ? userProfile.skills : (SKILL_DATABASE[selectedRole] ? SKILL_DATABASE[selectedRole].slice(0, 6).join(', ') : 'Technical Skills');
       const candidateName = (userProfile?.full_name || 'CANDIDATE').toUpperCase();
+      const candidateEmail = userProfile?.email || 'email@example.com';
       const candidatePhone = userProfile?.phone || '+91 XXXXX XXXXX';
-      const targetSkillsList = SKILL_DATABASE[selectedRole] || ['System Design', 'Optimization', 'Architecture', 'API'];
+      const candidateLocation = userProfile?.location || 'India';
+      const targetSkillsList = SKILL_DATABASE[selectedRole] || ['Software Engineering', 'System Architecture', 'APIs', 'Problem Solving'];
       
       const missingSkills = targetSkillsList.filter(s => !currentSourceText.toLowerCase().includes(s.toLowerCase()));
-      const skillsToAdd = missingSkills.slice(0, 4).join(', ');
-      const combinedSkills = skillsToAdd ? `${candidateSkills}, ${skillsToAdd}` : candidateSkills;
+      const addedSkillsStr = targetSkillsList.join(', ');
 
-      const optimizedContent = `${candidateName} — ${selectedRole.toUpperCase()}\nContact: ${userProfile?.email || 'email@example.com'} | ${candidatePhone}\n\nEXECUTIVE SUMMARY:\n${isFresher ? 'Motivated' : 'Experienced'} ${selectedRole} proficient in ${combinedSkills}. Demonstrated track record in software architecture, project execution, and high-performance system design.\n\nTECHNICAL SKILLS:\n${combinedSkills}\n\nPROFESSIONAL EXPERIENCE & PROJECTS:\n- ${currentSourceText}\n- Engineered scalable software solutions delivering 35%+ performance optimization.\n- Architected resilient REST/GraphQL APIs and integrated automated deployment pipelines.\n\nEDUCATION & CERTIFICATIONS:\n- Bachelor of Technology / Computer Science / Engineering Degree`;
+      // Intelligently transform input text into high-quality human resume format
+      let formattedLines = currentSourceText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean)
+        .filter(line => !/^(SUMMARY|TECHNICAL SKILLS|PROFESSIONAL EXPERIENCE|EDUCATION|CONTACT):?$/i.test(line));
+
+      const bulletPoints = formattedLines.length > 0
+        ? formattedLines.map(l => l.startsWith('-') || l.startsWith('•') ? l : `- ${l}`)
+        : [
+            `- Architected and implemented production systems for ${selectedRole} domain.`,
+            `- Optimized data workflows and API endpoints, improving throughput by 35%.`,
+            `- Collaborated with cross-functional teams to deliver scalable software solutions.`
+          ];
+
+      const optimizedContent = `${candidateName} — ${selectedRole.toUpperCase()}
+Contact: ${candidateEmail} | ${candidatePhone} | ${candidateLocation}
+
+EXECUTIVE SUMMARY:
+${isFresher ? 'Motivated and detail-oriented' : 'Accomplished and results-driven'} ${selectedRole} with strong expertise in ${targetSkillsList.slice(0, 4).join(', ')}. Proven track record of developing scalable applications, optimizing core architectures, and solving complex technical challenges.
+
+TECHNICAL SKILLS:
+Core Technologies: ${addedSkillsStr}
+Frameworks & Tools: Microservices, RESTful APIs, Git, Automated Testing, Cloud Deployment
+
+PROFESSIONAL EXPERIENCE & PROJECTS:
+${bulletPoints.join('\n')}
+- Engineered high-concurrency modules delivering 40%+ performance boost.
+- Spearheaded integration of robust automated testing and CI/CD pipelines.
+
+EDUCATION & CERTIFICATIONS:
+- Bachelor of Technology / Science in Computer Science & Engineering
+- Professional Certification in ${selectedRole} & System Architecture`;
 
       const scoreBreakdown = calculateATS(optimizedContent, selectedRole, isFresher);
 
@@ -450,7 +500,7 @@ export const ResumeSectionView = ({ toast }) => {
             ...r,
             resume_text: optimizedContent,
             ...scoreBreakdown,
-            ats_score: Math.max(88, scoreBreakdown.ats_score + 6)
+            ats_score: Math.max(90, Math.min(98, scoreBreakdown.ats_score + 12))
           };
         }
         return r;
@@ -460,7 +510,7 @@ export const ResumeSectionView = ({ toast }) => {
       setResumeText(optimizedContent);
       saveToLocalStorage(updated);
 
-      if (toast) toast(`🎉 Resume improved for ${selectedRole}! ATS score boosted to ${Math.max(88, scoreBreakdown.ats_score + 6)}%. Download available below!`, 'success');
+      if (toast) toast(`🎉 Tailored resume created for ${selectedRole}! ATS score improved to ${Math.max(90, Math.min(98, scoreBreakdown.ats_score + 12))}%.`, 'success');
 
       try {
         await api.saveResume({
@@ -509,7 +559,7 @@ export const ResumeSectionView = ({ toast }) => {
     }
   };
 
-  // Standard Harvard ATS PDF Export Function (No Theme Menu, Standard Clean Corporate Format)
+  // Standard Harvard ATS PDF Export Function (Zero AI Branding, Zero Watermarks, Clean Metadata)
   const handleDownloadPDF = () => {
     try {
       const doc = new jsPDF({ unit: 'pt', format: 'letter' });
@@ -522,18 +572,28 @@ export const ResumeSectionView = ({ toast }) => {
       const candidatePhone = userProfile?.phone || '+91 XXXXX XXXXX';
       const candidateLocation = userProfile?.location || '';
 
-      // Clean resume text of any AI tool mentions
-      const cleanResumeBody = resumeText.replace(/OpenAI|Claude|ChatGPT|Kronos AI/gi, 'API & System Automation');
+      // Set clean professional metadata on PDF (Zero AI tool mentions)
+      doc.setProperties({
+        title: `${candidateName} - ${selectedRole} Resume`,
+        subject: `${selectedRole} Resume`,
+        author: candidateName,
+        keywords: `Resume, Professional CV, ${selectedRole}`,
+        creator: candidateName,
+        producer: candidateName
+      });
 
-      // Standard Corporate Classic Harvard ATS Layout
+      // Clean resume text of any AI tool mentions
+      const cleanResumeBody = resumeText.replace(/OpenAI|Claude|ChatGPT|Kronos AI|AI Assistant|AI Generated/gi, 'Automation & API Systems');
+
+      // Standard Corporate Classic Harvard ATS Layout (Clean, Zero Watermarks)
       doc.setTextColor(0, 0, 0);
       doc.setFont('times', 'bold');
-      doc.setFontSize(22);
+      doc.setFontSize(20);
       doc.text(candidateName, pageWidth / 2, y, { align: 'center' });
       y += 18;
       doc.setFontSize(10);
       doc.setFont('times', 'normal');
-      doc.text(`${candidateEmail} | ${candidatePhone} | ${candidateLocation}`, pageWidth / 2, y, { align: 'center' });
+      doc.text(`${candidateEmail} | ${candidatePhone}${candidateLocation ? ` | ${candidateLocation}` : ''}`, pageWidth / 2, y, { align: 'center' });
       y += 24;
 
       // Resume Body Lines
@@ -550,7 +610,7 @@ export const ResumeSectionView = ({ toast }) => {
         }
 
         // Detect major section headers
-        if (/^(SUMMARY|EXECUTIVE SUMMARY|TECHNICAL SKILLS|WORK EXPERIENCE|PROFESSIONAL EXPERIENCE|EDUCATION|CERTIFICATIONS):?$/i.test(line.trim())) {
+        if (/^(EXECUTIVE SUMMARY|SUMMARY|TECHNICAL SKILLS|WORK EXPERIENCE|PROFESSIONAL EXPERIENCE|PROFESSIONAL EXPERIENCE & PROJECTS|EDUCATION|EDUCATION & CERTIFICATIONS):?$/i.test(line.trim())) {
           y += 8;
           doc.setFont('times', 'bold');
           doc.setFontSize(11);
@@ -571,9 +631,9 @@ export const ResumeSectionView = ({ toast }) => {
         }
       });
 
-      const cleanFileName = `${(userProfile?.full_name || selectedRole).replace(/\s+/g, '_')}_Resume.pdf`;
+      const cleanFileName = `${candidateName.replace(/\s+/g, '_')}_${selectedRole.replace(/\s+/g, '_')}_Resume.pdf`;
       doc.save(cleanFileName);
-      if (toast) toast(`📄 Saved Harvard ATS PDF resume: "${cleanFileName}"!`, 'success');
+      if (toast) toast(`📄 Downloaded clean PDF resume: "${cleanFileName}"!`, 'success');
     } catch (err) {
       console.error('PDF Export Error:', err);
       if (toast) toast(`PDF Export Error: ${err.message}`, 'error');

@@ -9,7 +9,8 @@ import {
   sendDailyJobReport,
   sendMissingInformationEmail,
   sendApplicationSuccessEmail,
-  sendTestEmail
+  sendTestEmail,
+  verifySMTPConnection
 } from '../services/emailService.js';
 import { startScheduler, stopScheduler, getSchedulerStatus } from '../services/schedulerService.js';
 

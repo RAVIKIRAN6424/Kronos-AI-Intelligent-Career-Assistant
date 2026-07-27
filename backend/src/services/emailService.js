@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { run } from '../config/database.js';
+import { run, getOne } from '../config/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -557,3 +557,60 @@ export async function sendTestEmail(toEmail) {
     return { success: false, error: result.error, isResendTestingError: result.isResendTestingError };
   }
 }
+
+/**
+ * 8. Verify SMTP Connection Test Helper
+ */
+export async function verifySMTPConnection() {
+  try {
+    let smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || '';
+    let smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
+    let smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+    let smtpPort = parseInt(process.env.SMTP_PORT || '587');
+
+    try {
+      const dbSettings = await getOne(`SELECT * FROM settings WHERE id = 1`);
+      if (dbSettings) {
+        if (dbSettings.smtp_user) smtpUser = dbSettings.smtp_user;
+        if (dbSettings.smtp_pass) smtpPass = dbSettings.smtp_pass;
+        if (dbSettings.smtp_host) smtpHost = dbSettings.smtp_host;
+        if (dbSettings.smtp_port) smtpPort = parseInt(dbSettings.smtp_port);
+      }
+    } catch (e) {
+      console.warn('Could not read DB settings for SMTP test:', e.message);
+    }
+
+    if (!smtpUser || !smtpPass) {
+      return {
+        ok: false,
+        message: 'SMTP credentials missing. Please enter your Gmail address and App Password in Settings.'
+      };
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      },
+      connectionTimeout: 10000,
+      socketTimeout: 10000
+    });
+
+    const verifyPromise = transporter.verify();
+    await withTimeout(verifyPromise, 10000);
+
+    return {
+      ok: true,
+      message: `Successfully connected and authenticated with SMTP server (${smtpHost}:${smtpPort}) as ${smtpUser}!`
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      message: `SMTP Connection Failed: ${err.message || err.toString()}`
+    };
+  }
+}
+

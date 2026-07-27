@@ -9,6 +9,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [postedWithin, setPostedWithin] = useState('all'); // 'all', '24h', '2d', '1w'
   const [experienceLevel, setExperienceLevel] = useState('all'); // 'all', 'entry', 'mid', 'senior'
+  const [locationFilter, setLocationFilter] = useState('all'); // 'all', 'mode_remote', 'mode_hybrid', 'mode_onsite', 'state_karnataka', etc.
   const [searching, setSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 8;
@@ -150,22 +151,50 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
     }
 
     // Recency Filter
-    if (postedWithin === 'all') return true;
+    if (postedWithin !== 'all') {
+      const currentTime = Date.now();
+      const jobTime = job.posted_at ? new Date(job.posted_at).getTime() : 0;
 
-    const currentTime = Date.now();
-    const jobTime = job.posted_at ? new Date(job.posted_at).getTime() : 0;
-
-    if (!jobTime) {
-      if (postedWithin === '24h') return job.posted_date?.includes('hour') || job.posted_date?.includes('Just now') || job.posted_date?.includes('1 day');
-      if (postedWithin === '2d') return !job.posted_date?.includes('3 day') && !job.posted_date?.includes('4 day') && !job.posted_date?.includes('5 day') && !job.posted_date?.includes('6 day');
-      if (postedWithin === '1w') return !job.posted_date?.includes('2 week') && !job.posted_date?.includes('month');
-      return true;
+      if (!jobTime) {
+        if (postedWithin === '24h' && (!job.posted_date?.includes('hour') && !job.posted_date?.includes('Just now') && !job.posted_date?.includes('1 day'))) return false;
+        if (postedWithin === '2d' && (job.posted_date?.includes('3 day') || job.posted_date?.includes('4 day') || job.posted_date?.includes('5 day') || job.posted_date?.includes('6 day'))) return false;
+        if (postedWithin === '1w' && (job.posted_date?.includes('2 week') || job.posted_date?.includes('month'))) return false;
+      } else {
+        const diffHours = (currentTime - jobTime) / (1000 * 3600);
+        if (postedWithin === '24h' && diffHours > 24) return false;
+        if (postedWithin === '2d' && diffHours > 48) return false;
+        if (postedWithin === '1w' && diffHours > 168) return false;
+      }
     }
 
-    const diffHours = (currentTime - jobTime) / (1000 * 3600);
-    if (postedWithin === '24h') return diffHours <= 24;
-    if (postedWithin === '2d') return diffHours <= 48;
-    if (postedWithin === '1w') return diffHours <= 168; // 7 days = 168h
+    // Location Filter (Work Mode, State, Country)
+    if (locationFilter !== 'all') {
+      const jobLoc = `${job.location || ''} ${job.title || ''} ${job.description || ''} ${job.country || ''}`.toLowerCase();
+      
+      if (locationFilter === 'mode_remote') {
+        if (!jobLoc.includes('remote') && !jobLoc.includes('wfh') && !jobLoc.includes('work from home')) return false;
+      } else if (locationFilter === 'mode_hybrid') {
+        if (!jobLoc.includes('hybrid')) return false;
+      } else if (locationFilter === 'mode_onsite') {
+        if (jobLoc.includes('remote') || jobLoc.includes('hybrid')) return false;
+      } else if (locationFilter === 'state_karnataka') {
+        if (!jobLoc.includes('karnataka') && !jobLoc.includes('bengaluru') && !jobLoc.includes('bangalore')) return false;
+      } else if (locationFilter === 'state_telangana') {
+        if (!jobLoc.includes('telangana') && !jobLoc.includes('hyderabad')) return false;
+      } else if (locationFilter === 'state_maharashtra') {
+        if (!jobLoc.includes('maharashtra') && !jobLoc.includes('mumbai') && !jobLoc.includes('pune')) return false;
+      } else if (locationFilter === 'state_tn') {
+        if (!jobLoc.includes('tamil nadu') && !jobLoc.includes('chennai')) return false;
+      } else if (locationFilter === 'state_up') {
+        if (!jobLoc.includes('noida') && !jobLoc.includes('uttar pradesh') && !jobLoc.includes('up') && !jobLoc.includes('gurugram') && !jobLoc.includes('ncr')) return false;
+      } else if (locationFilter === 'state_ca') {
+        if (!jobLoc.includes('california') && !jobLoc.includes('ca') && !jobLoc.includes('san francisco')) return false;
+      } else if (locationFilter === 'country_india') {
+        if (jobLoc.includes('usa') || jobLoc.includes('california') || jobLoc.includes('new york')) return false;
+      } else if (locationFilter === 'country_usa') {
+        if (!jobLoc.includes('usa') && !jobLoc.includes('california') && !jobLoc.includes('ca') && !jobLoc.includes('ny')) return false;
+      }
+    }
 
     return true;
   });
@@ -232,6 +261,39 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
               <option value="entry">🌱 Entry Level / Fresher</option>
               <option value="mid">⚡ Mid Level (2-5 yrs)</option>
               <option value="senior">👑 Senior / Experienced (5+ yrs)</option>
+            </select>
+          </div>
+
+          {/* Location Filter Dropdown (Work Mode, State, Country) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <MapPin size={16} color="var(--accent-cyan)" />
+            <select
+              className="cyber-input"
+              value={locationFilter}
+              onChange={(e) => { setLocationFilter(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '0 12px', height: '42px', fontSize: '13px', borderRadius: '10px', width: '195px' }}
+            >
+              <option value="all">📍 All Locations</option>
+
+              <optgroup label="Work Mode">
+                <option value="mode_remote">🏠 Remote</option>
+                <option value="mode_hybrid">🏢 Hybrid</option>
+                <option value="mode_onsite">📍 On-site</option>
+              </optgroup>
+
+              <optgroup label="State / Region">
+                <option value="state_karnataka">📌 Karnataka (Bengaluru)</option>
+                <option value="state_telangana">📌 Telangana (Hyderabad)</option>
+                <option value="state_maharashtra">📌 Maharashtra (Mumbai/Pune)</option>
+                <option value="state_tn">📌 Tamil Nadu (Chennai)</option>
+                <option value="state_up">📌 Uttar Pradesh / NCR</option>
+                <option value="state_ca">📌 California (USA)</option>
+              </optgroup>
+
+              <optgroup label="Country">
+                <option value="country_india">🌐 India</option>
+                <option value="country_usa">🌐 United States</option>
+              </optgroup>
             </select>
           </div>
 
