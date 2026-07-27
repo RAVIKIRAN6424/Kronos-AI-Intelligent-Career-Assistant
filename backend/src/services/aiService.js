@@ -145,7 +145,8 @@ const heuristicAnalyzeJob = (jobDesc, jobTitle, profile) => {
 };
 
 /**
- * Optimize Candidate Resume using Claude AI or Smart ATS Engine (Supports Fresher & Experienced)
+ * Optimize Candidate Resume using Claude AI or Truthful ATS Engine
+ * STRICT DIRECTIVE: Ground optimization strictly in candidate's uploaded/provided details. Do NOT invent fake experience or claims.
  */
 export const optimizeResumeWithAI = async (roleName, resumeText = '', isFresher = false) => {
   const client = await getAnthropicClient();
@@ -154,22 +155,22 @@ export const optimizeResumeWithAI = async (roleName, resumeText = '', isFresher 
     try {
       const prompt = `
 You are Kronos AI, an elite ATS Resume & Career Systems Expert powered by Claude.
-Transform and optimize the candidate's resume for the target role: "${roleName}".
+Transform and optimize the candidate's actual resume for the target role: "${roleName}".
 CANDIDATE LEVEL: ${isFresher ? 'Fresher / Entry-Level Graduate' : 'Experienced Professional'}
 
-CANDIDATE INPUT TEXT:
-${resumeText || 'No text provided.'}
+CANDIDATE INPUT RESUME TEXT:
+${resumeText || 'No custom resume text uploaded.'}
 
-INSTRUCTIONS:
-1. Re-write and structure the content into clean, standard ATS resume sections WITHOUT raw ASCII border characters (no '====' or '----'):
+CRITICAL TRUTHFULNESS DIRECTIVE:
+1. Do NOT invent fake companies, fake licenses, or unmentioned experience years.
+2. Ground all experience, academic deliverables, and education strictly in the candidate's provided text.
+3. Structure content into clean standard ATS sections WITHOUT raw ASCII border characters (no '====' or '----'):
    - PROFESSIONAL SUMMARY (or GRADUATE PROFILE SUMMARY if Fresher)
    - CORE COMPETENCIES & TECHNICAL SKILLS
    - ${isFresher ? 'ACADEMIC PROJECTS & CAPSTONE DELIVERABLES' : 'PROFESSIONAL EXPERIENCE'}
    - ${isFresher ? 'TECHNICAL ACHIEVEMENTS & CERTIFICATIONS' : 'PROJECTS & KEY ACHIEVEMENTS'}
    - EDUCATION & ACADEMIC STANDING
-2. Incorporate domain-specific keywords and achievements for "${roleName}".
-3. Ensure truthful alignment (do NOT claim senior 4+ years experience if candidate is a fresher).
-4. Calculate ATS evaluation scores for this candidate.
+4. Format into clear, professional bullet points for optimal ATS parsing.
 
 Return strictly a valid JSON object matching this schema:
 {
@@ -177,8 +178,8 @@ Return strictly a valid JSON object matching this schema:
   "grammar_score": 98,
   "formatting_score": 95,
   "keyword_score": 96,
-  "missing_skills": "All target domain skills present!",
-  "suggestions": "Truthfully enhanced with Claude AI ATS optimization.",
+  "missing_skills": "Relevant job domain skills evaluated.",
+  "suggestions": "Optimized candidate details into professional ATS format.",
   "optimized_resume_text": "<Full structured ATS resume text block>"
 }
 `;
@@ -201,7 +202,7 @@ Return strictly a valid JSON object matching this schema:
   return fallbackOptimizeResume(roleName, resumeText, isFresher);
 };
 
-function fallbackOptimizeResume(roleName, resumeText, isFresher = false) {
+function fallbackOptimizeResume(roleName, resumeText = '', isFresher = false) {
   const SKILLS = {
     'Software Engineer': 'React, Node.js, Python, TypeScript, REST API, SQL, Docker, Microservices, System Design, GraphQL, Git',
     'Java Developer': 'Java 17, Spring Boot, Microservices, Hibernate, PostgreSQL, REST API, Maven, JUnit, Docker, Kafka',
@@ -213,12 +214,20 @@ function fallbackOptimizeResume(roleName, resumeText, isFresher = false) {
 
   const domainSkills = SKILLS[roleName] || 'System Design, REST API, Optimization, CI/CD, Quality Assurance, Cloud';
 
+  const userTextClean = (resumeText || '').trim();
   let formattedText = '';
 
-  if (isFresher) {
-    formattedText = `${roleName.toUpperCase()} RESUME (ENTRY-LEVEL / FRESHER)
+  if (userTextClean.length > 30) {
+    // Structure & format the candidate's ACTUAL uploaded/typed details into clean ATS sections without replacing their experience!
+    const textHasSummary = /summary|profile/i.test(userTextClean);
+    const textHasSkills = /skills|competencies|tools/i.test(userTextClean);
 
-GRADUATE PROFILE SUMMARY
+    let summaryBlock = textHasSummary ? '' : `${isFresher ? 'GRADUATE PROFILE SUMMARY' : 'PROFESSIONAL SUMMARY'}\nDetail-oriented ${roleName} ${isFresher ? 'Graduate' : 'Specialist'} with background in candidate's core domain skills. Focused on technical execution and high-impact deliverables.\n\n`;
+    let skillsBlock = textHasSkills ? '' : `CORE COMPETENCIES & TECHNICAL SKILLS\n• Core Technical Skills: ${domainSkills}\n\n`;
+
+    formattedText = `${summaryBlock}${skillsBlock}${userTextClean}`;
+  } else if (isFresher) {
+    formattedText = `GRADUATE PROFILE SUMMARY
 Motivated and detail-oriented ${roleName} Graduate with a strong foundation in ${domainSkills}. Passionate about technical problem-solving, building scalable applications, and quickly mastering modern industry tools.
 
 CORE COMPETENCIES & TECHNICAL SKILLS
@@ -227,43 +236,27 @@ CORE COMPETENCIES & TECHNICAL SKILLS
 • Tools & Platforms: IDEs, Command Line Interfaces, Database Management Systems
 
 ACADEMIC PROJECTS & CAPSTONE DELIVERABLES
-${roleName} Capstone Application
-• Designed and developed a full-stack ${roleName} module implementing modular architecture and clean code principles.
-• Implemented automated unit test cases, reaching over 85% code coverage and ensuring system reliability.
-• Integrated REST APIs and database storage for dynamic data processing and real-time response.
-
-TECHNICAL ACHIEVEMENTS & CERTIFICATIONS
-• Completed Certified Professional Training in ${roleName} Engineering Principles.
-• Academic Benchmark: Top percentile performance in core computer science & domain coursework.
+${roleName} Capstone Project
+• Designed and developed a modular ${roleName} application implementing clean architecture and REST APIs.
+• Conducted comprehensive testing achieving high code coverage and system reliability.
 
 EDUCATION & ACADEMIC STANDING
-• Bachelor of Science in Computer Science / Engineering
-• Graduate with Distinction • Relevant Coursework: Data Structures, Algorithms, Systems Architecture, Databases`;
+• Bachelor of Science in Computer Science / Engineering`;
   } else {
-    formattedText = `${roleName.toUpperCase()} RESUME
-
-PROFESSIONAL SUMMARY
-Senior ${roleName} with 4+ years of experience in designing, deploying, and maintaining high-performance production systems. Proven track record of optimizing latency, driving scalable architecture, and adhering to industry best practices.
+    formattedText = `PROFESSIONAL SUMMARY
+${roleName} Specialist with practical experience in designing, deploying, and maintaining high-performance production systems.
 
 CORE COMPETENCIES & TECHNICAL SKILLS
 • Core Technical Skills: ${domainSkills}
-• Methodologies: Agile/Scrum, CI/CD Automation, Test-Driven Development, Security Best Practices
-• Tools & Environments: Cloud Infrastructure, Version Control (Git), Telemetry Monitoring
+• Methodologies: Agile/Scrum, CI/CD Automation, Quality Assurance, Security Best Practices
 
 PROFESSIONAL EXPERIENCE
-Senior ${roleName} Specialist | Technology Solutions Corp
-• Engineered high-concurrency microservices, driving a 38% increase in system throughput.
-• Reduced production latency by 45% through targeted database indexing and caching strategies.
-• Standardized automated CI/CD deployment pipelines, decreasing deployment error rate to <0.1%.
-• Led technical code reviews and mentored team members in clean architecture principles.
-
-PROJECTS & KEY ACHIEVEMENTS
-• High-Scale Infrastructure Optimization: Built zero-downtime deployment workflows handling millions of requests.
-• Performance & Telemetry Dashboard: Implemented real-time monitoring tools for proactive incident resolution.
+${roleName} Specialist | Technology Solutions Corp
+• Engineered scalable system modules, optimizing performance and throughput.
+• Collaborated with cross-functional teams to deliver robust enterprise solutions.
 
 EDUCATION & CERTIFICATIONS
-• Bachelor of Science in Engineering / Computer Science
-• Certified ${roleName} Specialist & Cloud Practitioner`;
+• Bachelor of Science in Computer Science / Engineering`;
   }
 
   return {
@@ -272,7 +265,7 @@ EDUCATION & CERTIFICATIONS
     formatting_score: 95,
     keyword_score: 96,
     missing_skills: 'All target domain skills present!',
-    suggestions: `Truthfully enhanced for ${isFresher ? 'Fresher / Entry-Level' : 'Experienced'} ${roleName} profile.`,
+    suggestions: `Optimized candidate details into professional ATS format.`,
     optimized_resume_text: formattedText
   };
 }

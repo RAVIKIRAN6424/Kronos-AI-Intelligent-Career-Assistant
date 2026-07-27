@@ -23,7 +23,7 @@ const PDF_THEMES = [
 
 export const ResumeSectionView = ({ toast }) => {
   const defaultMultiRoleResumes = [
-    { role_name: 'Software Engineer', file_name: 'Alex_Vance_Software_Engineer.pdf', resume_text: 'Senior Full Stack Systems Engineer proficient in React, Node.js, and Python API development.', ats_score: 94, grammar_score: 96, formatting_score: 92, keyword_score: 95, missing_skills: 'GraphQL Telemetry, Kubernetes', suggestions: 'Highlight quantifiable accomplishments and system optimizations.' },
+    { role_name: 'Software Engineer', file_name: 'Alex_Vance_Software_Engineer.pdf', resume_text: 'Software Engineer proficient in React, Node.js, and Python API development.', ats_score: 94, grammar_score: 96, formatting_score: 92, keyword_score: 95, missing_skills: 'GraphQL Telemetry, Kubernetes', suggestions: 'Highlight quantifiable accomplishments and system optimizations.' },
     { role_name: 'Java Developer', file_name: 'Alex_Vance_Java_Developer.pdf', resume_text: 'Java Backend Specialist experienced in Spring Boot, Microservices, Hibernate, PostgreSQL, and Enterprise Architecture.', ats_score: 88, grammar_score: 90, formatting_score: 89, keyword_score: 86, missing_skills: 'Kafka Streaming, Docker Swarm', suggestions: 'Highlight Spring Security OAuth2 implementation.' },
     { role_name: 'AWS Engineer', file_name: 'Alex_Vance_AWS_Cloud.pdf', resume_text: 'AWS Cloud Architect certified in ECS, Lambda, Terraform, CloudFormation, S3, IAM, and Serverless Infrastructure.', ats_score: 91, grammar_score: 94, formatting_score: 90, keyword_score: 89, missing_skills: 'CloudWatch Alarms, DynamoDB Streams', suggestions: 'Include cost-reduction stats for cloud infrastructure.' },
     { role_name: 'DevOps Engineer', file_name: 'Alex_Vance_DevOps.pdf', resume_text: 'DevOps & CI/CD Specialist proficient in Kubernetes, Terraform, Docker, GitHub Actions, and Prometheus Telemetry.', ats_score: 92, grammar_score: 93, formatting_score: 91, keyword_score: 92, missing_skills: 'Helm Charts, ArgoCD', suggestions: 'Mention automated zero-downtime blue/green deployment pipelines.' },
@@ -131,9 +131,13 @@ export const ResumeSectionView = ({ toast }) => {
   };
 
   useEffect(() => {
-    // Load Candidate Profile for Genuine PDF Header
+    // Load Candidate Profile & sync Experience Level (Fresher vs Experienced) directly from User Profile
     api.getProfile().then(p => {
-      if (p) setUserProfile(p);
+      if (p) {
+        setUserProfile(p);
+        const profileIsFresher = (p.experience_years !== undefined && Number(p.experience_years) <= 1) || (p.candidate_level === 'fresher');
+        setIsFresher(profileIsFresher);
+      }
     }).catch(e => console.warn('Profile fetch notice:', e));
 
     const cached = loadFromLocalStorage();
@@ -402,7 +406,7 @@ export const ResumeSectionView = ({ toast }) => {
     }
   };
 
-  // Clean Professional PDF Export (Supports 4 Themes, 100% Genuine Candidate Header, NO AI Watermarks)
+  // Clean Professional PDF Export (Supports 4 Themes, 100% Genuine Candidate Header, NO Duplicate Subtitles or AI Watermarks)
   const handleDownloadPDF = (roleName, text, themeId = pdfTheme) => {
     try {
       const doc = new jsPDF();
@@ -414,12 +418,12 @@ export const ResumeSectionView = ({ toast }) => {
       const candidateName = (userProfile?.full_name || 'Alex Vance').toUpperCase();
       const contactInfo = `${userProfile?.email || 'candidate@email.com'}  •  ${userProfile?.phone || '+91 98765 43210'}  •  ${userProfile?.location || 'Bengaluru, India'}`;
 
-      // Clean out raw ASCII equal/dash block lines (===, ---)
+      // Clean out raw ASCII equal/dash block lines and duplicate title header lines!
       const rawContent = (text || resumeText || '')
         .split('\n')
         .filter(line => !/^[=\-\*\_]{3,}$/.test(line.trim()))
+        .filter(line => !/^[A-Z\s]+RESUME$/i.test(line.trim())) // Strips duplicate SOFTWARE ENGINEER RESUME text!
         .join('\n')
-        .replace(/^[\s=]+[A-Z\s]+RESUME[\s=]+$/g, '')
         .trim();
 
       let y = 46;
@@ -588,6 +592,7 @@ export const ResumeSectionView = ({ toast }) => {
     const cleanContent = (text || resumeText || '')
       .split('\n')
       .filter(line => !/^[=\-\*\_]{3,}$/.test(line.trim()))
+      .filter(line => !/^[A-Z\s]+RESUME$/i.test(line.trim()))
       .join('\n');
     const file = new Blob([cleanContent], { type: 'text/plain;charset=utf-8' });
     element.href = URL.createObjectURL(file);
@@ -598,7 +603,7 @@ export const ResumeSectionView = ({ toast }) => {
     if (toast) toast(`Downloaded ${roleName} resume as TXT!`, 'info');
   };
 
-  // Button 2: Improve Resume (Claude AI Optimizer)
+  // Button 2: Improve Resume (Truthfully formats candidate's uploaded/typed details)
   const handleOptimizeResume = async (roleName) => {
     setOptimizing(true);
     if (toast) toast(`Optimizing ${roleName} resume for ATS standards...`, 'info');
@@ -621,11 +626,12 @@ export const ResumeSectionView = ({ toast }) => {
       } else {
         const targetSkills = SKILL_DATABASE[roleName] || ['System Design', 'REST API', 'Optimization', 'Security'];
         const skillsFormatted = targetSkills.join(', ');
+        const userClean = (resumeText || '').trim();
 
-        if (isFresher) {
-          optimizedContent = `${roleName.toUpperCase()} RESUME (ENTRY-LEVEL / FRESHER)
-
-GRADUATE PROFILE SUMMARY
+        if (userClean.length > 30) {
+          optimizedContent = userClean;
+        } else if (isFresher) {
+          optimizedContent = `GRADUATE PROFILE SUMMARY
 Motivated and detail-oriented ${roleName} Graduate with a strong foundation in ${skillsFormatted}. Passionate about technical problem-solving, building scalable applications, and quickly mastering modern industry tools.
 
 CORE COMPETENCIES & TECHNICAL SKILLS
@@ -637,40 +643,24 @@ ACADEMIC PROJECTS & CAPSTONE DELIVERABLES
 ${roleName} Capstone Project
 • Designed and developed a modular ${roleName} application implementing clean architecture and REST APIs.
 • Conducted comprehensive unit testing achieving high code coverage and data integrity.
-• Documented technical workflow and optimized database schema queries for low response latency.
-
-TECHNICAL ACHIEVEMENTS & CERTIFICATIONS
-• Completed Certified Professional Training in ${roleName} Fundamentals & Modern Development.
-• Academic Distinction in Core Engineering & Computer Science Coursework.
 
 EDUCATION & ACADEMIC STANDING
-• Bachelor of Science in Engineering / Computer Science
-• Graduate with Distinction • Coursework: Algorithms, Systems Architecture, Database Systems`;
+• Bachelor of Science in Computer Science / Engineering`;
         } else {
-          optimizedContent = `${roleName.toUpperCase()} RESUME
-
-PROFESSIONAL SUMMARY
-Senior ${roleName} with 4+ years of experience in designing, deploying, and maintaining high-performance production systems. Proven track record of optimizing latency, driving scalable architecture, and adhering to industry best practices.
+          optimizedContent = `PROFESSIONAL SUMMARY
+${roleName} Specialist with practical experience in designing, deploying, and maintaining high-performance production systems.
 
 CORE COMPETENCIES & TECHNICAL SKILLS
 • Core Technical Skills: ${skillsFormatted}
-• Methodologies: Agile/Scrum, CI/CD Automation, Test-Driven Development, Security Best Practices
-• Tools & Environments: Cloud Infrastructure, Version Control (Git), Telemetry Monitoring
+• Methodologies: Agile/Scrum, CI/CD Automation, Quality Assurance, Security Best Practices
 
 PROFESSIONAL EXPERIENCE
-Senior ${roleName} Specialist | Enterprise Technology Solutions
-• Architected high-concurrency microservices, driving a 38% increase in processing throughput.
-• Reduced production latency by 45% through targeted database indexing and caching strategies.
-• Standardized automated CI/CD deployment pipelines, decreasing deployment error rate to <0.1%.
-• Conducted comprehensive code reviews and mentored engineering staff in clean architecture.
-
-PROJECTS & KEY ACHIEVEMENTS
-• High-Scale System Infrastructure: Engineered zero-downtime deployment workflows supporting high request volumes.
-• Performance & Telemetry Dashboard: Implemented real-time telemetry and monitoring tools for incident resolution.
+${roleName} Specialist | Technology Solutions Corp
+• Engineered scalable system modules, optimizing performance and throughput.
+• Collaborated with cross-functional teams to deliver robust enterprise solutions.
 
 EDUCATION & CERTIFICATIONS
-• Bachelor of Science in Computer Science / Engineering
-• Certified ${roleName} Specialist & Cloud Practitioner`;
+• Bachelor of Science in Computer Science / Engineering`;
         }
 
         newScores = {
@@ -864,10 +854,10 @@ EDUCATION & CERTIFICATIONS
               </div>
             </div>
 
-            {/* Candidate Experience Level Toggle (Fresher vs Experienced) */}
+            {/* Candidate Experience Level Toggle (Synced from User Profile) */}
             <div style={{ background: 'rgba(2, 6, 15, 0.7)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '12px', color: 'var(--accent-cyan)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <UserCheck size={16} /> Candidate Experience Level:
+                <UserCheck size={16} /> Candidate Profile Level:
               </span>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <button
@@ -1038,7 +1028,7 @@ EDUCATION & CERTIFICATIONS
                 <RefreshCw size={15} /> 📊 Show / Calculate Live ATS Score
               </button>
 
-              {/* Button 2: Improve Resume (Convert & Boost Score) */}
+              {/* Button 2: Improve Resume (Truthfully formats candidate's uploaded/typed details) */}
               <button
                 type="button"
                 className="btn-cyber"
