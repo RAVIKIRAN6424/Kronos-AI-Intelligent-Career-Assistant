@@ -199,28 +199,42 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
         )}
       </div>
 
-      {/* Responsive Mobile Drawer Menu (Auto-closes when any nav item is selected) */}
+      {/* Responsive Mobile Drawer Menu (Auto-closes when any nav item is selected, fully scrollable on small screens) */}
       {isMobileMenuOpen && (
         <div
           className="mobile-menu-drawer"
           style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            background: 'rgba(4, 8, 20, 0.96)',
-            backdropFilter: 'blur(16px)',
-            borderBottom: '1px solid var(--accent-cyan)',
+            position: 'fixed',
+            top: '72px',
+            left: '12px',
+            right: '12px',
+            maxHeight: 'calc(85vh)',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            background: 'rgba(4, 8, 20, 0.98)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid var(--accent-cyan)',
+            borderRadius: '16px',
             padding: '20px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.8)',
-            zIndex: 999
+            gap: '10px',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.95), var(--glow-cyan)',
+            zIndex: 9999
           }}
         >
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: '4px' }}>
-            NAVIGATION MENU
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent-cyan)', letterSpacing: '1px' }}>
+              KRONOS NAVIGATION MENU
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(false)}
+              style={{ background: 'none', border: 'none', color: 'var(--accent-cyan)', cursor: 'pointer', padding: '4px' }}
+            >
+              <X size={20} />
+            </button>
           </div>
 
           {navItems.map(item => {
@@ -253,32 +267,41 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
             );
           })}
 
-          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px', marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Palette size={16} color="var(--accent-cyan)" />
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '14px', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#ffffff', fontWeight: 600 }}>
+                <Palette size={16} color="var(--accent-cyan)" />
+                <span>Theme Theme:</span>
+              </div>
               <select
                 value={activeTheme}
                 onChange={(e) => setTheme(e.target.value)}
                 style={{
                   background: '#090d16',
                   color: '#ffffff',
-                  border: '1px solid var(--border-subtle)',
-                  padding: '6px 10px',
-                  borderRadius: '6px',
-                  fontSize: '12px'
+                  border: '1px solid var(--accent-cyan)',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontFamily: 'var(--font-heading)',
+                  outline: 'none'
                 }}
               >
                 {themes.map(t => (
-                  <option key={t.id} value={t.id}>
+                  <option key={t.id} value={t.id} style={{ background: '#090d16', color: '#ffffff' }}>
                     {t.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {!currentUser && (
-              <button className="btn-cyber" onClick={() => { setIsMobileMenuOpen(false); onOpenAuthModal(); }}>
-                <LogIn size={15} /> Sign In
+            {!currentUser ? (
+              <button className="btn-cyber" onClick={() => { setIsMobileMenuOpen(false); onOpenAuthModal(); }} style={{ width: '100%', justifyContent: 'center' }}>
+                <LogIn size={15} /> Sign In / Register
+              </button>
+            ) : (
+              <button className="btn-cyber-outline" onClick={() => handleNavClick('profile')} style={{ width: '100%', justifyContent: 'center' }}>
+                <User size={15} /> View Candidate Profile
               </button>
             )}
           </div>
