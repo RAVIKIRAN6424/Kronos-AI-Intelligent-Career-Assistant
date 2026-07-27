@@ -29,6 +29,14 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
   const [availableRoles, setAvailableRoles] = useState(defaultAvailableRoles);
   const [customRoleInput, setCustomRoleInput] = useState('');
 
+  // Target Preferred Locations Selection State
+  const defaultAvailableLocations = [
+    'Bengaluru', 'Mumbai', 'Hyderabad', 'Pune', 'Delhi NCR', 'Chennai', 'Kolkata', 
+    'Remote', 'USA', 'United Kingdom', 'Canada', 'UAE', 'Germany', 'Singapore'
+  ];
+  const [availableLocations, setAvailableLocations] = useState(defaultAvailableLocations);
+  const [customLocationInput, setCustomLocationInput] = useState('');
+
   // Job Portals & Credentials State
   const defaultPortals = [
     { id: 1, portal_name: 'LinkedIn', is_connected: 0, is_enabled: 1, account_email: '', account_password: '' },
@@ -149,6 +157,35 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
     if (toast) toast(`Added "${trimmed}" to target job roles!`, 'success');
   };
 
+  // Helper: Toggle Target Location Chip Selection
+  const handleToggleLocationChip = (locationName) => {
+    const currentList = preferredLocations.split(',').map(s => s.trim()).filter(Boolean);
+    let newList = [];
+    if (currentList.some(l => l.toLowerCase() === locationName.toLowerCase())) {
+      newList = currentList.filter(l => l.toLowerCase() !== locationName.toLowerCase());
+    } else {
+      newList = [...currentList, locationName];
+    }
+    setPreferredLocations(newList.join(', '));
+  };
+
+  // Helper: Add Custom Target Location
+  const handleAddCustomLocation = () => {
+    const trimmed = customLocationInput.trim();
+    if (!trimmed) {
+      if (toast) toast('Please enter a valid target location name.', 'error');
+      return;
+    }
+
+    if (!availableLocations.some(l => l.toLowerCase() === trimmed.toLowerCase())) {
+      setAvailableLocations(prev => [...prev, trimmed]);
+    }
+
+    handleToggleLocationChip(trimmed);
+    setCustomLocationInput('');
+    if (toast) toast(`Added "${trimmed}" to target preferred locations!`, 'success');
+  };
+
   // Helper: Add Custom Job Portal
   const handleAddCustomPortal = () => {
     const trimmed = customPortalInput.trim();
@@ -186,7 +223,6 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
     const emailVal = (target.account_email || '').trim();
     const passVal = (target.account_password || '').trim();
 
-    // Check credentials validity (Valid email/username format & password length)
     const isEmailValid = emailVal.length >= 4 && (emailVal.includes('@') || emailVal.length >= 5);
     const isPassValid = passVal.length >= 4;
 
@@ -272,6 +308,7 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
   }
 
   const selectedTitlesArray = targetTitles.split(',').map(s => s.trim()).filter(Boolean);
+  const selectedLocationsArray = preferredLocations.split(',').map(s => s.trim()).filter(Boolean);
 
   return (
     <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -304,7 +341,7 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
             <UserCheck size={24} color="var(--accent-cyan)" /> Candidate Profile & Resume Studio
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
-            Configure your technical skills, target job roles, connected portal credentials, and resume breakdown sections.
+            Configure your technical skills, target job roles, target locations, connected portal credentials, and resume breakdown sections.
           </p>
         </div>
 
@@ -382,6 +419,69 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
             onClick={handleAddCustomRole}
           >
             <Plus size={15} /> + Add Custom Role
+          </button>
+        </div>
+      </div>
+
+      {/* Target Preferred Locations Interactive Selector & Add Custom Location */}
+      <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <MapPin size={18} color="var(--accent-cyan)" /> Select Target Preferred Locations
+        </h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '-8px' }}>
+          Click any location chip to enable or disable it for job search targeting (Indian Cities & International Countries), or add your custom location below.
+        </p>
+
+        {/* Location Chips Grid */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+          {availableLocations.map(loc => {
+            const isSelected = selectedLocationsArray.some(l => l.toLowerCase() === loc.toLowerCase());
+            return (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => handleToggleLocationChip(loc)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  background: isSelected ? 'var(--accent-cyan)' : 'rgba(13, 22, 38, 0.8)',
+                  color: isSelected ? '#060a12' : 'var(--text-muted)',
+                  border: isSelected ? 'none' : '1px solid var(--border-subtle)',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: isSelected ? 'var(--glow-cyan)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {isSelected && <CheckCircle2 size={14} />}
+                <span>{loc}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Add Custom Target Location Row */}
+        <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+          <input
+            type="text"
+            className="cyber-input"
+            placeholder="Type new custom target location (e.g. Austin, Sydney, Berlin, Tokyo)..."
+            value={customLocationInput}
+            onChange={e => setCustomLocationInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddCustomLocation())}
+            style={{ flex: 1, fontSize: '13px' }}
+          />
+          <button
+            type="button"
+            className="btn-cyber"
+            style={{ padding: '8px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={handleAddCustomLocation}
+          >
+            <Plus size={15} /> + Add Custom Location
           </button>
         </div>
       </div>
@@ -538,7 +638,7 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
           </div>
 
           <div>
-            <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Preferred Target Locations (India Cities & Global Countries)</label>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Preferred Target Locations (Selected above or typed)</label>
             <input type="text" className="cyber-input" value={preferredLocations} onChange={(e) => setPreferredLocations(e.target.value)} placeholder="Bengaluru, Mumbai, Pune, Remote, USA, United Kingdom, UAE" />
           </div>
 

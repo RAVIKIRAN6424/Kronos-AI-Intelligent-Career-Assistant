@@ -1,8 +1,8 @@
 import React from 'react';
 
 /**
- * Kronos AI Advanced Cybernetic Shield Logo Icon
- * Combines an outer cyber shield, ascending "K" career growth wings, and glowing AI neural star node.
+ * Kronos AI Pure Cybernetic Neural Engine Logo Symbol (No letters/numbers)
+ * Futuristic geometric AI shield with ascending career growth trajectory arcs & central neural core node.
  */
 export const KronosAppLogo = ({ size = 44, animated = true }) => {
   return (
@@ -28,7 +28,7 @@ export const KronosAppLogo = ({ size = 44, animated = true }) => {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Ultra Premium Multi-Layer Cyber Gradients */}
+          {/* Multi-Stop High-Tech Cyber Gradients */}
           <linearGradient id="kronosBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#0b1329" />
             <stop offset="50%" stopColor="#131c38" />
@@ -42,7 +42,7 @@ export const KronosAppLogo = ({ size = 44, animated = true }) => {
             <stop offset="100%" stopColor="#10b981" />
           </linearGradient>
 
-          <linearGradient id="kronosWingsGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <linearGradient id="kronosCoreGrad" x1="0%" y1="100%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#00c6ff" />
             <stop offset="50%" stopColor="#0072ff" />
             <stop offset="100%" stopColor="#a855f7" />
@@ -60,7 +60,7 @@ export const KronosAppLogo = ({ size = 44, animated = true }) => {
           </filter>
         </defs>
 
-        {/* 1. Outer Futuristic Shield Hexagon */}
+        {/* 1. Outer Tech Hexagon Shield */}
         <polygon
           points="50,4 92,25 92,75 50,96 8,75 8,25"
           fill="url(#kronosBgGrad)"
@@ -78,27 +78,37 @@ export const KronosAppLogo = ({ size = 44, animated = true }) => {
           strokeDasharray="5 3"
         />
 
-        {/* 3. Stylized Cybernetic "K" & Career Growth Wings Path */}
-        <path
-          d="M 32,24 L 42,24 L 42,76 L 32,76 Z 
-             M 42,46 L 66,24 L 78,24 L 52,50 L 80,76 L 66,76 L 42,52 Z"
-          fill="url(#kronosWingsGrad)"
+        {/* 3. Concentric Rotating Orbital Quantum Rings */}
+        <circle
+          cx="50"
+          cy="50"
+          r="26"
+          fill="none"
+          stroke="url(#kronosCyberBorder)"
+          strokeWidth="2.2"
+          strokeDasharray="18 8 28 8"
+        />
+
+        {/* 4. Ascending Quantum Career Core Diamond */}
+        <polygon
+          points="50,22 72,50 50,78 28,50"
+          fill="url(#kronosCoreGrad)"
           filter="url(#kronosGlow)"
         />
 
-        {/* 4. Ascending AI Neural Core Diamond Star */}
+        {/* 5. Four Corner Interlocking Neural Star Blades (Zero Text/Letters) */}
         <polygon
-          points="50,16 56,28 68,34 56,40 50,52 44,40 32,34 44,28"
+          points="50,18 56,30 68,36 56,42 50,54 44,42 32,36 44,30"
           fill="url(#kronosStarGrad)"
           filter="url(#kronosGlow)"
-          opacity="0.9"
+          opacity="0.95"
         />
 
-        {/* 5. Glowing Central Intelligence Node */}
+        {/* 6. Glowing Central Intelligence Nucleus */}
         <circle cx="50" cy="50" r="5" fill="#ffffff" filter="url(#kronosGlow)" />
         <circle cx="50" cy="50" r="2.5" fill="#00f2fe" />
 
-        {/* 6. Orbital Energy Accent Nodes */}
+        {/* 7. Orbital Cyber Vertex Nodes */}
         <circle cx="50" cy="8" r="2.5" fill="#00f2fe" />
         <circle cx="88" cy="30" r="2.5" fill="#a855f7" />
         <circle cx="88" cy="70" r="2.5" fill="#10b981" />
