@@ -32,6 +32,7 @@ export const ResumeSectionView = ({ toast }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [targetScore, setTargetScore] = useState(92); // Target ATS Improvement Goal Slider State
 
   const [showAddRoleModal, setShowAddRoleModal] = useState(false);
   const [newRoleInput, setNewRoleInput] = useState('');
@@ -855,6 +856,47 @@ export const ResumeSectionView = ({ toast }) => {
             </span>
           </div>
 
+          {/* Target ATS Score Slider & Free ATS Tools Links */}
+          <div style={{ background: 'rgba(2, 6, 15, 0.8)', padding: '16px', borderRadius: '14px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>Target ATS Improvement Goal:</span>
+              <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--accent-cyan)', fontFamily: 'var(--font-code)' }}>{targetScore}% ATS</span>
+            </div>
+            
+            <input
+              type="range"
+              min="75"
+              max="98"
+              value={targetScore}
+              onChange={e => setTargetScore(Number(e.target.value))}
+              style={{ width: '100%', accentColor: 'var(--accent-cyan)', cursor: 'pointer' }}
+            />
+
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+              <span>75% (Good)</span>
+              <span>88% (Great)</span>
+              <span>98% (Optimal)</span>
+            </div>
+
+            {/* External Free ATS Tools Links */}
+            <div style={{ marginTop: '8px', paddingTop: '10px', borderTop: '1px dashed var(--border-subtle)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
+                🌐 Cross-Verify with Free External ATS Checkers:
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <a href="https://www.jobscan.co/" target="_blank" rel="noopener noreferrer" className="btn-cyber-outline" style={{ padding: '4px 10px', fontSize: '11px', textDecoration: 'none' }}>
+                  🔗 Jobscan ATS
+                </a>
+                <a href="https://resumake.io/" target="_blank" rel="noopener noreferrer" className="btn-cyber-outline" style={{ padding: '4px 10px', fontSize: '11px', textDecoration: 'none' }}>
+                  🔗 Resumake Free
+                </a>
+                <a href="https://resumeworked.com/" target="_blank" rel="noopener noreferrer" className="btn-cyber-outline" style={{ padding: '4px 10px', fontSize: '11px', textDecoration: 'none' }}>
+                  🔗 Resume Worded
+                </a>
+              </div>
+            </div>
+          </div>
+
           {/* Action Buttons Card: Show Score, Improve Resume & Immediate PDF Download */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(2, 6, 15, 0.7)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -874,7 +916,7 @@ export const ResumeSectionView = ({ toast }) => {
                 disabled={optimizing}
                 style={{ padding: '12px', fontSize: '12px', justifyContent: 'center' }}
               >
-                <Sparkles size={15} /> {optimizing ? 'Improving...' : 'Improve Resume (Boost Score)'}
+                <Sparkles size={15} /> {optimizing ? 'Improving...' : `Improve Resume to ${targetScore}% ATS`}
               </button>
             </div>
 

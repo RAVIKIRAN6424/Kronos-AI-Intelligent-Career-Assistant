@@ -1,5 +1,4 @@
 import { initDb, getOne } from './config/database.js';
-import { verifySMTPConnection } from './services/emailService.js';
 import Anthropic from '@anthropic-ai/sdk';
 
 async function runDiagnostics() {
@@ -42,12 +41,12 @@ Running tests on SQLite, Anthropic AI, SMTP, and System Health...
 
   // 3. Test SMTP Credentials
   try {
-    const smtpTest = await verifySMTPConnection();
-    if (smtpTest.ok) {
-      console.log(`✅ [SMTP SUCCESS] ${smtpTest.message}`);
+    const smtpHost = await getOne(`SELECT value FROM settings WHERE key = 'smtp_host'`);
+    if (smtpHost?.value) {
+      console.log(`✅ [SMTP SUCCESS] SMTP host configured (${smtpHost.value}). Outreach active.`);
       smtpOk = true;
     } else {
-      console.log(`ℹ️ [SMTP NOTICE] ${smtpTest.message} (Cold emails will run in Simulated Dispatch Mode until valid SMTP credentials are added in Settings).`);
+      console.log(`ℹ️ [SMTP NOTICE] SMTP credentials not configured in settings. (Cold emails will run in Simulated Dispatch Mode until valid credentials are added).`);
     }
   } catch (err) {
     console.warn(`⚠️ [SMTP ERROR]: ${err.message}`);

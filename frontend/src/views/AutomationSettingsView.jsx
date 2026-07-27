@@ -3,7 +3,7 @@ import { Sliders, Clock, Calendar, Save, CheckCircle2, Shield, Play, Pause, Info
 import { api } from '../utils/api';
 
 export const AutomationSettingsView = ({ toast }) => {
-  const [mode, setMode] = useState('Automatic'); // 'Automatic' | 'Manual' | 'Automatic OFF'
+  const [mode, setMode] = useState('Automatic'); // 'Automatic' | 'Manual'
   const [dailyStartTime, setDailyStartTime] = useState('09:00');
   const [dailyStopTime, setDailyStopTime] = useState('18:00');
   const [repeatDays, setRepeatDays] = useState('Everyday'); // 'Everyday' | 'Weekdays' | 'Weekends'
@@ -17,7 +17,7 @@ export const AutomationSettingsView = ({ toast }) => {
     try {
       const config = await api.getAutomationConfig();
       if (config) {
-        setMode(config.mode || 'Automatic');
+        setMode(config.mode === 'Automatic' ? 'Automatic' : 'Manual');
         setDailyStartTime(config.daily_start_time || '09:00');
         setDailyStopTime(config.daily_stop_time || '18:00');
         setRepeatDays(config.repeat_days || 'Everyday');
@@ -30,9 +30,11 @@ export const AutomationSettingsView = ({ toast }) => {
   const handleModeSelect = (selectedMode) => {
     setMode(selectedMode);
     if (selectedMode === 'Automatic') {
-      api.updateBotState({ is_running: 1, current_job: 'Autonomous Scanning Portals...' }).catch(() => {});
-    } else if (selectedMode === 'Automatic OFF') {
-      api.updateBotState({ is_running: 0, current_job: 'Automation Engine OFF' }).catch(() => {});
+      api.updateBotState({ is_running: 1, current_job: 'Autonomous Scanning Portals & Applying...' }).catch(() => {});
+      if (toast) toast('🤖 Switched to Automatic Mode! Kronos AI will check job portals and apply automatically.', 'success');
+    } else {
+      api.updateBotState({ is_running: 0, current_job: 'Manual Mode Active (Background Schedule OFF)' }).catch(() => {});
+      if (toast) toast('⚙️ Switched to Manual Mode! Automated daily schedule turned OFF.', 'info');
     }
   };
 
@@ -47,9 +49,9 @@ export const AutomationSettingsView = ({ toast }) => {
       });
 
       if (mode === 'Automatic') {
-        await api.updateBotState({ is_running: 1, current_job: 'Autonomous Portal Job Checking Active' });
+        await api.updateBotState({ is_running: 1, current_job: 'Autonomous Portal Job Application Active' });
       } else {
-        await api.updateBotState({ is_running: 0, current_job: mode === 'Manual' ? 'Manual Trigger Mode' : 'Automation Engine OFF' });
+        await api.updateBotState({ is_running: 0, current_job: 'Manual Trigger Mode Active' });
       }
 
       toast(`Automation Config saved in "${mode}" mode!`, 'success');
@@ -60,7 +62,7 @@ export const AutomationSettingsView = ({ toast }) => {
     }
   };
 
-  const isScheduleDisabled = mode !== 'Automatic';
+  const isScheduleDisabled = mode === 'Manual';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -69,12 +71,12 @@ export const AutomationSettingsView = ({ toast }) => {
           <Sliders size={24} color="var(--accent-cyan)" /> Automation Settings Studio
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
-          Configure execution modes, daily start and stop time windows, and repeat frequency for autonomous job application queueing.
+          Configure execution mode (Automatic vs Manual) and daily start/stop hours for job applications across connected portals.
         </p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-        {/* Mode Selector */}
+        {/* 2 Clean Modes Selector */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Shield size={18} color="var(--accent-cyan)" /> Automation Mode Selection
@@ -82,9 +84,8 @@ export const AutomationSettingsView = ({ toast }) => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
-              { id: 'Automatic', title: 'Automatic Mode', desc: 'Kronos AI automatically checks portals, scans postings, and applies within daily start/stop hours.' },
-              { id: 'Manual', title: 'Manual Mode', desc: 'Requires manual click of START button on Dashboard to scan and submit applications.' },
-              { id: 'Automatic OFF', title: 'Automatic OFF Mode', desc: 'Completely pauses all background automated application triggers.' }
+              { id: 'Automatic', title: '1. Automatic Mode (Autonomous)', desc: 'Kronos AI automatically checks connected portals, scans postings, and applies to matching jobs within your daily hours.' },
+              { id: 'Manual', title: '2. Manual Mode (User Controlled)', desc: 'Background automatic schedule turned OFF. Applications only run when you manually click START on the Dashboard.' }
             ].map(m => {
               const isSelected = mode === m.id;
               return (
@@ -98,26 +99,23 @@ export const AutomationSettingsView = ({ toast }) => {
                     background: isSelected ? 'rgba(0, 242, 254, 0.12)' : 'rgba(2, 6, 15, 0.6)',
                     border: isSelected ? '2px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
                     color: isSelected ? '#ffffff' : 'var(--text-muted)',
+                    transition: 'all 0.2s ease',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s ease'
+                    flexDirection: 'column',
+                    gap: '4px'
                   }}
                 >
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '14px', color: isSelected ? 'var(--accent-cyan)' : '#ffffff' }}>
-                      {m.title}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.4' }}>
-                      {m.desc}
-                    </div>
+                  <div style={{ fontWeight: 700, fontSize: '15px', color: isSelected ? 'var(--accent-cyan)' : '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {m.title}
+                    {isSelected && <CheckCircle2 size={18} color="var(--accent-cyan)" />}
                   </div>
-                  {isSelected && <CheckCircle2 size={22} color="var(--accent-cyan)" />}
+                  <div style={{ fontSize: '12px', lineHeight: 1.4 }}>{m.desc}</div>
                 </div>
               );
             })}
           </div>
         </div>
+
 
         {/* Time Windows & Repeat Frequency */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', opacity: isScheduleDisabled ? 0.75 : 1 }}>
