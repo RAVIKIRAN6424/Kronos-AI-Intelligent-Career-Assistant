@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Upload, Sparkles, AlertTriangle, Cpu, Download, Save, Plus, Trash2, X, FileCode, CheckCircle, RefreshCw, UserCheck, Palette, GraduationCap, Briefcase } from 'lucide-react';
+import { FileText, Upload, Sparkles, AlertTriangle, Cpu, Download, Save, Plus, Trash2, X, FileCode, CheckCircle, RefreshCw, UserCheck, GraduationCap, Briefcase } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { api } from '../utils/api';
 
@@ -12,14 +12,6 @@ const SKILL_DATABASE = {
   'Data Analyst': ['SQL', 'Python', 'Pandas', 'Tableau', 'PyTorch', 'BI Analytics', 'Snowflake', 'PowerBI DAX', 'Data Analysis', 'Excel'],
   'Mechanical Engineer': ['SolidWorks', 'FEA', 'Mechatronics', 'CAD', 'CNC', 'Ansys Simulation', 'GD&T', 'Manufacturing', 'Assembly']
 };
-
-// 4 Professional Resume PDF Themes (100% Genuine Candidate Layouts - Zero AI Tool Watermarks)
-const PDF_THEMES = [
-  { id: 'classic', name: 'Classic Harvard (Black & White ATS)', desc: '100% Traditional black & white corporate ATS standard.' },
-  { id: 'modern', name: 'Modern Minimalist (Executive Style)', desc: 'Clean slate top header bar with cyan accents.' },
-  { id: 'cyber', name: 'Tech Cyber (Cyan Accent)', desc: 'Dark cyber header with modern sans-serif typography.' },
-  { id: 'executive', name: 'Executive Compact (Indigo Style)', desc: 'High-density indigo theme for senior/fresher candidates.' }
-];
 
 export const ResumeSectionView = ({ toast }) => {
   const defaultMultiRoleResumes = [
@@ -36,7 +28,6 @@ export const ResumeSectionView = ({ toast }) => {
   const [resumeText, setResumeText] = useState(defaultMultiRoleResumes[0].resume_text);
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [isFresher, setIsFresher] = useState(false); // Interactive Fresher vs Experienced mode toggle
-  const [pdfTheme, setPdfTheme] = useState('classic');
   const [userProfile, setUserProfile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
@@ -446,7 +437,6 @@ export const ResumeSectionView = ({ toast }) => {
       if (toast) toast(`Formatting and optimizing resume for ${selectedRole} ATS filters...`, 'info');
 
       let currentSourceText = (resumeText || '').trim();
-      // Remove any AI tool names
       currentSourceText = currentSourceText.replace(/OpenAI|Claude|ChatGPT|Kronos AI/gi, 'API & Automation Systems');
 
       const candidateSkills = userProfile?.skills ? userProfile.skills : (SKILL_DATABASE[selectedRole] ? SKILL_DATABASE[selectedRole].slice(0, 6).join(', ') : 'Technical Skills');
@@ -527,7 +517,7 @@ export const ResumeSectionView = ({ toast }) => {
     }
   };
 
-  // PDF Export Function (No AI Watermarks, genuine candidate details header, no +91 98765 43210 default)
+  // Standard Harvard ATS PDF Export Function (No Theme Menu, Standard Clean Corporate Format)
   const handleDownloadPDF = () => {
     try {
       const doc = new jsPDF({ unit: 'pt', format: 'letter' });
@@ -543,59 +533,21 @@ export const ResumeSectionView = ({ toast }) => {
       // Clean resume text of any AI tool mentions
       const cleanResumeBody = resumeText.replace(/OpenAI|Claude|ChatGPT|Kronos AI/gi, 'API & System Automation');
 
-      // PDF Theme Layout Styling
-      if (pdfTheme === 'cyber') {
-        doc.setFillColor(11, 19, 41);
-        doc.rect(0, 0, pageWidth, 70, 'F');
-        doc.setTextColor(0, 242, 254);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(20);
-        doc.text(candidateName, margin, 38);
-        doc.setFontSize(9);
-        doc.setTextColor(180, 210, 240);
-        doc.text(`${candidateEmail} | ${candidatePhone} | ${candidateLocation}`, margin, 54);
-        y = 90;
-      } else if (pdfTheme === 'modern') {
-        doc.setFillColor(240, 244, 248);
-        doc.rect(0, 0, pageWidth, 60, 'F');
-        doc.setTextColor(30, 41, 59);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text(candidateName, margin, 34);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(71, 85, 105);
-        doc.text(`${candidateEmail}  •  ${candidatePhone}  •  ${candidateLocation}`, margin, 48);
-        y = 80;
-      } else if (pdfTheme === 'executive') {
-        doc.setFillColor(49, 46, 129);
-        doc.rect(0, 0, pageWidth, 65, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(19);
-        doc.text(candidateName, margin, 36);
-        doc.setFontSize(9);
-        doc.setTextColor(224, 231, 255);
-        doc.text(`${candidateEmail} | ${candidatePhone} | ${candidateLocation}`, margin, 52);
-        y = 85;
-      } else {
-        // Classic Harvard
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('times', 'bold');
-        doc.setFontSize(22);
-        doc.text(candidateName, pageWidth / 2, y, { align: 'center' });
-        y += 18;
-        doc.setFontSize(10);
-        doc.setFont('times', 'normal');
-        doc.text(`${candidateEmail} | ${candidatePhone} | ${candidateLocation}`, pageWidth / 2, y, { align: 'center' });
-        y += 24;
-      }
+      // Standard Corporate Classic Harvard ATS Layout
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('times', 'bold');
+      doc.setFontSize(22);
+      doc.text(candidateName, pageWidth / 2, y, { align: 'center' });
+      y += 18;
+      doc.setFontSize(10);
+      doc.setFont('times', 'normal');
+      doc.text(`${candidateEmail} | ${candidatePhone} | ${candidateLocation}`, pageWidth / 2, y, { align: 'center' });
+      y += 24;
 
       // Resume Body Lines
-      const fontStyle = (pdfTheme === 'classic') ? 'times' : 'helvetica';
-      doc.setFont(fontStyle, 'normal');
+      doc.setFont('times', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(pdfTheme === 'cyber' ? 220 : 40, pdfTheme === 'cyber' ? 230 : 40, pdfTheme === 'cyber' ? 240 : 40);
+      doc.setTextColor(30, 30, 30);
 
       const splitLines = doc.splitTextToSize(cleanResumeBody, pageWidth - (margin * 2));
       
@@ -608,11 +560,9 @@ export const ResumeSectionView = ({ toast }) => {
         // Detect major section headers
         if (/^(SUMMARY|EXECUTIVE SUMMARY|TECHNICAL SKILLS|WORK EXPERIENCE|PROFESSIONAL EXPERIENCE|EDUCATION|CERTIFICATIONS):?$/i.test(line.trim())) {
           y += 8;
-          doc.setFont(fontStyle, 'bold');
+          doc.setFont('times', 'bold');
           doc.setFontSize(11);
-          if (pdfTheme === 'cyber') doc.setTextColor(0, 242, 254);
-          else if (pdfTheme === 'executive') doc.setTextColor(49, 46, 129);
-          else doc.setTextColor(0, 0, 0);
+          doc.setTextColor(0, 0, 0);
           
           doc.text(line, margin, y);
           y += 4;
@@ -620,9 +570,9 @@ export const ResumeSectionView = ({ toast }) => {
           doc.line(margin, y, pageWidth - margin, y);
           y += 14;
 
-          doc.setFont(fontStyle, 'normal');
+          doc.setFont('times', 'normal');
           doc.setFontSize(10);
-          doc.setTextColor(40, 40, 40);
+          doc.setTextColor(30, 30, 30);
         } else {
           doc.text(line, margin, y);
           y += 14;
@@ -631,7 +581,7 @@ export const ResumeSectionView = ({ toast }) => {
 
       const cleanFileName = `${(userProfile?.full_name || selectedRole).replace(/\s+/g, '_')}_Resume.pdf`;
       doc.save(cleanFileName);
-      if (toast) toast(`📄 Saved PDF resume: "${cleanFileName}"!`, 'success');
+      if (toast) toast(`📄 Saved Harvard ATS PDF resume: "${cleanFileName}"!`, 'success');
     } catch (err) {
       console.error('PDF Export Error:', err);
       if (toast) toast(`PDF Export Error: ${err.message}`, 'error');
@@ -684,7 +634,7 @@ export const ResumeSectionView = ({ toast }) => {
         </div>
       )}
 
-      {/* Header Banner */}
+      {/* Header Banner (Clean Header - Theme Selector Dropdown Removed as requested) */}
       <div className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -702,7 +652,7 @@ export const ResumeSectionView = ({ toast }) => {
               type="button"
               onClick={() => handleToggleFresherMode(true)}
               style={{
-                padding: '6px 12px',
+                padding: '8px 14px',
                 borderRadius: '8px',
                 border: 'none',
                 background: isFresher ? 'var(--accent-cyan)' : 'transparent',
@@ -715,13 +665,13 @@ export const ResumeSectionView = ({ toast }) => {
                 gap: '6px'
               }}
             >
-              <GraduationCap size={14} /> Fresher / Graduate
+              <GraduationCap size={15} /> Fresher / Graduate
             </button>
             <button
               type="button"
               onClick={() => handleToggleFresherMode(false)}
               style={{
-                padding: '6px 12px',
+                padding: '8px 14px',
                 borderRadius: '8px',
                 border: 'none',
                 background: !isFresher ? 'var(--accent-purple)' : 'transparent',
@@ -734,26 +684,11 @@ export const ResumeSectionView = ({ toast }) => {
                 gap: '6px'
               }}
             >
-              <Briefcase size={14} /> Experienced Pro
+              <Briefcase size={15} /> Experienced Pro
             </button>
           </div>
 
-          {/* Theme Selector Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(2, 6, 15, 0.7)', padding: '4px 10px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
-            <Palette size={15} color="var(--accent-cyan)" />
-            <select
-              value={pdfTheme}
-              onChange={e => setPdfTheme(e.target.value)}
-              className="cyber-select"
-              style={{ fontSize: '12px', padding: '6px', width: '220px', border: 'none', background: 'transparent' }}
-            >
-              {PDF_THEMES.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <button type="button" className="btn-cyber-outline" onClick={handleDownloadPDF} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '12px' }}>
+          <button type="button" className="btn-cyber" onClick={handleDownloadPDF} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', fontSize: '12px' }}>
             <Download size={15} /> Download PDF Resume (.pdf)
           </button>
         </div>

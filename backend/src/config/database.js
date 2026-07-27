@@ -241,12 +241,12 @@ const seedDefaults = () => {
 
     // Seed Default Connected Job Portals (Step 8)
     const portals = [
-      ['LinkedIn', 1, 1, 'alex.vance@linkedin.com'],
-      ['Indeed', 1, 1, 'alex.vance@indeed.com'],
-      ['Glassdoor', 1, 1, 'alex.vance@glassdoor.com'],
-      ['Google Jobs', 1, 1, 'alex.vance@gmail.com'],
-      ['Naukri', 0, 1, 'alex.vance@naukri.com'],
-      ['Monster', 0, 0, 'alex.vance@monster.com']
+      ['LinkedIn', 1, 1, 'candidate@linkedin.com'],
+      ['Indeed', 1, 1, 'candidate@indeed.com'],
+      ['Glassdoor', 1, 1, 'candidate@glassdoor.com'],
+      ['Google Jobs', 1, 1, 'candidate@gmail.com'],
+      ['Naukri', 0, 1, 'candidate@naukri.com'],
+      ['Monster', 0, 0, 'candidate@monster.com']
     ];
     portals.forEach(([pName, conn, enab, email]) => {
       db.run(`INSERT OR IGNORE INTO connected_portals (portal_name, is_connected, is_enabled, account_email) VALUES (?, ?, ?, ?)`, [pName, conn, enab, email]);
@@ -254,12 +254,12 @@ const seedDefaults = () => {
 
     // Seed Default Multi-Role Resumes (Step 6 & 7)
     const defaultResumes = [
-      ['Software Engineer', 'Alex_Vance_Software_Engineer.pdf', 'Senior Full Stack & AI Systems Engineer with 4 years experience in React, Node.js, and Python API development.', 94, 96, 92, 95, 'GraphQL Telemetry, Kubernetes', 'Add quantifiable achievements for microservice latency optimization.'],
-      ['Java Developer', 'Alex_Vance_Java_Developer.pdf', 'Java Backend Specialist experienced in Spring Boot, Microservices, Hibernate, PostgreSQL, and Enterprise Architecture.', 88, 90, 89, 86, 'Kafka Streaming, Docker Swarm', 'Highlight Spring Security OAuth2 implementation.'],
-      ['AWS Engineer', 'Alex_Vance_AWS_Cloud.pdf', 'AWS Cloud Architect certified in ECS, Lambda, Terraform, CloudFormation, S3, IAM, and Serverless Infrastructure.', 91, 94, 90, 89, 'CloudWatch Alarms, DynamoDB Streams', 'Include cost-reduction stats for cloud infrastructure.'],
-      ['Data Analyst', 'Alex_Vance_Data_Analyst.pdf', 'Data Science & BI Analyst proficient in SQL, Python, Pandas, Tableau, PyTorch, and Predictive Churn Models.', 89, 91, 88, 88, 'Snowflake, PowerBI DAX', 'Add regression analysis project benchmarks.'],
-      ['Mechanical Engineer', 'Alex_Vance_Mechanical.pdf', 'CAD & Mechatronics Design Engineer experienced in SolidWorks, Finite Element Analysis (FEA), and Automated CNC Assembly.', 86, 88, 85, 84, 'Ansys Simulation, GD&T', 'Include CAD certifications and manufacturing safety compliance.'],
-      ['DevOps Engineer', 'Alex_Vance_DevOps.pdf', 'DevOps & CI/CD Specialist proficient in Kubernetes, Terraform, Docker, GitHub Actions, and Prometheus Telemetry.', 92, 93, 91, 92, 'Helm Charts, ArgoCD', 'Mention automated zero-downtime blue/green deployment pipelines.']
+      ['Software Engineer', 'Software_Engineer_Resume.pdf', 'Software & Web Specialist proficient in React, Node.js, and Python API development.', 94, 96, 92, 95, 'GraphQL Telemetry, Kubernetes', 'Add quantifiable achievements for microservice latency optimization.'],
+      ['Java Developer', 'Java_Developer_Resume.pdf', 'Java Backend Specialist experienced in Spring Boot, Microservices, Hibernate, PostgreSQL, and Enterprise Architecture.', 88, 90, 89, 86, 'Kafka Streaming, Docker Swarm', 'Highlight Spring Security OAuth2 implementation.'],
+      ['AWS Engineer', 'AWS_Cloud_Resume.pdf', 'AWS Cloud Architect certified in ECS, Lambda, Terraform, CloudFormation, S3, IAM, and Serverless Infrastructure.', 91, 94, 90, 89, 'CloudWatch Alarms, DynamoDB Streams', 'Include cost-reduction stats for cloud infrastructure.'],
+      ['Data Analyst', 'Data_Analyst_Resume.pdf', 'Data Science & BI Analyst proficient in SQL, Python, Pandas, Tableau, PyTorch, and Predictive Churn Models.', 89, 91, 88, 88, 'Snowflake, PowerBI DAX', 'Add regression analysis project benchmarks.'],
+      ['Mechanical Engineer', 'Mechanical_Engineer_Resume.pdf', 'CAD & Mechatronics Design Engineer experienced in SolidWorks, Finite Element Analysis (FEA), and Automated CNC Assembly.', 86, 88, 85, 84, 'Ansys Simulation, GD&T', 'Include CAD certifications and manufacturing safety compliance.'],
+      ['DevOps Engineer', 'DevOps_Resume.pdf', 'DevOps & CI/CD Specialist proficient in Kubernetes, Terraform, Docker, GitHub Actions, and Prometheus Telemetry.', 92, 93, 91, 92, 'Helm Charts, ArgoCD', 'Mention automated zero-downtime blue/green deployment pipelines.']
     ];
     defaultResumes.forEach(([role, file, txt, ats, gram, fmt, kwd, miss, sug]) => {
       db.run(`INSERT OR IGNORE INTO role_resumes (role_name, file_name, resume_text, ats_score, grammar_score, formatting_score, keyword_score, missing_skills, suggestions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, [role, file, txt, ats, gram, fmt, kwd, miss, sug]);
