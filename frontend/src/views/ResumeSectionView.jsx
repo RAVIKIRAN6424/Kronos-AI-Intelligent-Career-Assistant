@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Upload, Sparkles, AlertTriangle, Cpu, Download, Save, Plus, Trash2, X, FileCode, CheckCircle, RefreshCw, UserCheck } from 'lucide-react';
+import { FileText, Upload, Sparkles, AlertTriangle, Cpu, Download, Save, Plus, Trash2, X, FileCode, CheckCircle, RefreshCw, UserCheck, Palette } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { api } from '../utils/api';
 
@@ -12,6 +12,14 @@ const SKILL_DATABASE = {
   'Data Analyst': ['SQL', 'Python', 'Pandas', 'Tableau', 'PyTorch', 'BI Analytics', 'Snowflake', 'PowerBI DAX', 'Data Analysis', 'Excel'],
   'Mechanical Engineer': ['SolidWorks', 'FEA', 'Mechatronics', 'CAD', 'CNC', 'Ansys Simulation', 'GD&T', 'Manufacturing', 'Assembly']
 };
+
+// 4 Professional Resume PDF Themes (No AI watermarks, 100% genuine candidate layouts)
+const PDF_THEMES = [
+  { id: 'modern', name: 'Modern Minimalist (Claude Executive)', desc: 'Clean slate top header bar with cyan accents.' },
+  { id: 'classic', name: 'Classic Harvard (Black & White ATS)', desc: '100% Traditional black & white corporate ATS standard.' },
+  { id: 'cyber', name: 'Tech Cyber (Cyan Accent)', desc: 'Dark cyber header with modern sans-serif typography.' },
+  { id: 'executive', name: 'Executive Compact (Indigo Style)', desc: 'High-density indigo theme for senior/fresher candidates.' }
+];
 
 export const ResumeSectionView = ({ toast }) => {
   const defaultMultiRoleResumes = [
@@ -28,6 +36,8 @@ export const ResumeSectionView = ({ toast }) => {
   const [resumeText, setResumeText] = useState(defaultMultiRoleResumes[0].resume_text);
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [isFresher, setIsFresher] = useState(false);
+  const [pdfTheme, setPdfTheme] = useState('modern');
+  const [userProfile, setUserProfile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -105,7 +115,7 @@ export const ResumeSectionView = ({ toast }) => {
     
     let suggestions = '';
     if (missing.length > 0) {
-      suggestions = `Target keywords missing: ${missing.slice(0, 3).join(', ')}. Click "Improve Resume" to format into standard high ATS layout.`;
+      suggestions = `Target keywords missing: ${missing.slice(0, 3).join(', ')}. Click "Improve ATS Resume" to format into standard high ATS layout.`;
     } else {
       suggestions = `Optimized for ${fresherMode ? 'Fresher / Entry Level' : 'Experienced Candidate'} ${roleName} target filters.`;
     }
@@ -121,6 +131,11 @@ export const ResumeSectionView = ({ toast }) => {
   };
 
   useEffect(() => {
+    // Load Candidate Profile for Genuine PDF Header
+    api.getProfile().then(p => {
+      if (p) setUserProfile(p);
+    }).catch(e => console.warn('Profile fetch notice:', e));
+
     const cached = loadFromLocalStorage();
     if (cached) {
       setResumes(cached);
@@ -178,7 +193,7 @@ export const ResumeSectionView = ({ toast }) => {
     saveToLocalStorage(updated);
   };
 
-  // Explicit Button 1: Show / Calculate Live ATS Score
+  // Button 1: Show / Calculate Live ATS Score
   const handleShowScore = () => {
     const scoreBreakdown = calculateATS(resumeText, selectedRole, isFresher);
     const updated = resumes.map(r => r.role_name === selectedRole ? { ...r, ...scoreBreakdown } : r);
@@ -387,8 +402,8 @@ export const ResumeSectionView = ({ toast }) => {
     }
   };
 
-  // Clean PDF Export (NO AI branding, NO raw ASCII '====' or '----' lines)
-  const handleDownloadPDF = (roleName, text) => {
+  // Clean Professional PDF Export (Supports 4 Themes, 100% Genuine Candidate Header, NO AI Watermarks)
+  const handleDownloadPDF = (roleName, text, themeId = pdfTheme) => {
     try {
       const doc = new jsPDF();
       const margin = 18;
@@ -396,7 +411,10 @@ export const ResumeSectionView = ({ toast }) => {
       const pageHeight = doc.internal.pageSize.getHeight();
       const maxLineWidth = pageWidth - margin * 2;
 
-      // Clean out raw ASCII equal/dash block lines
+      const candidateName = (userProfile?.full_name || 'Alex Vance').toUpperCase();
+      const contactInfo = `${userProfile?.email || 'candidate@email.com'}  •  ${userProfile?.phone || '+91 98765 43210'}  •  ${userProfile?.location || 'Bengaluru, India'}`;
+
+      // Clean out raw ASCII equal/dash block lines (===, ---)
       const rawContent = (text || resumeText || '')
         .split('\n')
         .filter(line => !/^[=\-\*\_]{3,}$/.test(line.trim()))
@@ -404,52 +422,131 @@ export const ResumeSectionView = ({ toast }) => {
         .replace(/^[\s=]+[A-Z\s]+RESUME[\s=]+$/g, '')
         .trim();
 
-      // Executive Header Bar (Clean Dark Navy)
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, 0, pageWidth, 36, 'F');
-
-      // Professional Document Title (No AI branding mentioned!)
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(20);
-      doc.setTextColor(0, 242, 254);
-      doc.text(`${roleName.toUpperCase()} RESUME`, margin, 20);
-
-      // Clean Subtitle (No AI name!)
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(148, 163, 184);
-      doc.text(`Professional ATS Optimized Resume Format`, margin, 28);
-
-      // Top Accent Line
-      doc.setDrawColor(0, 242, 254);
-      doc.setLineWidth(0.8);
-      doc.line(margin, 36, pageWidth - margin, 36);
-
       let y = 46;
-      const lines = rawContent.split('\n');
 
+      if (themeId === 'classic') {
+        // Theme 2: Classic Harvard / Corporate (100% Black & White ATS Standard)
+        doc.setFont("times", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(15, 23, 42);
+        doc.text(candidateName, pageWidth / 2, 20, { align: 'center' });
+
+        doc.setFont("times", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(71, 85, 105);
+        doc.text(roleName.toUpperCase(), pageWidth / 2, 27, { align: 'center' });
+
+        doc.setFont("times", "normal");
+        doc.setFontSize(9.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text(contactInfo, pageWidth / 2, 33, { align: 'center' });
+
+        doc.setDrawColor(51, 65, 85);
+        doc.setLineWidth(0.8);
+        doc.line(margin, 37, pageWidth - margin, 37);
+
+        y = 45;
+      } else if (themeId === 'cyber') {
+        // Theme 3: Tech Cyber (Teal Dark Banner)
+        doc.setFillColor(9, 13, 22);
+        doc.rect(0, 0, pageWidth, 38, 'F');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(20);
+        doc.setTextColor(56, 189, 248);
+        doc.text(candidateName, margin, 18);
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255);
+        doc.text(roleName.toUpperCase(), margin, 25);
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(148, 163, 184);
+        doc.text(contactInfo, margin, 32);
+
+        doc.setDrawColor(56, 189, 248);
+        doc.setLineWidth(1);
+        doc.line(margin, 38, pageWidth - margin, 38);
+
+        y = 48;
+      } else if (themeId === 'executive') {
+        // Theme 4: Executive Compact (Indigo Banner)
+        doc.setFillColor(30, 27, 75);
+        doc.rect(0, 0, pageWidth, 38, 'F');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(19);
+        doc.setTextColor(255, 255, 255);
+        doc.text(candidateName, margin, 18);
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(129, 140, 248);
+        doc.text(roleName.toUpperCase(), margin, 26);
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(199, 210, 254);
+        doc.text(contactInfo, margin, 32);
+
+        doc.setDrawColor(129, 140, 248);
+        doc.setLineWidth(1);
+        doc.line(margin, 38, pageWidth - margin, 38);
+
+        y = 48;
+      } else {
+        // Theme 1: Modern Minimalist (Claude AI Standard Executive)
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, pageWidth, 38, 'F');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(20);
+        doc.setTextColor(0, 242, 254);
+        doc.text(candidateName, margin, 18);
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255);
+        doc.text(roleName.toUpperCase(), margin, 25);
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(148, 163, 184);
+        doc.text(contactInfo, margin, 32);
+
+        doc.setDrawColor(0, 242, 254);
+        doc.setLineWidth(0.8);
+        doc.line(margin, 38, pageWidth - margin, 38);
+
+        y = 48;
+      }
+
+      const lines = rawContent.split('\n');
       lines.forEach((line) => {
         const trimmed = line.trim();
 
-        // Detect Section Headers
         const isHeader = /^(PROFESSIONAL SUMMARY|GRADUATE PROFILE SUMMARY|SUMMARY|CORE COMPETENCIES|TECHNICAL SKILLS|PROFESSIONAL EXPERIENCE|ACADEMIC PROJECTS|PROJECTS|EDUCATION|CERTIFICATIONS)/i.test(trimmed);
 
         if (y > pageHeight - 20) {
           doc.addPage();
-          doc.setFillColor(15, 23, 42);
-          doc.rect(0, 0, pageWidth, 14, 'F');
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(9);
-          doc.setTextColor(0, 242, 254);
-          doc.text(`${roleName.toUpperCase()} RESUME (Continued)`, margin, 10);
+          if (themeId !== 'classic') {
+            doc.setFillColor(15, 23, 42);
+            doc.rect(0, 0, pageWidth, 14, 'F');
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9);
+            doc.setTextColor(0, 242, 254);
+            doc.text(`${candidateName} • ${roleName.toUpperCase()} (Continued)`, margin, 10);
+          }
           y = 24;
         }
 
         if (isHeader) {
           y += 4;
-          doc.setFont("helvetica", "bold");
+          doc.setFont(themeId === 'classic' ? "times" : "helvetica", "bold");
           doc.setFontSize(12);
-          doc.setTextColor(14, 116, 144);
+          doc.setTextColor(themeId === 'classic' ? 15 : 14, themeId === 'classic' ? 23 : 116, themeId === 'classic' ? 42 : 144);
           doc.text(trimmed, margin, y);
 
           y += 2;
@@ -458,7 +555,7 @@ export const ResumeSectionView = ({ toast }) => {
           doc.line(margin, y, pageWidth - margin, y);
           y += 6;
         } else if (trimmed.length > 0) {
-          doc.setFont("helvetica", "normal");
+          doc.setFont(themeId === 'classic' ? "times" : "helvetica", "normal");
           doc.setFontSize(10);
           doc.setTextColor(30, 41, 59);
 
@@ -476,9 +573,10 @@ export const ResumeSectionView = ({ toast }) => {
         }
       });
 
-      const pdfName = `${roleName.replace(/\s+/g, '_')}_Resume.pdf`;
+      const themeLabel = PDF_THEMES.find(t => t.id === themeId)?.name.split(' ')[0] || 'Theme';
+      const pdfName = `${roleName.replace(/\s+/g, '_')}_${themeLabel}_Resume.pdf`;
       doc.save(pdfName);
-      if (toast) toast(`📄 Downloaded PDF: ${pdfName}`, 'success');
+      if (toast) toast(`📄 Downloaded ${pdfName}`, 'success');
     } catch (err) {
       console.error('PDF export error:', err);
       handleDownloadTXT(roleName, text);
@@ -500,7 +598,7 @@ export const ResumeSectionView = ({ toast }) => {
     if (toast) toast(`Downloaded ${roleName} resume as TXT!`, 'info');
   };
 
-  // Explicit Button 2: Improve Resume (Claude AI Optimizer)
+  // Button 2: Improve Resume (Claude AI Optimizer)
   const handleOptimizeResume = async (roleName) => {
     setOptimizing(true);
     if (toast) toast(`Optimizing ${roleName} resume for ATS standards...`, 'info');
@@ -726,15 +824,32 @@ EDUCATION & CERTIFICATIONS
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
           {/* Left Column: Editor & Device Upload */}
           <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText size={18} color="var(--accent-cyan)" /> {activeResume.role_name} Resume Section
+                <FileText size={18} color="var(--accent-cyan)" /> {activeResume.role_name} Resume Editor
               </h3>
-              <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {/* Professional Theme Picker */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(2, 6, 15, 0.8)', padding: '4px 8px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                  <Palette size={13} color="var(--accent-cyan)" />
+                  <select
+                    value={pdfTheme}
+                    onChange={(e) => setPdfTheme(e.target.value)}
+                    style={{ background: 'transparent', border: 'none', color: '#ffffff', fontSize: '11px', fontWeight: 700, outline: 'none', cursor: 'pointer' }}
+                  >
+                    {PDF_THEMES.map(t => (
+                      <option key={t.id} value={t.id} style={{ background: '#0f172a', color: '#ffffff' }}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <button
                   className="btn-cyber-outline"
                   style={{ padding: '6px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  onClick={() => handleDownloadPDF(activeResume.role_name, resumeText || activeResume.resume_text)}
+                  onClick={() => handleDownloadPDF(activeResume.role_name, resumeText || activeResume.resume_text, pdfTheme)}
                 >
                   <Download size={14} /> Download PDF
                 </button>
@@ -745,14 +860,6 @@ EDUCATION & CERTIFICATIONS
                   title="Download as Plain Text"
                 >
                   <FileCode size={14} /> TXT
-                </button>
-                <button
-                  className="btn-danger"
-                  style={{ padding: '6px 10px', fontSize: '12px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.4)' }}
-                  onClick={(e) => handleRemoveJobRole(activeResume.role_name, e)}
-                  title="Remove this job role"
-                >
-                  <Trash2 size={14} /> Delete Role
                 </button>
               </div>
             </div>
@@ -869,7 +976,7 @@ EDUCATION & CERTIFICATIONS
             </button>
           </div>
 
-          {/* Right Column: ATS Scoring & Action Buttons */}
+          {/* Right Column: ATS Scoring & 2 Distinct Action Buttons */}
           <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -915,11 +1022,11 @@ EDUCATION & CERTIFICATIONS
 
             {/* Improvement Suggestions */}
             <div>
-              <span style={{ fontSize: '12px', color: 'var(--accent-amber)', fontWeight: 700 }}>AI Improvement Suggestions:</span>
+              <span style={{ fontSize: '12px', color: 'var(--accent-amber)', fontWeight: 700 }}>ATS Optimization Suggestions:</span>
               <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>{activeResume.suggestions || 'Include target framework keywords and quantifiable achievements.'}</p>
             </div>
 
-            {/* Two Explicit Buttons: Show Score & Improve Score */}
+            {/* Two Explicit Buttons: Show Live ATS Score vs Improve Resume */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: 'auto' }}>
               {/* Button 1: Show / Calculate Live ATS Score */}
               <button
@@ -928,10 +1035,10 @@ EDUCATION & CERTIFICATIONS
                 style={{ width: '100%', padding: '11px', justifyContent: 'center', fontSize: '13px' }}
                 onClick={handleShowScore}
               >
-                <RefreshCw size={15} /> Show / Calculate Live ATS Score
+                <RefreshCw size={15} /> 📊 Show / Calculate Live ATS Score
               </button>
 
-              {/* Button 2: Improve Resume (Truthful ATS Optimization) */}
+              {/* Button 2: Improve Resume (Convert & Boost Score) */}
               <button
                 type="button"
                 className="btn-cyber"
@@ -939,7 +1046,7 @@ EDUCATION & CERTIFICATIONS
                 onClick={() => handleOptimizeResume(activeResume.role_name)}
                 disabled={optimizing}
               >
-                <Sparkles size={16} /> {optimizing ? 'Optimizing Resume...' : `Improve ${activeResume.role_name} Resume (Truthful ATS Format)`}
+                <Sparkles size={16} /> {optimizing ? 'Optimizing Resume...' : `✨ Improve ${activeResume.role_name} Resume (Convert & Boost Score)`}
               </button>
             </div>
           </div>
