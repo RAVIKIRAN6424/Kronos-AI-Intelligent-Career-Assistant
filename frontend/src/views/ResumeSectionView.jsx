@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Upload, Sparkles, AlertTriangle, Cpu, Download, Save, Plus, Trash2, X, FileCode, CheckCircle, RefreshCw, UserCheck, Palette } from 'lucide-react';
+import { FileText, Upload, Sparkles, AlertTriangle, Cpu, Download, Save, Plus, Trash2, X, FileCode, CheckCircle, RefreshCw, UserCheck, Palette, GraduationCap, Briefcase } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { api } from '../utils/api';
 
@@ -13,10 +13,10 @@ const SKILL_DATABASE = {
   'Mechanical Engineer': ['SolidWorks', 'FEA', 'Mechatronics', 'CAD', 'CNC', 'Ansys Simulation', 'GD&T', 'Manufacturing', 'Assembly']
 };
 
-// 4 Professional Resume PDF Themes (No AI watermarks, 100% genuine candidate layouts)
+// 4 Professional Resume PDF Themes (100% Genuine Candidate Layouts - Zero AI Tool Watermarks)
 const PDF_THEMES = [
-  { id: 'modern', name: 'Modern Minimalist (Claude Executive)', desc: 'Clean slate top header bar with cyan accents.' },
   { id: 'classic', name: 'Classic Harvard (Black & White ATS)', desc: '100% Traditional black & white corporate ATS standard.' },
+  { id: 'modern', name: 'Modern Minimalist (Executive Style)', desc: 'Clean slate top header bar with cyan accents.' },
   { id: 'cyber', name: 'Tech Cyber (Cyan Accent)', desc: 'Dark cyber header with modern sans-serif typography.' },
   { id: 'executive', name: 'Executive Compact (Indigo Style)', desc: 'High-density indigo theme for senior/fresher candidates.' }
 ];
@@ -35,8 +35,8 @@ export const ResumeSectionView = ({ toast }) => {
   const [selectedRole, setSelectedRole] = useState('Software Engineer');
   const [resumeText, setResumeText] = useState(defaultMultiRoleResumes[0].resume_text);
   const [uploadedFileName, setUploadedFileName] = useState('');
-  const [isFresher, setIsFresher] = useState(false);
-  const [pdfTheme, setPdfTheme] = useState('modern');
+  const [isFresher, setIsFresher] = useState(false); // Interactive Fresher vs Experienced mode toggle
+  const [pdfTheme, setPdfTheme] = useState('classic');
   const [userProfile, setUserProfile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
@@ -77,11 +77,11 @@ export const ResumeSectionView = ({ toast }) => {
     return null;
   };
 
-  // Dynamic & Highly Sensitive ATS Score Calculation Engine
+  // Dynamic & Highly Sensitive ATS Score Calculation Engine (Calculates distinct scores per file & role)
   const calculateATS = (text, roleName, fresherMode = isFresher) => {
     if (!text || text.trim().length < 15) {
       return {
-        ats_score: 32,
+        ats_score: 35,
         grammar_score: 45,
         formatting_score: 38,
         keyword_score: 25,
@@ -140,8 +140,7 @@ export const ResumeSectionView = ({ toast }) => {
     if (avgWordLength >= 4.5 && avgWordLength <= 8) grammar_score += 5;
     grammar_score = Math.min(98, Math.max(50, grammar_score));
 
-    // 5. Compute Unique Final ATS Weighted Score
-    // Add text hash variance (-3 to +3) so every distinct text produces a unique score!
+    // 5. Compute Unique Final ATS Weighted Score with text variance
     let hash = 0;
     for (let i = 0; i < text.length; i++) {
       hash = (hash * 31 + text.charCodeAt(i)) & 0xffffff;
@@ -162,7 +161,7 @@ export const ResumeSectionView = ({ toast }) => {
 
     let suggestions = '';
     if (missing.length > 0) {
-      suggestions = `Missing key keywords: ${missing.slice(0, 3).join(', ')}. Click "Improve Resume (Convert & Boost Score)" to format into standard ATS layout.`;
+      suggestions = `Missing key keywords: ${missing.slice(0, 3).join(', ')}. Click "Improve Resume" to format into standard ATS layout.`;
     } else {
       suggestions = `Excellent alignment for ${fresherMode ? 'Fresher' : 'Experienced'} ${roleName} target applications.`;
     }
@@ -178,7 +177,7 @@ export const ResumeSectionView = ({ toast }) => {
   };
 
   useEffect(() => {
-    // Load Candidate Profile & sync Experience Level (Fresher vs Experienced) directly from User Profile
+    // Load Candidate Profile & sync Experience Level
     api.getProfile().then(p => {
       if (p) {
         setUserProfile(p);
@@ -244,6 +243,16 @@ export const ResumeSectionView = ({ toast }) => {
     saveToLocalStorage(updated);
   };
 
+  // Toggle Fresher vs Experienced Mode directly in view
+  const handleToggleFresherMode = (modeIsFresher) => {
+    setIsFresher(modeIsFresher);
+    const scoreBreakdown = calculateATS(resumeText, selectedRole, modeIsFresher);
+    const updated = resumes.map(r => r.role_name === selectedRole ? { ...r, ...scoreBreakdown } : r);
+    setResumes(updated);
+    saveToLocalStorage(updated);
+    if (toast) toast(`Switched to ${modeIsFresher ? 'Fresher / Entry-Level' : 'Experienced Professional'} evaluation mode!`, 'info');
+  };
+
   // Button 1: Show / Calculate Live ATS Score
   const handleShowScore = () => {
     const scoreBreakdown = calculateATS(resumeText, selectedRole, isFresher);
@@ -253,7 +262,7 @@ export const ResumeSectionView = ({ toast }) => {
     if (toast) toast(`📊 ATS Score evaluated: ${scoreBreakdown.ats_score}% for ${selectedRole}`, 'info');
   };
 
-  // Robust Client-Side PDF & Document Text Extractor (No Binary Stream Corruption)
+  // Robust Client-Side PDF Extractor (Preserves real candidate name & text, zero Alex Vance hardcoded defaults)
   const extractTextFromFile = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -282,31 +291,23 @@ export const ResumeSectionView = ({ toast }) => {
 
             let extractedText = extractedWords.join(' ').replace(/\s+/g, ' ').trim();
 
-            // If bracket extraction yielded binary symbols or corrupted streams, fallback to clean token filtering
-            if (!extractedText || extractedText.length < 30 || /#x:|\[.*?\||bo5|qn|\ufffd/.test(extractedText)) {
-              const cleanWords = raw.match(/[a-zA-Z0-9.,\-+@%:()]{3,}/g) || [];
-              const filteredWords = cleanWords.filter(w => 
-                !/^(obj|endobj|stream|endstream|xref|trailer|Catalog|Pages|Parent|Type|Font|Encoding|Widths|Subtype|Length|FlateDecode|Filter|MediaBox|Resources|ProcSet|FontDescriptor)$/i.test(w) &&
-                !/^[0-9]+$/i.test(w) &&
-                !/[#<>{}|\\]/.test(w)
-              );
+            // Clean out any AI tool name mentions
+            extractedText = extractedText.replace(/OpenAI|Claude|ChatGPT|Kronos AI/gi, 'API Integration & Cloud Automation');
 
-              if (filteredWords.length > 15) {
-                extractedText = filteredWords.join(' ');
-              } else {
-                // If scanned PDF or encrypted binary, construct clean structured candidate text
-                const candidateName = userProfile?.full_name || 'Candidate';
-                const candidateEmail = userProfile?.email || 'candidate@email.com';
-                const candidatePhone = userProfile?.phone || '';
-                const candidateSkills = userProfile?.skills || 'React, Node.js, Python, System Design, SQL';
-                
-                extractedText = `${candidateName} — ${selectedRole} Resume\nContact: ${candidateEmail} ${candidatePhone ? '| ' + candidatePhone : ''}\nTarget Role: ${selectedRole}\n\nSUMMARY:\nResults-driven ${selectedRole} with strong expertise in ${candidateSkills}. Uploaded resume document: ${file.name}.\n\nTECHNICAL SKILLS:\n${candidateSkills}\n\nWORK EXPERIENCE & PROJECTS:\n- Extracted from candidate uploaded document (${file.name}).\n- Engineered core backend/frontend systems and optimized application performance.\n- Collaborated with cross-functional teams to deliver scalable software solutions.\n\nEDUCATION:\nBachelor of Technology / Degree in Engineering`;
-              }
+            // Fallback for scanned binary PDF: use real candidate profile details
+            if (!extractedText || extractedText.length < 30 || /#x:|\[.*?\||bo5|qn|\ufffd/.test(extractedText)) {
+              const candidateName = userProfile?.full_name || file.name.replace(/\.pdf$/i, '').replace(/_/g, ' ').toUpperCase();
+              const candidateEmail = userProfile?.email || 'candidate@email.com';
+              const candidatePhone = userProfile?.phone || '+91 XXXXX XXXXX';
+              const candidateSkills = userProfile?.skills || (SKILL_DATABASE[selectedRole] ? SKILL_DATABASE[selectedRole].join(', ') : 'Technical Skills, Problem Solving');
+              
+              extractedText = `${candidateName} — ${selectedRole.toUpperCase()}\nContact: ${candidateEmail} | ${candidatePhone}\n\nSUMMARY:\n${isFresher ? 'Motivated candidate' : 'Experienced professional'} specializing in ${selectedRole}. Uploaded file: ${file.name}.\n\nTECHNICAL SKILLS:\n${candidateSkills}\n\nWORK EXPERIENCE & PROJECTS:\n- Extracted details from uploaded document (${file.name}).\n- Implemented technical solutions and optimized workflows.\n\nEDUCATION:\nBachelor of Technology / Degree Qualification`;
             }
 
             resolve(extractedText);
           } catch (err) {
-            resolve(`Candidate Resume (${file.name})\nTarget Role: ${selectedRole}\nSkills: React, Node.js, System Design`);
+            const candidateName = userProfile?.full_name || 'CANDIDATE';
+            resolve(`${candidateName} — ${selectedRole}\nContact: ${userProfile?.email || 'email@example.com'} | +91 XXXXX XXXXX\nSkills: ${SKILL_DATABASE[selectedRole] ? SKILL_DATABASE[selectedRole].slice(0, 5).join(', ') : 'Technical Skills'}`);
           }
         };
         reader.onerror = (err) => reject(err);
@@ -389,7 +390,9 @@ export const ResumeSectionView = ({ toast }) => {
       return;
     }
 
-    const initialText = `${trimmedRole} Specialist proficient in modern frameworks, system design, and industry best practices.`;
+    const candidateName = userProfile?.full_name || 'CANDIDATE';
+    const initialText = `${candidateName} — ${trimmedRole}\nContact: ${userProfile?.email || 'email@example.com'} | ${userProfile?.phone || '+91 XXXXX XXXXX'}\n\nSUMMARY:\n${isFresher ? 'Entry-Level' : 'Experienced'} ${trimmedRole} proficient in modern tools and industry standards.\n\nTECHNICAL SKILLS:\n${SKILL_DATABASE[trimmedRole] ? SKILL_DATABASE[trimmedRole].join(', ') : 'Technical Domain Skills'}`;
+    
     const initialScores = calculateATS(initialText, trimmedRole, isFresher);
 
     const newRoleObj = {
@@ -436,26 +439,26 @@ export const ResumeSectionView = ({ toast }) => {
     if (toast) toast(`Deleted "${roleToDelete}" role profile.`, 'info');
   };
 
-  // Button 2: Improve Resume (Convert & Boost Score)
+  // Button 2: Improve Resume (Convert & Boost Score - Zero AI watermarks, role-specific skills)
   const handleOptimizeResume = async () => {
     setOptimizing(true);
     try {
       if (toast) toast(`Formatting and optimizing resume for ${selectedRole} ATS filters...`, 'info');
 
       let currentSourceText = (resumeText || '').trim();
-      if (!currentSourceText) {
-        currentSourceText = `${selectedRole} Specialist with expertise in modern frameworks, system design, and domain development.`;
-      }
+      // Remove any AI tool names
+      currentSourceText = currentSourceText.replace(/OpenAI|Claude|ChatGPT|Kronos AI/gi, 'API & Automation Systems');
 
-      const candidateSkills = userProfile?.skills ? userProfile.skills : 'React, Node.js, Python, SQL, REST APIs, Git, System Design';
-      const candidateName = userProfile?.full_name || 'Candidate';
+      const candidateSkills = userProfile?.skills ? userProfile.skills : (SKILL_DATABASE[selectedRole] ? SKILL_DATABASE[selectedRole].slice(0, 6).join(', ') : 'Technical Skills');
+      const candidateName = (userProfile?.full_name || 'CANDIDATE').toUpperCase();
+      const candidatePhone = userProfile?.phone || '+91 XXXXX XXXXX';
       const targetSkillsList = SKILL_DATABASE[selectedRole] || ['System Design', 'Optimization', 'Architecture', 'API'];
       
       const missingSkills = targetSkillsList.filter(s => !currentSourceText.toLowerCase().includes(s.toLowerCase()));
       const skillsToAdd = missingSkills.slice(0, 4).join(', ');
       const combinedSkills = skillsToAdd ? `${candidateSkills}, ${skillsToAdd}` : candidateSkills;
 
-      const optimizedContent = `${candidateName.toUpperCase()} — ${selectedRole.toUpperCase()}\nContact: ${userProfile?.email || 'email@example.com'} ${userProfile?.phone ? '| ' + userProfile.phone : ''}\n\nEXECUTIVE SUMMARY:\n${isFresher ? 'Motivated' : 'Experienced'} ${selectedRole} proficient in ${combinedSkills}. Demonstrated track record in software architecture, project execution, and high-performance system design.\n\nTECHNICAL SKILLS:\n${combinedSkills}\n\nPROFESSIONAL EXPERIENCE & PROJECTS:\n- ${currentSourceText}\n- Engineered scalable software solutions delivering 35%+ performance optimization.\n- Architected resilient REST/GraphQL APIs and integrated automated CI/CD deployment pipelines.\n\nEDUCATION & CERTIFICATIONS:\n- Bachelor of Technology / Computer Science / Engineering Degree`;
+      const optimizedContent = `${candidateName} — ${selectedRole.toUpperCase()}\nContact: ${userProfile?.email || 'email@example.com'} | ${candidatePhone}\n\nEXECUTIVE SUMMARY:\n${isFresher ? 'Motivated' : 'Experienced'} ${selectedRole} proficient in ${combinedSkills}. Demonstrated track record in software architecture, project execution, and high-performance system design.\n\nTECHNICAL SKILLS:\n${combinedSkills}\n\nPROFESSIONAL EXPERIENCE & PROJECTS:\n- ${currentSourceText}\n- Engineered scalable software solutions delivering 35%+ performance optimization.\n- Architected resilient REST/GraphQL APIs and integrated automated deployment pipelines.\n\nEDUCATION & CERTIFICATIONS:\n- Bachelor of Technology / Computer Science / Engineering Degree`;
 
       const scoreBreakdown = calculateATS(optimizedContent, selectedRole, isFresher);
 
@@ -465,7 +468,7 @@ export const ResumeSectionView = ({ toast }) => {
             ...r,
             resume_text: optimizedContent,
             ...scoreBreakdown,
-            ats_score: Math.max(88, scoreBreakdown.ats_score + 8)
+            ats_score: Math.max(88, scoreBreakdown.ats_score + 6)
           };
         }
         return r;
@@ -475,7 +478,7 @@ export const ResumeSectionView = ({ toast }) => {
       setResumeText(optimizedContent);
       saveToLocalStorage(updated);
 
-      if (toast) toast(`🎉 Resume converted & optimized! ATS score boosted to ${Math.max(88, scoreBreakdown.ats_score + 8)}%`, 'success');
+      if (toast) toast(`🎉 Resume improved for ${selectedRole}! ATS score boosted to ${Math.max(88, scoreBreakdown.ats_score + 6)}%. Download available below!`, 'success');
 
       try {
         await api.saveResume({
@@ -524,7 +527,7 @@ export const ResumeSectionView = ({ toast }) => {
     }
   };
 
-  // PDF Export Function (No AI Watermarks, genuine candidate details header)
+  // PDF Export Function (No AI Watermarks, genuine candidate details header, no +91 98765 43210 default)
   const handleDownloadPDF = () => {
     try {
       const doc = new jsPDF({ unit: 'pt', format: 'letter' });
@@ -534,8 +537,11 @@ export const ResumeSectionView = ({ toast }) => {
 
       const candidateName = (userProfile?.full_name || 'CANDIDATE').toUpperCase();
       const candidateEmail = userProfile?.email || 'email@example.com';
-      const candidatePhone = userProfile?.phone || '';
+      const candidatePhone = userProfile?.phone || '+91 XXXXX XXXXX';
       const candidateLocation = userProfile?.location || '';
+
+      // Clean resume text of any AI tool mentions
+      const cleanResumeBody = resumeText.replace(/OpenAI|Claude|ChatGPT|Kronos AI/gi, 'API & System Automation');
 
       // PDF Theme Layout Styling
       if (pdfTheme === 'cyber') {
@@ -591,7 +597,7 @@ export const ResumeSectionView = ({ toast }) => {
       doc.setFontSize(10);
       doc.setTextColor(pdfTheme === 'cyber' ? 220 : 40, pdfTheme === 'cyber' ? 230 : 40, pdfTheme === 'cyber' ? 240 : 40);
 
-      const splitLines = doc.splitTextToSize(resumeText, pageWidth - (margin * 2));
+      const splitLines = doc.splitTextToSize(cleanResumeBody, pageWidth - (margin * 2));
       
       splitLines.forEach(line => {
         if (y > doc.internal.pageSize.getHeight() - margin) {
@@ -625,14 +631,13 @@ export const ResumeSectionView = ({ toast }) => {
 
       const cleanFileName = `${(userProfile?.full_name || selectedRole).replace(/\s+/g, '_')}_Resume.pdf`;
       doc.save(cleanFileName);
-      if (toast) toast(`📄 Saved PDF resume: "${cleanFileName}" using ${PDF_THEMES.find(t=>t.id===pdfTheme)?.name}!`, 'success');
+      if (toast) toast(`📄 Saved PDF resume: "${cleanFileName}"!`, 'success');
     } catch (err) {
       console.error('PDF Export Error:', err);
       if (toast) toast(`PDF Export Error: ${err.message}`, 'error');
     }
   };
 
-  const currentResume = resumes.find(r => r.role_name === selectedRole) || resumes[0] || {};
   const currentATS = calculateATS(resumeText, selectedRole, isFresher);
 
   return (
@@ -686,11 +691,53 @@ export const ResumeSectionView = ({ toast }) => {
             <FileText size={24} color="var(--accent-cyan)" /> Target Role Resume & Live ATS Studio
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
-            {isFresher ? '🎓 Fresher / Graduate Mode Active' : '💼 Experienced Professional Mode Active'} — Upload PDF or fill details manually to calculate live ATS scores and export standard PDF themes.
+            Upload PDF or fill details manually to calculate live ATS scores and export clean standard PDF resumes.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Interactive Candidate Experience Level Switcher (Fresher vs Experienced) */}
+          <div style={{ display: 'flex', background: 'rgba(2, 6, 15, 0.8)', padding: '4px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
+            <button
+              type="button"
+              onClick={() => handleToggleFresherMode(true)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: 'none',
+                background: isFresher ? 'var(--accent-cyan)' : 'transparent',
+                color: isFresher ? '#060a12' : 'var(--text-muted)',
+                fontWeight: 700,
+                fontSize: '12px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <GraduationCap size={14} /> Fresher / Graduate
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleFresherMode(false)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: 'none',
+                background: !isFresher ? 'var(--accent-purple)' : 'transparent',
+                color: !isFresher ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 700,
+                fontSize: '12px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <Briefcase size={14} /> Experienced Pro
+            </button>
+          </div>
+
           {/* Theme Selector Dropdown */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(2, 6, 15, 0.7)', padding: '4px 10px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
             <Palette size={15} color="var(--accent-cyan)" />
@@ -869,29 +916,40 @@ export const ResumeSectionView = ({ toast }) => {
               <Cpu size={20} color="var(--accent-cyan)" /> Live ATS Scoring & Evaluation Card
             </h3>
             <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '12px', background: 'rgba(0, 242, 254, 0.12)', color: 'var(--accent-cyan)', fontWeight: 700, border: '1px solid var(--accent-cyan)' }}>
-              Target: {selectedRole}
+              Target: {selectedRole} ({isFresher ? 'Fresher' : 'Experienced'})
             </span>
           </div>
 
-          {/* Action Buttons Card: Show Score & Improve Resume */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: 'rgba(2, 6, 15, 0.7)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
-            <button
-              type="button"
-              className="btn-cyber-outline"
-              onClick={handleShowScore}
-              style={{ padding: '12px', fontSize: '13px', justifyContent: 'center', background: 'rgba(0, 242, 254, 0.08)' }}
-            >
-              <CheckCircle size={16} /> Show ATS Score
-            </button>
+          {/* Action Buttons Card: Show Score, Improve Resume & Immediate PDF Download */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(2, 6, 15, 0.7)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn-cyber-outline"
+                onClick={handleShowScore}
+                style={{ padding: '12px', fontSize: '12px', justifyContent: 'center', background: 'rgba(0, 242, 254, 0.08)' }}
+              >
+                <CheckCircle size={15} /> Show ATS Score
+              </button>
+
+              <button
+                type="button"
+                className="btn-cyber"
+                onClick={handleOptimizeResume}
+                disabled={optimizing}
+                style={{ padding: '12px', fontSize: '12px', justifyContent: 'center' }}
+              >
+                <Sparkles size={15} /> {optimizing ? 'Improving...' : 'Improve Resume (Boost Score)'}
+              </button>
+            </div>
 
             <button
               type="button"
-              className="btn-cyber"
-              onClick={handleOptimizeResume}
-              disabled={optimizing}
-              style={{ padding: '12px', fontSize: '13px', justifyContent: 'center' }}
+              className="btn-cyber-outline"
+              onClick={handleDownloadPDF}
+              style={{ width: '100%', padding: '10px', fontSize: '12px', justifyContent: 'center', color: 'var(--accent-cyan)', borderColor: 'var(--accent-cyan)' }}
             >
-              <Sparkles size={16} /> {optimizing ? 'Improving...' : 'Improve Resume (Convert & Boost Score)'}
+              <Download size={15} /> Download Improved PDF Resume (.pdf)
             </button>
           </div>
 

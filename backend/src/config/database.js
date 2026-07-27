@@ -279,11 +279,11 @@ const seedDefaults = () => {
             id, full_name, email, phone, age, location, target_domain, target_titles, experience_years,
             skills, resume_text, resume_summary, preferred_locations, remote_only, expected_salary
           ) VALUES (
-            1, 'Alex Vance', 'alex.vance@kronos-ai.io', '+91 98765 43210', 26, 'Bengaluru, India', 'Software',
-            'Full Stack Developer, Senior Software Engineer, AI Systems Specialist', 4,
-            'React, Node.js, Python, TypeScript, SQLite, System Design, OpenAI/Claude APIs, GraphQL, Docker',
-            'Full Stack Software Engineer with 4 years of experience delivering highly responsive microservices, modern React interfaces, and AI API integrations. Passionate about autonomous agents and web automation.',
-            'Experienced developer specializing in scalable Web & AI infrastructure across React, Express, Python, and cloud deployments.',
+            1, 'RAVI KIRAN MADASU', 'ravikiran@kronos-ai.io', '+91 XXXXX XXXXX', 26, 'Bengaluru, India', 'Software',
+            'Full Stack Developer, Senior Software Engineer, Mechanical Lead', 4,
+            'React, Node.js, Python, SolidWorks, System Design, SQL, Docker',
+            'Candidate Software & Engineering Specialist proficient in modern frameworks, system architecture, and domain development.',
+            'Experienced developer & engineer specializing in scalable systems, React, Express, Python, and CAD deployments.',
             'Bengaluru, Mumbai, Hyderabad, Pune, Remote, USA, United Kingdom', 1, '₹18,000,000 - ₹28,000,000 PA / $110,000 USD'
           )
         `);

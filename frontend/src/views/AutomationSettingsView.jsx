@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Sliders, Clock, Calendar, Save, CheckCircle2, Shield } from 'lucide-react';
+import { Sliders, Clock, Calendar, Save, CheckCircle2, Shield, Play, Pause, Info } from 'lucide-react';
 import { api } from '../utils/api';
 
 export const AutomationSettingsView = ({ toast }) => {
-  const [mode, setMode] = useState('Automatic'); // 'Manual' | 'Automatic' | 'Automatic OFF'
+  const [mode, setMode] = useState('Automatic'); // 'Automatic' | 'Manual' | 'Automatic OFF'
   const [dailyStartTime, setDailyStartTime] = useState('09:00');
   const [dailyStopTime, setDailyStopTime] = useState('18:00');
   const [repeatDays, setRepeatDays] = useState('Everyday'); // 'Everyday' | 'Weekdays' | 'Weekends'
@@ -27,6 +27,15 @@ export const AutomationSettingsView = ({ toast }) => {
     }
   };
 
+  const handleModeSelect = (selectedMode) => {
+    setMode(selectedMode);
+    if (selectedMode === 'Automatic') {
+      api.updateBotState({ is_running: 1, current_job: 'Autonomous Scanning Portals...' }).catch(() => {});
+    } else if (selectedMode === 'Automatic OFF') {
+      api.updateBotState({ is_running: 0, current_job: 'Automation Engine OFF' }).catch(() => {});
+    }
+  };
+
   const handleSaveConfig = async () => {
     setSaving(true);
     try {
@@ -36,13 +45,22 @@ export const AutomationSettingsView = ({ toast }) => {
         daily_stop_time: dailyStopTime,
         repeat_days: repeatDays
       });
-      toast('Automation Settings saved successfully!', 'success');
+
+      if (mode === 'Automatic') {
+        await api.updateBotState({ is_running: 1, current_job: 'Autonomous Portal Job Checking Active' });
+      } else {
+        await api.updateBotState({ is_running: 0, current_job: mode === 'Manual' ? 'Manual Trigger Mode' : 'Automation Engine OFF' });
+      }
+
+      toast(`Automation Config saved in "${mode}" mode!`, 'success');
     } catch (err) {
       toast(err.message || 'Failed to save automation settings', 'error');
     } finally {
       setSaving(false);
     }
   };
+
+  const isScheduleDisabled = mode !== 'Automatic';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -59,16 +77,20 @@ export const AutomationSettingsView = ({ toast }) => {
         {/* Mode Selector */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Shield size={18} color="var(--accent-cyan)" /> Automation Mode
+            <Shield size={18} color="var(--accent-cyan)" /> Automation Mode Selection
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {['Automatic', 'Manual', 'Automatic OFF'].map(m => {
-              const isSelected = mode === m;
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {[
+              { id: 'Automatic', title: 'Automatic Mode', desc: 'Kronos AI automatically checks portals, scans postings, and applies within daily start/stop hours.' },
+              { id: 'Manual', title: 'Manual Mode', desc: 'Requires manual click of START button on Dashboard to scan and submit applications.' },
+              { id: 'Automatic OFF', title: 'Automatic OFF Mode', desc: 'Completely pauses all background automated application triggers.' }
+            ].map(m => {
+              const isSelected = mode === m.id;
               return (
                 <div
-                  key={m}
-                  onClick={() => setMode(m)}
+                  key={m.id}
+                  onClick={() => handleModeSelect(m.id)}
                   style={{
                     padding: '16px',
                     borderRadius: '12px',
@@ -78,18 +100,19 @@ export const AutomationSettingsView = ({ toast }) => {
                     color: isSelected ? '#ffffff' : 'var(--text-muted)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s ease'
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '14px' }}>{m} Mode</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      {m === 'Automatic' && 'Kronos AI automatically checks portals within daily start/stop hours.'}
-                      {m === 'Manual' && 'Requires manual click of START button on Dashboard.'}
-                      {m === 'Automatic OFF' && 'Pauses all background automated triggers.'}
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: isSelected ? 'var(--accent-cyan)' : '#ffffff' }}>
+                      {m.title}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.4' }}>
+                      {m.desc}
                     </div>
                   </div>
-                  {isSelected && <CheckCircle2 size={20} color="var(--accent-cyan)" />}
+                  {isSelected && <CheckCircle2 size={22} color="var(--accent-cyan)" />}
                 </div>
               );
             })}
@@ -97,10 +120,17 @@ export const AutomationSettingsView = ({ toast }) => {
         </div>
 
         {/* Time Windows & Repeat Frequency */}
-        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Clock size={18} color="var(--accent-purple)" /> Daily Schedule & Time Windows
-          </h3>
+        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', opacity: isScheduleDisabled ? 0.75 : 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Clock size={18} color="var(--accent-purple)" /> Daily Schedule & Time Windows
+            </h3>
+            {isScheduleDisabled && (
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Info size={12} /> Schedule applies in Automatic Mode
+              </span>
+            )}
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
@@ -112,6 +142,8 @@ export const AutomationSettingsView = ({ toast }) => {
                 className="cyber-input"
                 value={dailyStartTime}
                 onChange={e => setDailyStartTime(e.target.value)}
+                disabled={isScheduleDisabled}
+                style={{ opacity: isScheduleDisabled ? 0.6 : 1 }}
               />
             </div>
 
@@ -124,6 +156,8 @@ export const AutomationSettingsView = ({ toast }) => {
                 className="cyber-input"
                 value={dailyStopTime}
                 onChange={e => setDailyStopTime(e.target.value)}
+                disabled={isScheduleDisabled}
+                style={{ opacity: isScheduleDisabled ? 0.6 : 1 }}
               />
             </div>
           </div>
@@ -136,7 +170,9 @@ export const AutomationSettingsView = ({ toast }) => {
               {['Everyday', 'Weekdays', 'Weekends'].map(r => (
                 <button
                   key={r}
+                  type="button"
                   onClick={() => setRepeatDays(r)}
+                  disabled={isScheduleDisabled}
                   style={{
                     padding: '10px',
                     borderRadius: '8px',
@@ -145,7 +181,8 @@ export const AutomationSettingsView = ({ toast }) => {
                     border: '1px solid var(--border-subtle)',
                     fontWeight: 700,
                     fontSize: '12px',
-                    cursor: 'pointer'
+                    cursor: isScheduleDisabled ? 'not-allowed' : 'pointer',
+                    opacity: isScheduleDisabled ? 0.6 : 1
                   }}
                 >
                   {r}
@@ -155,12 +192,13 @@ export const AutomationSettingsView = ({ toast }) => {
           </div>
 
           <button
+            type="button"
             className="btn-cyber"
             style={{ width: '100%', padding: '14px', marginTop: 'auto', justifyContent: 'center' }}
             onClick={handleSaveConfig}
             disabled={saving}
           >
-            <Save size={18} /> {saving ? 'Saving Config...' : 'Save Automation Config'}
+            <Save size={18} /> {saving ? 'Saving Config...' : `Save Automation Config (${mode})`}
           </button>
         </div>
       </div>
