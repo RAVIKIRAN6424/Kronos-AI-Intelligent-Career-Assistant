@@ -564,11 +564,11 @@ router.post('/resumes', async (req, res) => {
 
 router.post('/resumes/optimize', async (req, res) => {
   try {
-    const { role_name, resume_text } = req.body;
+    const { role_name, resume_text, is_fresher = false } = req.body;
     const existing = await getOne(`SELECT * FROM role_resumes WHERE role_name = ?`, [role_name]);
     const currentText = resume_text || existing?.resume_text || '';
 
-    const aiResult = await optimizeResumeWithAI(role_name, currentText);
+    const aiResult = await optimizeResumeWithAI(role_name, currentText, Boolean(is_fresher));
 
     const atsScore = aiResult.ats_score || 96;
     const grammarScore = aiResult.grammar_score || 98;

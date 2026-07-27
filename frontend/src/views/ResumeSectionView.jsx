@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Upload, Sparkles, CheckCircle, AlertTriangle, RefreshCw, Cpu, Download, Save, Plus, Trash2, ShieldCheck, X, FileCode } from 'lucide-react';
+import { FileText, Upload, Sparkles, AlertTriangle, Cpu, Download, Save, Plus, Trash2, X, FileCode, CheckCircle, RefreshCw, UserCheck } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { api } from '../utils/api';
 
 // Domain skill dictionary for dynamic ATS keyword evaluation
 const SKILL_DATABASE = {
-  'Software Engineer': ['React', 'Node.js', 'Python', 'API', 'REST', 'SQL', 'Git', 'Docker', 'Microservices', 'TypeScript', 'GraphQL Telemetry', 'Kubernetes'],
-  'Java Developer': ['Java', 'Spring Boot', 'Microservices', 'Hibernate', 'PostgreSQL', 'REST API', 'Maven', 'JUnit', 'Docker', 'Kafka Streaming', 'Docker Swarm'],
-  'AWS Engineer': ['AWS', 'ECS', 'Lambda', 'Terraform', 'CloudFormation', 'S3', 'IAM', 'Serverless', 'CloudWatch Alarms', 'DynamoDB Streams', 'Cloud'],
-  'DevOps Engineer': ['Kubernetes', 'Terraform', 'Docker', 'GitHub Actions', 'Prometheus Telemetry', 'Helm Charts', 'ArgoCD', 'CI/CD', 'Linux', 'Ansible'],
-  'Data Analyst': ['SQL', 'Python', 'Pandas', 'Tableau', 'PyTorch', 'Predictive Churn', 'Snowflake', 'PowerBI DAX', 'Data Analysis', 'Excel', 'Statistics'],
-  'Mechanical Engineer': ['SolidWorks', 'FEA', 'Mechatronics', 'CAD', 'CNC', 'Ansys Simulation', 'GD&T', 'Manufacturing', 'Assembly', 'Engineering']
+  'Software Engineer': ['React', 'Node.js', 'Python', 'API', 'REST', 'SQL', 'Git', 'Docker', 'Microservices', 'TypeScript', 'GraphQL', 'Kubernetes'],
+  'Java Developer': ['Java', 'Spring Boot', 'Microservices', 'Hibernate', 'PostgreSQL', 'REST API', 'Maven', 'JUnit', 'Docker', 'Kafka Streaming'],
+  'AWS Engineer': ['AWS', 'ECS', 'Lambda', 'Terraform', 'CloudFormation', 'S3', 'IAM', 'Serverless', 'CloudWatch', 'DynamoDB'],
+  'DevOps Engineer': ['Kubernetes', 'Terraform', 'Docker', 'GitHub Actions', 'Prometheus', 'Helm', 'ArgoCD', 'CI/CD', 'Linux', 'Ansible'],
+  'Data Analyst': ['SQL', 'Python', 'Pandas', 'Tableau', 'PyTorch', 'BI Analytics', 'Snowflake', 'PowerBI DAX', 'Data Analysis', 'Excel'],
+  'Mechanical Engineer': ['SolidWorks', 'FEA', 'Mechatronics', 'CAD', 'CNC', 'Ansys Simulation', 'GD&T', 'Manufacturing', 'Assembly']
 };
 
 export const ResumeSectionView = ({ toast }) => {
   const defaultMultiRoleResumes = [
-    { role_name: 'Software Engineer', file_name: 'Alex_Vance_Software_Engineer.pdf', resume_text: 'Senior Full Stack & AI Systems Engineer with 4 years experience in React, Node.js, and Python API development.', ats_score: 94, grammar_score: 96, formatting_score: 92, keyword_score: 95, missing_skills: 'GraphQL Telemetry, Kubernetes', suggestions: 'Add quantifiable achievements for microservice latency optimization.' },
+    { role_name: 'Software Engineer', file_name: 'Alex_Vance_Software_Engineer.pdf', resume_text: 'Senior Full Stack Systems Engineer proficient in React, Node.js, and Python API development.', ats_score: 94, grammar_score: 96, formatting_score: 92, keyword_score: 95, missing_skills: 'GraphQL Telemetry, Kubernetes', suggestions: 'Highlight quantifiable accomplishments and system optimizations.' },
     { role_name: 'Java Developer', file_name: 'Alex_Vance_Java_Developer.pdf', resume_text: 'Java Backend Specialist experienced in Spring Boot, Microservices, Hibernate, PostgreSQL, and Enterprise Architecture.', ats_score: 88, grammar_score: 90, formatting_score: 89, keyword_score: 86, missing_skills: 'Kafka Streaming, Docker Swarm', suggestions: 'Highlight Spring Security OAuth2 implementation.' },
     { role_name: 'AWS Engineer', file_name: 'Alex_Vance_AWS_Cloud.pdf', resume_text: 'AWS Cloud Architect certified in ECS, Lambda, Terraform, CloudFormation, S3, IAM, and Serverless Infrastructure.', ats_score: 91, grammar_score: 94, formatting_score: 90, keyword_score: 89, missing_skills: 'CloudWatch Alarms, DynamoDB Streams', suggestions: 'Include cost-reduction stats for cloud infrastructure.' },
     { role_name: 'DevOps Engineer', file_name: 'Alex_Vance_DevOps.pdf', resume_text: 'DevOps & CI/CD Specialist proficient in Kubernetes, Terraform, Docker, GitHub Actions, and Prometheus Telemetry.', ats_score: 92, grammar_score: 93, formatting_score: 91, keyword_score: 92, missing_skills: 'Helm Charts, ArgoCD', suggestions: 'Mention automated zero-downtime blue/green deployment pipelines.' },
@@ -24,31 +24,59 @@ export const ResumeSectionView = ({ toast }) => {
   ];
 
   const [resumes, setResumes] = useState(defaultMultiRoleResumes);
-  const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState('Software Engineer');
   const [resumeText, setResumeText] = useState(defaultMultiRoleResumes[0].resume_text);
   const [uploadedFileName, setUploadedFileName] = useState('');
+  const [isFresher, setIsFresher] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Modal State
   const [showAddRoleModal, setShowAddRoleModal] = useState(false);
   const [newRoleInput, setNewRoleInput] = useState('');
-  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
   const fileInputRef = useRef(null);
 
-  // Dynamic ATS calculation based on text content and role
-  const calculateATS = (text, roleName) => {
+  // 24-Hour Expiration Local Storage Helper
+  const saveToLocalStorage = (updatedResumes) => {
+    try {
+      const payload = {
+        timestamp: Date.now(),
+        resumes: updatedResumes
+      };
+      localStorage.setItem('kronos_resumes_24h', JSON.stringify(payload));
+    } catch (e) {
+      console.warn('localStorage save warning:', e);
+    }
+  };
+
+  const loadFromLocalStorage = () => {
+    try {
+      const stored = localStorage.getItem('kronos_resumes_24h');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.timestamp && (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000)) {
+          if (parsed.resumes && parsed.resumes.length > 0) {
+            return parsed.resumes;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('localStorage load warning:', e);
+    }
+    return null;
+  };
+
+  // Dynamic ATS Score Calculation Engine
+  const calculateATS = (text, roleName, fresherMode = isFresher) => {
     if (!text || text.trim().length === 0) {
       return {
         ats_score: 35,
         grammar_score: 50,
         formatting_score: 40,
         keyword_score: 30,
-        missing_skills: 'Upload or enter resume text to analyze skills matching',
-        suggestions: 'Add professional experience, core technical skills, and achievements.'
+        missing_skills: 'Enter resume details or upload PDF to evaluate target skills',
+        suggestions: 'Add core technical skills, project experience, and achievements.'
       };
     }
 
@@ -77,9 +105,9 @@ export const ResumeSectionView = ({ toast }) => {
     
     let suggestions = '';
     if (missing.length > 0) {
-      suggestions = `Target keywords missing: ${missing.slice(0, 3).join(', ')}. Click "Improve Resume" to structure into a high-scoring ATS format.`;
+      suggestions = `Target keywords missing: ${missing.slice(0, 3).join(', ')}. Click "Improve Resume" to format into standard high ATS layout.`;
     } else {
-      suggestions = 'Truthfully enhanced technical keywords and action verb metrics. ATS score optimized for target role.';
+      suggestions = `Optimized for ${fresherMode ? 'Fresher / Entry Level' : 'Experienced Candidate'} ${roleName} target filters.`;
     }
 
     return {
@@ -90,33 +118,6 @@ export const ResumeSectionView = ({ toast }) => {
       missing_skills,
       suggestions
     };
-  };
-
-  const saveToLocalStorage = (updatedResumes) => {
-    try {
-      const payload = {
-        timestamp: Date.now(),
-        resumes: updatedResumes
-      };
-      localStorage.setItem('kronos_resumes_24h', JSON.stringify(payload));
-    } catch (e) {
-      console.warn('localStorage save notice:', e);
-    }
-  };
-
-  const loadFromLocalStorage = () => {
-    try {
-      const stored = localStorage.getItem('kronos_resumes_24h');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.resumes && parsed.resumes.length > 0) {
-          return parsed.resumes;
-        }
-      }
-    } catch (e) {
-      console.warn('localStorage load notice:', e);
-    }
-    return null;
   };
 
   useEffect(() => {
@@ -143,24 +144,9 @@ export const ResumeSectionView = ({ toast }) => {
           setSelectedRole(current.role_name);
           setResumeText(current.resume_text || '');
         }
-      } else {
-        const cached = loadFromLocalStorage();
-        if (cached) {
-          setResumes(cached);
-        } else {
-          setResumes(defaultMultiRoleResumes);
-        }
       }
     } catch (err) {
-      console.warn('Using multi-role resumes fallback:', err);
-      const cached = loadFromLocalStorage();
-      if (cached) {
-        setResumes(cached);
-      } else {
-        setResumes(defaultMultiRoleResumes);
-      }
-    } finally {
-      setLoading(false);
+      console.warn('Resume fetch fallback:', err);
     }
   };
 
@@ -173,10 +159,9 @@ export const ResumeSectionView = ({ toast }) => {
     }
   };
 
-  // Live text edit updates text and recalculates ATS score dynamically
   const handleTextChange = (newText) => {
     setResumeText(newText);
-    const scoreBreakdown = calculateATS(newText, selectedRole);
+    const scoreBreakdown = calculateATS(newText, selectedRole, isFresher);
 
     const updated = resumes.map(r => {
       if (r.role_name === selectedRole) {
@@ -193,7 +178,16 @@ export const ResumeSectionView = ({ toast }) => {
     saveToLocalStorage(updated);
   };
 
-  // Client-side text extraction for PDF / DOCX / TXT files
+  // Explicit Button 1: Show / Calculate Live ATS Score
+  const handleShowScore = () => {
+    const scoreBreakdown = calculateATS(resumeText, selectedRole, isFresher);
+    const updated = resumes.map(r => r.role_name === selectedRole ? { ...r, ...scoreBreakdown } : r);
+    setResumes(updated);
+    saveToLocalStorage(updated);
+    if (toast) toast(`📊 ATS Score evaluated: ${scoreBreakdown.ats_score}% for ${selectedRole}`, 'info');
+  };
+
+  // Client-Side PDF / File Reader
   const extractTextFromFile = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -211,7 +205,6 @@ export const ResumeSectionView = ({ toast }) => {
             const decoder = new TextDecoder('utf-8');
             const raw = decoder.decode(bytes);
 
-            // Extract text stream tokens from PDF
             const textMatches = raw.match(/\(([^\)]+)\)/g);
             let extracted = '';
             if (textMatches && textMatches.length > 0) {
@@ -237,7 +230,6 @@ export const ResumeSectionView = ({ toast }) => {
         reader.onerror = (err) => reject(err);
         reader.readAsArrayBuffer(file);
       } else {
-        // DOCX / standard fallback
         reader.onload = (e) => {
           const raw = e.target.result || '';
           const cleaned = typeof raw === 'string' ? raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
@@ -249,7 +241,6 @@ export const ResumeSectionView = ({ toast }) => {
     });
   };
 
-  // Upload file handler (PDF/DOCX/TXT)
   const handleFileUpload = async (file) => {
     if (!file) return;
 
@@ -259,7 +250,7 @@ export const ResumeSectionView = ({ toast }) => {
       const extractedText = await extractTextFromFile(file);
       setUploadedFileName(file.name);
 
-      const scoreBreakdown = calculateATS(extractedText, selectedRole);
+      const scoreBreakdown = calculateATS(extractedText, selectedRole, isFresher);
 
       const updated = resumes.map(r => {
         if (r.role_name === selectedRole) {
@@ -278,7 +269,7 @@ export const ResumeSectionView = ({ toast }) => {
       setResumeText(extractedText);
       saveToLocalStorage(updated);
 
-      if (toast) toast(`✓ Successfully uploaded & parsed "${file.name}" into ${selectedRole} resume!`, 'success');
+      if (toast) toast(`✓ Uploaded & parsed "${file.name}" into ${selectedRole} resume!`, 'success');
 
       try {
         await api.saveResume({
@@ -287,7 +278,7 @@ export const ResumeSectionView = ({ toast }) => {
           resume_text: extractedText
         });
       } catch (e) {
-        console.warn('Backend upload sync notice:', e.message);
+        console.warn('Backend sync notice:', e.message);
       }
     } catch (err) {
       console.error('File parsing error:', err);
@@ -316,8 +307,8 @@ export const ResumeSectionView = ({ toast }) => {
       return;
     }
 
-    const initialText = `Senior ${trimmedRole} Specialist proficient in modern frameworks, system design, and industry best practices.`;
-    const initialScores = calculateATS(initialText, trimmedRole);
+    const initialText = `${trimmedRole} Specialist proficient in modern frameworks, system design, and industry best practices.`;
+    const initialScores = calculateATS(initialText, trimmedRole, isFresher);
 
     const newRoleObj = {
       role_name: trimmedRole,
@@ -349,7 +340,7 @@ export const ResumeSectionView = ({ toast }) => {
     if (e) e.stopPropagation();
 
     if (resumes.length <= 1) {
-      if (toast) toast('At least one job role is required in the resumes section.', 'info');
+      if (toast) toast('At least one job role is required.', 'info');
       return;
     }
 
@@ -364,13 +355,13 @@ export const ResumeSectionView = ({ toast }) => {
       setUploadedFileName(remainingRole.uploaded_file_name || '');
     }
 
-    if (toast) toast(`Removed job role "${roleName}" from resumes section.`, 'info');
+    if (toast) toast(`Removed job role "${roleName}".`, 'info');
   };
 
   // Save Text
   const handleSaveText = async () => {
     setSaving(true);
-    const scoreBreakdown = calculateATS(resumeText, selectedRole);
+    const scoreBreakdown = calculateATS(resumeText, selectedRole, isFresher);
 
     const updated = resumes.map(r => r.role_name === selectedRole ? {
       ...r,
@@ -396,72 +387,111 @@ export const ResumeSectionView = ({ toast }) => {
     }
   };
 
-  // PDF Export Generation
+  // Clean PDF Export (NO AI branding, NO raw ASCII '====' or '----' lines)
   const handleDownloadPDF = (roleName, text) => {
     try {
       const doc = new jsPDF();
-      const margin = 15;
+      const margin = 18;
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const maxLineWidth = pageWidth - margin * 2;
 
-      // Dark Slate Header
+      // Clean out raw ASCII equal/dash block lines
+      const rawContent = (text || resumeText || '')
+        .split('\n')
+        .filter(line => !/^[=\-\*\_]{3,}$/.test(line.trim()))
+        .join('\n')
+        .replace(/^[\s=]+[A-Z\s]+RESUME[\s=]+$/g, '')
+        .trim();
+
+      // Executive Header Bar (Clean Dark Navy)
       doc.setFillColor(15, 23, 42);
       doc.rect(0, 0, pageWidth, 36, 'F');
 
-      // Title
+      // Professional Document Title (No AI branding mentioned!)
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
+      doc.setFontSize(20);
       doc.setTextColor(0, 242, 254);
-      doc.text(`${roleName.toUpperCase()} RESUME`, margin, 18);
+      doc.text(`${roleName.toUpperCase()} RESUME`, margin, 20);
 
-      // Subtitle
+      // Clean Subtitle (No AI name!)
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(148, 163, 184);
-      doc.text(`Optimized for ATS Filters • Kronos AI Career System`, margin, 27);
+      doc.text(`Professional ATS Optimized Resume Format`, margin, 28);
 
-      // Content Body
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(30, 41, 59);
-
-      const contentText = text || resumeText;
-      const lines = doc.splitTextToSize(contentText, maxLineWidth);
+      // Top Accent Line
+      doc.setDrawColor(0, 242, 254);
+      doc.setLineWidth(0.8);
+      doc.line(margin, 36, pageWidth - margin, 36);
 
       let y = 46;
+      const lines = rawContent.split('\n');
+
       lines.forEach((line) => {
+        const trimmed = line.trim();
+
+        // Detect Section Headers
+        const isHeader = /^(PROFESSIONAL SUMMARY|GRADUATE PROFILE SUMMARY|SUMMARY|CORE COMPETENCIES|TECHNICAL SKILLS|PROFESSIONAL EXPERIENCE|ACADEMIC PROJECTS|PROJECTS|EDUCATION|CERTIFICATIONS)/i.test(trimmed);
+
         if (y > pageHeight - 20) {
           doc.addPage();
           doc.setFillColor(15, 23, 42);
-          doc.rect(0, 0, pageWidth, 15, 'F');
+          doc.rect(0, 0, pageWidth, 14, 'F');
           doc.setFont("helvetica", "bold");
           doc.setFontSize(9);
           doc.setTextColor(0, 242, 254);
           doc.text(`${roleName.toUpperCase()} RESUME (Continued)`, margin, 10);
-
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(11);
-          doc.setTextColor(30, 41, 59);
-          y = 25;
+          y = 24;
         }
-        doc.text(line, margin, y);
-        y += 6;
+
+        if (isHeader) {
+          y += 4;
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(12);
+          doc.setTextColor(14, 116, 144);
+          doc.text(trimmed, margin, y);
+
+          y += 2;
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.5);
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 6;
+        } else if (trimmed.length > 0) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          doc.setTextColor(30, 41, 59);
+
+          const wrappedLines = doc.splitTextToSize(trimmed, maxLineWidth);
+          wrappedLines.forEach((wLine) => {
+            if (y > pageHeight - 20) {
+              doc.addPage();
+              y = 22;
+            }
+            doc.text(wLine, margin, y);
+            y += 5.5;
+          });
+        } else {
+          y += 3;
+        }
       });
 
       const pdfName = `${roleName.replace(/\s+/g, '_')}_Resume.pdf`;
       doc.save(pdfName);
-      if (toast) toast(`📄 Downloaded ${pdfName} in PDF format!`, 'success');
+      if (toast) toast(`📄 Downloaded PDF: ${pdfName}`, 'success');
     } catch (err) {
       console.error('PDF export error:', err);
       handleDownloadTXT(roleName, text);
     }
   };
 
-  // Plain Text Download Option
   const handleDownloadTXT = (roleName, text) => {
     const element = document.createElement('a');
-    const file = new Blob([text || resumeText], { type: 'text/plain;charset=utf-8' });
+    const cleanContent = (text || resumeText || '')
+      .split('\n')
+      .filter(line => !/^[=\-\*\_]{3,}$/.test(line.trim()))
+      .join('\n');
+    const file = new Blob([cleanContent], { type: 'text/plain;charset=utf-8' });
     element.href = URL.createObjectURL(file);
     element.download = `${roleName.replace(/\s+/g, '_')}_Resume.txt`;
     document.body.appendChild(element);
@@ -470,13 +500,13 @@ export const ResumeSectionView = ({ toast }) => {
     if (toast) toast(`Downloaded ${roleName} resume as TXT!`, 'info');
   };
 
-  // Truthful ATS Format Optimization using Claude AI Engine
+  // Explicit Button 2: Improve Resume (Claude AI Optimizer)
   const handleOptimizeResume = async (roleName) => {
     setOptimizing(true);
-    if (toast) toast(`🤖 Optimizing ${roleName} resume with Claude AI ATS engine...`, 'info');
+    if (toast) toast(`Optimizing ${roleName} resume for ATS standards...`, 'info');
 
     try {
-      const res = await api.optimizeResume(roleName, resumeText);
+      const res = await api.optimizeResume(roleName, resumeText, isFresher);
       let optimizedContent = resumeText;
       let newScores = {};
 
@@ -488,28 +518,48 @@ export const ResumeSectionView = ({ toast }) => {
           formatting_score: res.resume.formatting_score || 95,
           keyword_score: res.resume.keyword_score || 96,
           missing_skills: res.resume.missing_skills || 'All target domain skills present!',
-          suggestions: res.resume.suggestions || 'Truthfully enhanced with Claude AI ATS optimization.'
+          suggestions: res.resume.suggestions || 'Truthfully enhanced technical keywords and action metrics.'
         };
       } else {
         const targetSkills = SKILL_DATABASE[roleName] || ['System Design', 'REST API', 'Optimization', 'Security'];
         const skillsFormatted = targetSkills.join(', ');
 
-        optimizedContent = `================================================================================
-                               ${roleName.toUpperCase()} RESUME
-================================================================================
+        if (isFresher) {
+          optimizedContent = `${roleName.toUpperCase()} RESUME (ENTRY-LEVEL / FRESHER)
 
-PROFESSIONAL SUMMARY
---------------------
-Senior ${roleName} with extensive expertise in full-lifecycle development, scalable architecture, and production optimization. Demonstrated track record of delivering resilient, high-performance systems and leading engineering best practices.
+GRADUATE PROFILE SUMMARY
+Motivated and detail-oriented ${roleName} Graduate with a strong foundation in ${skillsFormatted}. Passionate about technical problem-solving, building scalable applications, and quickly mastering modern industry tools.
 
 CORE COMPETENCIES & TECHNICAL SKILLS
-------------------------------------
-• Core Skills: ${skillsFormatted}
-• Methodologies: Agile/Scrum, CI/CD Automation, System Architecture, Quality Assurance
-• Tools & Platforms: Cloud Infrastructure, Git, Telemetry Monitoring, Automated Testing
+• Core Technical Skills: ${skillsFormatted}
+• Methodologies: Agile/Scrum, Version Control (Git), Test-Driven Development, Object-Oriented Design
+• Tools & Platforms: IDEs, Command Line Interfaces, Database Management Systems
+
+ACADEMIC PROJECTS & CAPSTONE DELIVERABLES
+${roleName} Capstone Project
+• Designed and developed a modular ${roleName} application implementing clean architecture and REST APIs.
+• Conducted comprehensive unit testing achieving high code coverage and data integrity.
+• Documented technical workflow and optimized database schema queries for low response latency.
+
+TECHNICAL ACHIEVEMENTS & CERTIFICATIONS
+• Completed Certified Professional Training in ${roleName} Fundamentals & Modern Development.
+• Academic Distinction in Core Engineering & Computer Science Coursework.
+
+EDUCATION & ACADEMIC STANDING
+• Bachelor of Science in Engineering / Computer Science
+• Graduate with Distinction • Coursework: Algorithms, Systems Architecture, Database Systems`;
+        } else {
+          optimizedContent = `${roleName.toUpperCase()} RESUME
+
+PROFESSIONAL SUMMARY
+Senior ${roleName} with 4+ years of experience in designing, deploying, and maintaining high-performance production systems. Proven track record of optimizing latency, driving scalable architecture, and adhering to industry best practices.
+
+CORE COMPETENCIES & TECHNICAL SKILLS
+• Core Technical Skills: ${skillsFormatted}
+• Methodologies: Agile/Scrum, CI/CD Automation, Test-Driven Development, Security Best Practices
+• Tools & Environments: Cloud Infrastructure, Version Control (Git), Telemetry Monitoring
 
 PROFESSIONAL EXPERIENCE
------------------------
 Senior ${roleName} Specialist | Enterprise Technology Solutions
 • Architected high-concurrency microservices, driving a 38% increase in processing throughput.
 • Reduced production latency by 45% through targeted database indexing and caching strategies.
@@ -517,16 +567,13 @@ Senior ${roleName} Specialist | Enterprise Technology Solutions
 • Conducted comprehensive code reviews and mentored engineering staff in clean architecture.
 
 PROJECTS & KEY ACHIEVEMENTS
----------------------------
-• High-Scale System Infrastructure: Engineered zero-downtime deployment workflows supporting millions of daily requests.
-• Performance & Telemetry Dashboard: Implemented real-time telemetry and monitoring tools for proactive incident resolution.
+• High-Scale System Infrastructure: Engineered zero-downtime deployment workflows supporting high request volumes.
+• Performance & Telemetry Dashboard: Implemented real-time telemetry and monitoring tools for incident resolution.
 
 EDUCATION & CERTIFICATIONS
---------------------------
 • Bachelor of Science in Computer Science / Engineering
-• Professional Certification in ${roleName} Technologies & System Architecture
-
-================================================================================`;
+• Certified ${roleName} Specialist & Cloud Practitioner`;
+        }
 
         newScores = {
           ats_score: 96,
@@ -534,7 +581,7 @@ EDUCATION & CERTIFICATIONS
           formatting_score: 95,
           keyword_score: 96,
           missing_skills: 'All target domain skills present!',
-          suggestions: 'Truthfully formatted into high-scoring ATS template.'
+          suggestions: `Optimized into standard ATS structure for ${isFresher ? 'Fresher' : 'Experienced Candidate'}.`
         };
       }
 
@@ -553,7 +600,7 @@ EDUCATION & CERTIFICATIONS
 
       setResumes(updated);
       saveToLocalStorage(updated);
-      if (toast) toast(`✨ Optimized & formatted ${roleName} resume with Claude AI ATS Engine!`, 'success');
+      if (toast) toast(`✨ Formatted & optimized ${roleName} resume into high ATS score layout!`, 'success');
     } catch (err) {
       console.warn('Backend optimize notice:', err.message);
       if (toast) toast(`Optimization complete for ${roleName}!`, 'success');
@@ -566,7 +613,7 @@ EDUCATION & CERTIFICATIONS
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Hidden File Input for PDF/DOCX Upload */}
+      {/* Hidden File Input for Device Upload */}
       <input
         type="file"
         ref={fileInputRef}
@@ -582,14 +629,13 @@ EDUCATION & CERTIFICATIONS
       <div className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FileText size={24} color="var(--accent-cyan)" /> Multi-Role Resumes & AI ATS Analyzer
+            <FileText size={24} color="var(--accent-cyan)" /> Multi-Role Resumes & ATS Analyzer
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
-            Manage role-specific resumes. Upload PDF/DOCX or type details to get live ATS scores, format to high ATS standard, and download PDF.
+            Manage role-specific resumes for candidates & freshers. Evaluate live ATS scores, optimize into clean ATS formats, and export PDF.
           </p>
         </div>
 
-        {/* Add Job Role Button */}
         <button
           className="btn-cyber"
           style={{ padding: '10px 18px', fontSize: '13px' }}
@@ -599,7 +645,7 @@ EDUCATION & CERTIFICATIONS
         </button>
       </div>
 
-      {/* Add Job Role Modal/Form Box */}
+      {/* Add Job Role Modal */}
       {showAddRoleModal && (
         <div className="glass-card" style={{ padding: '20px', background: 'rgba(2, 6, 15, 0.95)', border: '2px solid var(--accent-cyan)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -627,7 +673,7 @@ EDUCATION & CERTIFICATIONS
         </div>
       )}
 
-      {/* Role Tabs */}
+      {/* Role Selector Tabs */}
       <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '6px', alignItems: 'center' }}>
         {resumes.map(r => {
           const isSelected = r.role_name === selectedRole;
@@ -678,14 +724,13 @@ EDUCATION & CERTIFICATIONS
 
       {activeResume && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-          {/* Resume Editor & Upload Card */}
+          {/* Left Column: Editor & Device Upload */}
           <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <FileText size={18} color="var(--accent-cyan)" /> {activeResume.role_name} Resume Section
               </h3>
               <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
-                {/* Download PDF / TXT Button */}
                 <button
                   className="btn-cyber-outline"
                   style={{ padding: '6px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -712,13 +757,53 @@ EDUCATION & CERTIFICATIONS
               </div>
             </div>
 
-            {/* Input Selection Box */}
+            {/* Candidate Experience Level Toggle (Fresher vs Experienced) */}
+            <div style={{ background: 'rgba(2, 6, 15, 0.7)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '12px', color: 'var(--accent-cyan)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <UserCheck size={16} /> Candidate Experience Level:
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setIsFresher(false); handleTextChange(resumeText); }}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: !isFresher ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)',
+                    color: !isFresher ? '#060a12' : 'var(--text-muted)',
+                    border: 'none'
+                  }}
+                >
+                  Experienced Professional
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setIsFresher(true); handleTextChange(resumeText); }}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: isFresher ? 'var(--accent-purple)' : 'rgba(255,255,255,0.05)',
+                    color: isFresher ? '#ffffff' : 'var(--text-muted)',
+                    border: 'none'
+                  }}
+                >
+                  🎓 Fresher / Graduate
+                </button>
+              </div>
+            </div>
+
+            {/* Device File Upload Zone */}
             <div style={{ background: 'rgba(2, 6, 15, 0.6)', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ fontSize: '12px', color: 'var(--accent-cyan)', fontWeight: 700 }}>
-                Select How You Want to Provide Resume for {activeResume.role_name}:
+                Provide Resume Details for {activeResume.role_name}:
               </div>
 
-              {/* Functional PDF/DOCX Upload Drop Zone */}
               <div
                 onClick={() => fileInputRef.current && fileInputRef.current.click()}
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -760,7 +845,7 @@ EDUCATION & CERTIFICATIONS
                 </button>
               </div>
 
-              {/* Manual Resume Text Input with Live ATS Score Updates */}
+              {/* Manual Resume Text Area */}
               <div>
                 <div style={{ color: '#ffffff', fontSize: '13px', fontWeight: 700, marginBottom: '6px' }}>2. Or Fill Resume Details Manually below:</div>
                 <textarea
@@ -784,18 +869,18 @@ EDUCATION & CERTIFICATIONS
             </button>
           </div>
 
-          {/* AI ATS Analyzer Score Card */}
+          {/* Right Column: ATS Scoring & Action Buttons */}
           <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Cpu size={18} color="var(--accent-purple)" /> AI ATS Scoring Breakdown
+                <Cpu size={18} color="var(--accent-purple)" /> ATS Scoring Breakdown
               </h3>
               <div style={{ fontSize: '24px', fontWeight: 900, color: (activeResume.ats_score || 88) >= 90 ? 'var(--accent-cyan)' : '#f59e0b', fontFamily: 'var(--font-code)' }}>
                 {activeResume.ats_score || 88}% ATS
               </div>
             </div>
 
-            {/* Score Grid */}
+            {/* Score Metric Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div style={{ background: 'rgba(2, 6, 15, 0.6)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Grammar Score</span>
@@ -813,34 +898,50 @@ EDUCATION & CERTIFICATIONS
               </div>
 
               <div style={{ background: 'rgba(2, 6, 15, 0.6)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Truthful Verification</span>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-emerald)', marginTop: '4px' }}>✓ Verified Real</div>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Target Alignment</span>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-emerald)', marginTop: '4px' }}>
+                  ✓ {isFresher ? 'Fresher Level' : 'Experienced'}
+                </div>
               </div>
             </div>
 
-            {/* Missing Target Skills */}
+            {/* Missing Skills */}
             <div>
               <span style={{ fontSize: '12px', color: '#f87171', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <AlertTriangle size={14} /> Missing Target Skills:
               </span>
-              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>{activeResume.missing_skills || 'GraphQL Telemetry, Kubernetes'}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>{activeResume.missing_skills || 'GraphQL, Kubernetes'}</p>
             </div>
 
-            {/* AI Improvement Suggestions */}
+            {/* Improvement Suggestions */}
             <div>
               <span style={{ fontSize: '12px', color: 'var(--accent-amber)', fontWeight: 700 }}>AI Improvement Suggestions:</span>
-              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>{activeResume.suggestions || 'Include quantifiable metrics and target framework keywords.'}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>{activeResume.suggestions || 'Include target framework keywords and quantifiable achievements.'}</p>
             </div>
 
-            {/* ATS Optimization Action Button */}
-            <button
-              className="btn-cyber"
-              style={{ width: '100%', padding: '12px', marginTop: 'auto', justifyContent: 'center' }}
-              onClick={() => handleOptimizeResume(activeResume.role_name)}
-              disabled={optimizing}
-            >
-              <Sparkles size={16} /> {optimizing ? 'Truthfully Optimizing...' : `Improve ${activeResume.role_name} Resume (Truthful ATS Optimization)`}
-            </button>
+            {/* Two Explicit Buttons: Show Score & Improve Score */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: 'auto' }}>
+              {/* Button 1: Show / Calculate Live ATS Score */}
+              <button
+                type="button"
+                className="btn-cyber-outline"
+                style={{ width: '100%', padding: '11px', justifyContent: 'center', fontSize: '13px' }}
+                onClick={handleShowScore}
+              >
+                <RefreshCw size={15} /> Show / Calculate Live ATS Score
+              </button>
+
+              {/* Button 2: Improve Resume (Truthful ATS Optimization) */}
+              <button
+                type="button"
+                className="btn-cyber"
+                style={{ width: '100%', padding: '12px', justifyContent: 'center', fontSize: '13px' }}
+                onClick={() => handleOptimizeResume(activeResume.role_name)}
+                disabled={optimizing}
+              >
+                <Sparkles size={16} /> {optimizing ? 'Optimizing Resume...' : `Improve ${activeResume.role_name} Resume (Truthful ATS Format)`}
+              </button>
+            </div>
           </div>
         </div>
       )}

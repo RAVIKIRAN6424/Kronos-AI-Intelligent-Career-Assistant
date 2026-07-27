@@ -526,8 +526,8 @@ export const api = {
     const res = await request('/resumes', { method: 'POST', body: payload });
     return res;
   },
-  optimizeResume: async (role_name, resume_text = '') => {
-    const res = await request('/resumes/optimize', { method: 'POST', body: { role_name, resume_text } });
+  optimizeResume: async (role_name, resume_text = '', is_fresher = false) => {
+    const res = await request('/resumes/optimize', { method: 'POST', body: { role_name, resume_text, is_fresher } });
     return res;
   }
 };
