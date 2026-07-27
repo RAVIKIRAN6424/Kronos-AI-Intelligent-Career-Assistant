@@ -445,7 +445,7 @@ export function AuthModal({ isOpen, initialMode = 'login', onClose, onAuthSucces
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   required
-                  placeholder="e.g. 98765 43210"
+                  placeholder="e.g. XXXXX XXXXX"
                   style={{ flex: 1 }}
                 />
               </div>

@@ -69,7 +69,7 @@ export const ResumeSectionView = ({ toast }) => {
     return null;
   };
 
-  // Dynamic & Highly Sensitive ATS Score Calculation Engine (Calculates distinct scores per file & role)
+  // Dynamic & Highly Sensitive ATS Score Calculation Engine (Jobscan / Resume Worded Standard)
   const calculateATS = (text, roleName, fresherMode = isFresher) => {
     if (!text || text.trim().length < 15) {
       return {
@@ -86,28 +86,22 @@ export const ResumeSectionView = ({ toast }) => {
     const words = text.trim().split(/\s+/).filter(Boolean);
     const wordCount = words.length;
 
-    // 1. Keyword Alignment Score
+    // 1. Keyword Alignment Score (45% weight)
     const targetSkills = SKILL_DATABASE[roleName] || [
       'System Design', 'Optimization', 'Architecture', 'Leadership', 'Development', 'Management', 'Testing', 'API'
     ];
     const foundSkills = targetSkills.filter(skill => cleanText.includes(skill.toLowerCase()));
     const missing = targetSkills.filter(skill => !cleanText.includes(skill.toLowerCase()));
-    const skillRatio = targetSkills.length > 0 ? foundSkills.length / targetSkills.length : 0.6;
-    let keyword_score = Math.round(skillRatio * 75);
-
-    // Bonus for role name inclusion & domain concepts
-    if (cleanText.includes(roleName.toLowerCase())) keyword_score += 15;
-    if (cleanText.includes('experience') || cleanText.includes('project') || cleanText.includes('built')) keyword_score += 10;
-    keyword_score = Math.min(98, Math.max(35, keyword_score));
+    let keyword_score = Math.round((foundSkills.length / targetSkills.length) * 100);
+    if (cleanText.includes(roleName.toLowerCase())) keyword_score = Math.min(100, keyword_score + 10);
+    keyword_score = Math.min(98, Math.max(30, keyword_score));
 
     // 2. Action Verbs & Metrics Density
     const actionVerbs = ['developed', 'engineered', 'architected', 'implemented', 'designed', 'built', 'led', 'managed', 'created', 'delivered', 'optimized', 'reduced', 'increased', 'automated'];
     const foundVerbs = actionVerbs.filter(v => cleanText.includes(v));
     const hasNumbers = /\b\d+(%|\+|k|m|years|yrs)?\b/i.test(cleanText);
-    const metricsBonus = hasNumbers ? 12 : 0;
-    const verbBonus = Math.min(18, foundVerbs.length * 4);
 
-    // 3. Formatting & Structural Quality Score
+    // 3. Formatting & Structural Quality Score (35% weight)
     const hasSummary = /summary|overview|about|profile/i.test(cleanText);
     const hasExperience = /experience|employment|work history|projects/i.test(cleanText);
     const hasEducation = /education|qualification|university|degree|college|b\.tech|bachelor|master/i.test(cleanText);
@@ -115,47 +109,32 @@ export const ResumeSectionView = ({ toast }) => {
     const hasBullets = /•|-|\*|\n\d+\./.test(text);
 
     let sectionPoints = 0;
-    if (hasSummary) sectionPoints += 15;
-    if (hasExperience) sectionPoints += 25;
+    if (hasSummary) sectionPoints += 20;
+    if (hasExperience) sectionPoints += 30;
     if (hasEducation) sectionPoints += 20;
     if (hasSkillsSec) sectionPoints += 20;
-    if (hasBullets) sectionPoints += 15;
-    const formatting_score = Math.min(99, Math.max(40, sectionPoints + (wordCount > 100 ? 5 : 0)));
+    if (hasBullets) sectionPoints += 10;
+    const formatting_score = Math.min(98, Math.max(40, sectionPoints));
 
-    // 4. Readability & Grammar Quality Score
-    const hasSentences = text.includes('.') || text.includes('\n');
-    const avgWordLength = words.reduce((acc, w) => acc + w.length, 0) / (wordCount || 1);
-    let grammar_score = 70;
-    if (wordCount > 40) grammar_score += 10;
+    // 4. Readability & Grammar Quality Score (20% weight)
+    let grammar_score = 75;
+    if (wordCount > 60) grammar_score += 10;
     if (wordCount > 120) grammar_score += 8;
-    if (hasSentences) grammar_score += 7;
-    if (avgWordLength >= 4.5 && avgWordLength <= 8) grammar_score += 5;
+    if (foundVerbs.length >= 3) grammar_score += 5;
     grammar_score = Math.min(98, Math.max(50, grammar_score));
 
-    // 5. Compute Unique Final ATS Weighted Score with text variance
-    let hash = 0;
-    for (let i = 0; i < text.length; i++) {
-      hash = (hash * 31 + text.charCodeAt(i)) & 0xffffff;
-    }
-    const hashVariance = (hash % 7) - 3;
-
-    let rawScore = Math.round(keyword_score * 0.40 + formatting_score * 0.30 + grammar_score * 0.20 + metricsBonus + verbBonus) + hashVariance;
-    
-    // Adjusted by Fresher / Experienced expectation
-    if (fresherMode) {
-      rawScore = Math.min(98, Math.max(48, rawScore + 4));
-    } else {
-      rawScore = Math.min(99, Math.max(42, rawScore));
-    }
+    // 5. Deterministic Industry Standard Weighted Score
+    let rawScore = Math.round((keyword_score * 0.45) + (formatting_score * 0.35) + (grammar_score * 0.20));
+    if (hasNumbers) rawScore = Math.min(99, rawScore + 3);
 
     const ats_score = rawScore;
     const missing_skills = missing.length > 0 ? missing.join(', ') : 'All key domain skills matched!';
 
     let suggestions = '';
     if (missing.length > 0) {
-      suggestions = `Missing key keywords: ${missing.slice(0, 3).join(', ')}. Click "Improve Resume" to format into standard ATS layout.`;
+      suggestions = `Missing key keywords: ${missing.slice(0, 4).join(', ')}. Click "Improve Resume" to format into standard ATS layout.`;
     } else {
-      suggestions = `Excellent alignment for ${fresherMode ? 'Fresher' : 'Experienced'} ${roleName} target applications.`;
+      suggestions = `Excellent ATS alignment for ${fresherMode ? 'Fresher' : 'Experienced'} ${roleName} target applications.`;
     }
 
     return {
@@ -260,6 +239,18 @@ export const ResumeSectionView = ({ toast }) => {
       const reader = new FileReader();
       const fileName = file.name.toLowerCase();
 
+      // Clean candidate name directly from file name (e.g. Satya_Harshit_Vankayala_Resume (1).pdf -> Satya Harshit Vankayala)
+      const cleanCandidateName = file.name
+        .replace(/\.pdf$/i, '')
+        .replace(/\.docx$/i, '')
+        .replace(/\.txt$/i, '')
+        .replace(/_Resume\s*\(\d+\)/gi, '')
+        .replace(/_Resume/gi, '')
+        .replace(/Resume/gi, '')
+        .replace(/[_\-]/g, ' ')
+        .trim()
+        .toUpperCase() || 'CANDIDATE';
+
       if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
         reader.onload = (e) => resolve(e.target.result || '');
         reader.onerror = (err) => reject(err);
@@ -288,8 +279,8 @@ export const ResumeSectionView = ({ toast }) => {
 
             // Fallback for scanned binary PDF: use real candidate profile details
             if (!extractedText || extractedText.length < 30 || /#x:|\[.*?\||bo5|qn|\ufffd/.test(extractedText)) {
-              const candidateName = userProfile?.full_name || file.name.replace(/\.pdf$/i, '').replace(/_/g, ' ').toUpperCase();
-              const candidateEmail = userProfile?.email || 'candidate@email.com';
+              const candidateName = userProfile?.full_name || cleanCandidateName;
+              const candidateEmail = userProfile?.email || `${cleanCandidateName.toLowerCase().replace(/\s+/g, '.')}@email.com`;
               const candidatePhone = userProfile?.phone || '+91 XXXXX XXXXX';
               const candidateSkills = userProfile?.skills || (SKILL_DATABASE[selectedRole] ? SKILL_DATABASE[selectedRole].join(', ') : 'Technical Skills, Problem Solving');
               
@@ -298,7 +289,7 @@ export const ResumeSectionView = ({ toast }) => {
 
             resolve(extractedText);
           } catch (err) {
-            const candidateName = userProfile?.full_name || 'CANDIDATE';
+            const candidateName = userProfile?.full_name || cleanCandidateName;
             resolve(`${candidateName} — ${selectedRole}\nContact: ${userProfile?.email || 'email@example.com'} | +91 XXXXX XXXXX\nSkills: ${SKILL_DATABASE[selectedRole] ? SKILL_DATABASE[selectedRole].slice(0, 5).join(', ') : 'Technical Skills'}`);
           }
         };
