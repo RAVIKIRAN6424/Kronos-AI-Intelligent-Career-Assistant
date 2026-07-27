@@ -105,24 +105,29 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
     }
   };
 
-  // Filter Jobs by Portal Tab and Search Term
-  const filteredJobs = recentJobs.filter(job => {
-    const matchesPortal = selectedPortal === 'All Portals' || job.source.toLowerCase() === selectedPortal.toLowerCase();
+  // Filter Jobs by Search Term First (so portal badge counts stay 100% in sync with search results)
+  const searchFilteredJobs = recentJobs.filter(job => {
     const term = searchTerm.toLowerCase().trim();
-    const matchesSearch = !term ||
+    if (!term) return true;
+    return (
       job.title.toLowerCase().includes(term) ||
       job.company.toLowerCase().includes(term) ||
       (job.key_skills && job.key_skills.toLowerCase().includes(term)) ||
-      (job.location && job.location.toLowerCase().includes(term));
-
-    return matchesPortal && matchesSearch;
+      (job.location && job.location.toLowerCase().includes(term)) ||
+      (job.category && job.category.toLowerCase().includes(term))
+    );
   });
 
-  // Calculate jobs count per portal
+  // Calculate jobs count per portal matching current search term
   const getPortalCount = (pName) => {
-    if (pName === 'All Portals') return recentJobs.length;
-    return recentJobs.filter(j => j.source.toLowerCase() === pName.toLowerCase()).length;
+    if (pName === 'All Portals') return searchFilteredJobs.length;
+    return searchFilteredJobs.filter(j => j.source.toLowerCase() === pName.toLowerCase()).length;
   };
+
+  // Filter Jobs by Selected Portal
+  const filteredJobs = searchFilteredJobs.filter(job => {
+    return selectedPortal === 'All Portals' || job.source.toLowerCase() === selectedPortal.toLowerCase();
+  });
 
   // Pagination Math
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage) || 1;
