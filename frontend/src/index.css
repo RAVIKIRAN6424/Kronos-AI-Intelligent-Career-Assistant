@@ -468,6 +468,11 @@ body {
   filter: brightness(1.1);
 }
 
+/* Input with left icon spacing override (Fixes magnifying glass icon overlapping placeholder text) */
+.cyber-input-with-icon {
+  padding-left: 44px !important;
+}
+
 /* Native Select Dropdown Popup List Theme Styling (Fixes "THE LIST THEME ALSO NOT CHAGE D") */
 select option,
 select optgroup,
@@ -527,8 +532,22 @@ header.kronos-navbar {
   }
 }
 
-/* Responsive Grid Reflow for Mobile & Tablets (<= 768px) */
+/* Responsive Grid & Search Filter Reflow for Mobile (<= 768px) */
 @media (max-width: 768px) {
+  .search-filter-controls {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  .filter-dropdown-wrapper {
+    width: 100% !important;
+  }
+
+  .filter-dropdown-wrapper select {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   /* Force all multi-column inline grids to stack into 1 single vertical column on mobile */
   div[style*="gridTemplateColumns"],
   div[style*="grid-template-columns"] {

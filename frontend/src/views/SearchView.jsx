@@ -235,27 +235,26 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
         </p>
 
         {/* Search Bar & Multi-Filter Controls */}
-        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
+        <form onSubmit={handleSearchSubmit} className="search-filter-controls" style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '260px', position: 'relative' }}>
-            <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+            <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', zIndex: 2, pointerEvents: 'none' }} />
             <input
               type="text"
-              className="cyber-input"
+              className="cyber-input cyber-input-with-icon"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               placeholder="Search target title, company, skills (e.g. Java, Python, Data Analyst, CAD)..."
-              style={{ paddingLeft: '44px' }}
             />
           </div>
 
           {/* Experience Level Filter Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="filter-dropdown-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Briefcase size={16} color="var(--accent-purple)" />
             <select
               className="cyber-input"
               value={experienceLevel}
               onChange={(e) => { setExperienceLevel(e.target.value); setCurrentPage(1); }}
-              style={{ padding: '0 12px', height: '42px', fontSize: '13px', borderRadius: '10px', width: '190px' }}
+              style={{ padding: '0 12px', height: '42px', fontSize: '13px', borderRadius: '10px', minWidth: '180px' }}
             >
               <option value="all">🎯 All Experience Levels</option>
               <option value="entry">🌱 Entry Level / Fresher</option>
@@ -265,13 +264,13 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
           </div>
 
           {/* Location Filter Dropdown (Work Mode, State, Country) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="filter-dropdown-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <MapPin size={16} color="var(--accent-cyan)" />
             <select
               className="cyber-input"
               value={locationFilter}
               onChange={(e) => { setLocationFilter(e.target.value); setCurrentPage(1); }}
-              style={{ padding: '0 12px', height: '42px', fontSize: '13px', borderRadius: '10px', width: '195px' }}
+              style={{ padding: '0 12px', height: '42px', fontSize: '13px', borderRadius: '10px', minWidth: '185px' }}
             >
               <option value="all">📍 All Locations</option>
 

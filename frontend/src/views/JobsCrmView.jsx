@@ -158,14 +158,13 @@ export const JobsCrmView = ({ jobs, onSelectJob, onOpenOutreach, onRefreshJobs, 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
           {/* Search */}
           <div style={{ position: 'relative' }}>
-            <Search size={16} color="var(--accent-cyan)" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+            <Search size={16} color="var(--accent-cyan)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 2, pointerEvents: 'none' }} />
             <input
               type="text"
-              className="cyber-input"
+              className="cyber-input cyber-input-with-icon"
               placeholder="Search title, company, skills..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '38px' }}
             />
           </div>
 
