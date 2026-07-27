@@ -440,15 +440,15 @@ export const api = {
     }
     return getStorage('kronos_profile', {
       id: 1,
-      full_name: 'Alex Vance',
-      email: 'alex.vance@example.com',
-      phone: '+91 98765 43210',
-      age: 26,
+      full_name: '',
+      email: '',
+      phone: '',
+      age: '',
       location: 'Bengaluru, Karnataka, India',
       target_domain: 'Software',
       target_titles: 'Software Engineer, Java Developer, AWS Engineer, DevOps Engineer, Data Analyst, Mechanical Engineer',
-      experience_years: 4,
-      skills: 'Java, Python, React, Node.js, Spring Boot, AWS, Docker, Kubernetes, SQL, SolidWorks',
+      experience_years: 2,
+      skills: 'Java, Python, React, Node.js, Spring Boot, AWS, Docker, Kubernetes, SQL',
       preferred_locations: 'Bengaluru, Karnataka, India, Mumbai, Maharashtra, India, Hyderabad, Telangana, India, Remote (Worldwide)',
       remote_only: 0,
       expected_salary: '₹2,500,000 PA'

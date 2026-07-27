@@ -847,7 +847,7 @@ export const ResumeSectionView = ({ toast }) => {
             </span>
           </div>
 
-          {/* Target ATS Score Slider & Free ATS Tools Links */}
+          {/* Target ATS Score Slider */}
           <div style={{ background: 'rgba(2, 6, 15, 0.8)', padding: '16px', borderRadius: '14px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>Target ATS Improvement Goal:</span>
@@ -867,24 +867,6 @@ export const ResumeSectionView = ({ toast }) => {
               <span>75% (Good)</span>
               <span>88% (Great)</span>
               <span>98% (Optimal)</span>
-            </div>
-
-            {/* External Free ATS Tools Links */}
-            <div style={{ marginTop: '8px', paddingTop: '10px', borderTop: '1px dashed var(--border-subtle)' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
-                🌐 Cross-Verify with Free External ATS Checkers:
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <a href="https://www.jobscan.co/" target="_blank" rel="noopener noreferrer" className="btn-cyber-outline" style={{ padding: '4px 10px', fontSize: '11px', textDecoration: 'none' }}>
-                  🔗 Jobscan ATS
-                </a>
-                <a href="https://resumake.io/" target="_blank" rel="noopener noreferrer" className="btn-cyber-outline" style={{ padding: '4px 10px', fontSize: '11px', textDecoration: 'none' }}>
-                  🔗 Resumake Free
-                </a>
-                <a href="https://resumeworked.com/" target="_blank" rel="noopener noreferrer" className="btn-cyber-outline" style={{ padding: '4px 10px', fontSize: '11px', textDecoration: 'none' }}>
-                  🔗 Resume Worded
-                </a>
-              </div>
             </div>
           </div>
 
