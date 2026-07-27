@@ -14,17 +14,27 @@ frontend/.env
 
 # Production build outputs & dist files
 dist/
+/dist
 frontend/dist/
 backend/dist/
+/assets
+assets/
+backend/assets/
+frontend/assets/
 
 # Logs and temporary files
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+vite.config.js.timestamp-*
+*.timestamp-*.mjs
 
 # Database
 database.db
+*.db
+backend/database.db
+backend/*.db
 
 # IDE & OS metadata
 .vscode/
