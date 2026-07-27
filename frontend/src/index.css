@@ -468,6 +468,21 @@ body {
   filter: brightness(1.1);
 }
 
+/* Fluid Layout Container System (Zero side-bleeding or dead strips across viewports) */
+header.kronos-navbar {
+  width: calc(100% - 32px) !important;
+  max-width: 1400px !important;
+  margin: 12px auto 24px auto !important;
+}
+
+.kronos-main-container {
+  width: 100% !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 0 20px !important;
+  box-sizing: border-box !important;
+}
+
 /* =========================================================
    RESPONSIVE MEDIA QUERIES (320px Phones to Large Desktops)
    ========================================================= */
@@ -481,22 +496,35 @@ body {
     display: none !important;
   }
   header.kronos-navbar {
-    padding: 10px 16px !important;
-    margin: 8px 8px 16px 8px !important;
+    width: calc(100% - 16px) !important;
+    padding: 10px 14px !important;
+    margin: 8px auto 16px auto !important;
+  }
+  .kronos-main-container {
+    padding: 0 12px !important;
   }
 }
 
 /* Tablets (768px - 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
-  main {
+  .kronos-main-container {
     padding: 0 16px !important;
   }
 }
 
 /* Large Phones (481px - 767px) */
 @media (max-width: 767px) {
+  header.kronos-navbar {
+    width: calc(100% - 12px) !important;
+    margin: 6px auto 12px auto !important;
+  }
+
+  .kronos-main-container {
+    padding: 0 8px !important;
+  }
+
   .glass-card, .glass-panel {
-    padding: 16px !important;
+    padding: 14px !important;
     border-radius: 12px !important;
   }
   
@@ -520,4 +548,5 @@ body {
     padding: 10px 12px !important;
   }
 }
+
 

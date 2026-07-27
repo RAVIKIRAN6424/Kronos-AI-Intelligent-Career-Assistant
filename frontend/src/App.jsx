@@ -128,7 +128,7 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main style={{ maxWidth: '1350px', margin: '0 auto', padding: '0 20px', position: 'relative', zIndex: 1 }}>
+      <main className="kronos-main-container" style={{ position: 'relative', zIndex: 1 }}>
         {activeTab === 'landing' && (
           <LandingView
             onOpenAuthModal={handleOpenAuth}
