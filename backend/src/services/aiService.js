@@ -443,11 +443,17 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
   if (q.includes('salary') || q.includes('negotiat')) {
     return `Regarding salary for "${userMessage}": Research market bands, never give a single static number first, and frame requests around business value.`;
   }
-  if (q.includes('job') || q.includes('work')) {
-    return `Looking for a job can be tough, but I'm here to help! I can help optimize your resume or prepare you for interviews.`;
+  if (q.includes('job') || q.includes('work') || q.includes('opening')) {
+    return `Looking for a job can be tough, but I'm here to help! I recommend exploring the latest active job postings on the platform.`;
   }
-  if (q.includes('how are you') || q.includes('what going on') || q.includes('whats up')) {
-    return `I'm doing great! Just analyzing some career data. How can I assist you with your job search today?`;
+  if (q.includes('how are you') || q.includes('what going on') || q.includes('whats up') || q === 'hi' || q === 'hii' || q === 'hello') {
+    return `Hello! I'm doing great. As your Kronos AI Career Assistant, I'm ready to help you optimize your resume, prepare for interviews, or find job opportunities. How can I assist you?`;
+  }
+  if (q.includes('fresher') || q.includes('entry level') || q.includes('entry-level')) {
+    return `For freshers and entry-level candidates, I highly recommend highlighting your academic projects, internships, and transferable skills on your resume. Don't worry about lack of experience—focus on your potential and eagerness to learn!`;
+  }
+  if (q.includes('engineering') || q.includes('mechanical') || q.includes('software')) {
+    return `Engineering roles (like mechanical or software) require strong technical fundamentals. Make sure your resume explicitly lists the tools, software (like CAD or Git), and frameworks you are proficient in!`;
   }
   
   // Dynamic conversational fallback
