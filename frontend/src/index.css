@@ -477,54 +477,52 @@ select option, select optgroup {
   --text: var(--text-main);
 }
 
- / *   = = = = = = = = = = = = = = = = =   R E S P O N S I V E   L A Y O U T   = = = = = = = = = = = = = = = = =   * / 
- @ m e d i a   ( m a x - w i d t h :   7 6 8 p x )   { 
-     . a p p   { 
-         d i s p l a y :   f l e x ; 
-         f l e x - d i r e c t i o n :   c o l u m n ; 
-     } 
-     . s i d e b a r   { 
-         p o s i t i o n :   f i x e d ; 
-         l e f t :   - 1 0 0 % ; 
-         t r a n s i t i o n :   l e f t   0 . 3 s   e a s e ; 
-         w i d t h :   2 6 0 p x ; 
-         z - i n d e x :   1 0 0 0 ; 
-     } 
-     . s i d e b a r . o p e n   { 
-         l e f t :   0 ; 
-     } 
-     . m o b i l e - o v e r l a y   { 
-         d i s p l a y :   n o n e ; 
-         p o s i t i o n :   f i x e d ; 
-         i n s e t :   0 ; 
-         b a c k g r o u n d :   r g b a ( 0 ,   0 ,   0 ,   0 . 5 ) ; 
-         b a c k d r o p - f i l t e r :   b l u r ( 4 p x ) ; 
-         z - i n d e x :   9 9 9 ; 
-     } 
-     . m o b i l e - o v e r l a y . o p e n   { 
-         d i s p l a y :   b l o c k ; 
-     } 
-     . m o b i l e - m e n u - b t n   { 
-         d i s p l a y :   b l o c k   ! i m p o r t a n t ; 
-         b a c k g r o u n d :   t r a n s p a r e n t ; 
-         b o r d e r :   n o n e ; 
-         c o l o r :   v a r ( - - t e x t ) ; 
-         c u r s o r :   p o i n t e r ; 
-         p a d d i n g :   4 p x ; 
-         m a r g i n - r i g h t :   1 2 p x ; 
-     } 
-     . h e a d e r   { 
-         p a d d i n g :   1 2 p x   1 6 p x ; 
-     } 
-     . h e a d e r   h 1   { 
-         f o n t - s i z e :   1 6 p x ; 
-     } 
-     . h e a d e r   . s u b   { 
-         f o n t - s i z e :   1 0 p x ; 
-     } 
- } 
- . m o b i l e - m e n u - b t n   { 
-     d i s p l a y :   n o n e ; 
- } 
-  
- 
+/* ================= RESPONSIVE LAYOUT ================= */
+@media (max-width: 768px) {
+  .app {
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    transition: left 0.3s ease;
+    width: 260px;
+    z-index: 1000;
+  }
+  .sidebar.open {
+    left: 0;
+  }
+  .mobile-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+  }
+  .mobile-overlay.open {
+    display: block;
+  }
+  .mobile-menu-btn {
+    display: block !important;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px;
+    margin-right: 12px;
+  }
+  .header {
+    padding: 12px 16px;
+  }
+  .header h1 {
+    font-size: 16px;
+  }
+  .header .sub {
+    font-size: 10px;
+  }
+}
+.mobile-menu-btn {
+  display: none;
+}
