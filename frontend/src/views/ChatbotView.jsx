@@ -111,7 +111,7 @@ export const ChatbotView = ({ toast }) => {
     if (q.includes('salary') || q.includes('negotiat')) {
       return `For salary negotiations: 1. Research market bands for your role and experience level. 2. Never give a single static number first—provide a range. 3. Frame compensation requests around the business value and impact you bring.`;
     }
-    return `I evaluated your question regarding "${query}". As your Kronos AI Career Assistant, I recommend tailoring your resume keywords, optimizing your LinkedIn summary, and automating outreach during peak recruiter hours (09:00 AM - 11:00 AM).`;
+    return `That's an interesting point about "${query}". As your Kronos AI Career Assistant, I'm here to support you in every aspect of your professional journey! I recommend keeping your resume tailored to the roles you want, continuously updating your skills, and staying proactive in your outreach. Let me know if you want to dive deeper into interview prep, resume reviews, or salary negotiation!`;
   };
 
   const handleSendMessage = async (e) => {

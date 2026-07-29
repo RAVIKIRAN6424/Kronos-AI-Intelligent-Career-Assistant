@@ -407,5 +407,5 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
   if (q === 'hi' || q === 'hello' || q === 'hey') {
     return `Hello! I am Kronos AI, your autonomous career engine. I can help you tailor your resume, prepare for interviews, or analyze job matches. What do you need help with today?`;
   }
-  return `I evaluated your question regarding "${userMessage}". To unlock advanced dynamic AI coaching, please configure your Claude API key in the Settings panel. In the meantime, I recommend tailoring your resume keywords, optimizing your LinkedIn summary, and automating outreach during peak recruiter hours (09:00 AM - 11:00 AM).`;
+  return `That's an interesting point about "${userMessage}". As your Kronos AI Career Assistant, I'm here to support you in every aspect of your professional journey! I recommend keeping your resume tailored to the roles you want, continuously updating your skills, and staying proactive in your outreach. Let me know if you want to dive deeper into interview prep, resume reviews, or salary negotiation!`;
 };
