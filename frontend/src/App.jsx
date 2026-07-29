@@ -127,6 +127,7 @@ export function App() {
   }, [showNotifications]);
 
   const recentAppliedJobs = jobs.filter(j => j.status === 'Applied').sort((a,b) => new Date(b.date_applied || b.created_at) - new Date(a.date_applied || a.created_at)).slice(0, 3);
+  const latestJobMatches = jobs.filter(j => j.status !== 'Applied' && j.match_score >= 80).sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 2);
 
   const handleRefreshJobs = async () => {
     try {
@@ -192,15 +193,25 @@ export function App() {
                 }} onClick={(e) => e.stopPropagation()}>
                   <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px' }}>Notifications</h4>
                   <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {recentAppliedJobs.length > 0 ? recentAppliedJobs.map(job => (
-                      <div key={job.id} style={{ display: 'flex', gap: '8px' }}>
+                    {latestJobMatches.map(job => (
+                      <div key={'match-'+job.id} style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--blue)', marginTop: '4px', flexShrink: 0 }}></div>
+                        <div>
+                          <b>New Profile Match!</b><br/>
+                          <span style={{ color: 'var(--text-muted)' }}>{job.title} at {job.company} matches your profile ({job.match_score}%).</span>
+                        </div>
+                      </div>
+                    ))}
+                    {recentAppliedJobs.map(job => (
+                      <div key={'applied-'+job.id} style={{ display: 'flex', gap: '8px' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--sage)', marginTop: '4px', flexShrink: 0 }}></div>
                         <div>
                           <b>Automated Apply</b><br/>
                           <span style={{ color: 'var(--text-muted)' }}>Successfully applied to {job.company} at {new Date(job.date_applied || job.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.</span>
                         </div>
                       </div>
-                    )) : (
+                    ))}
+                    {recentAppliedJobs.length === 0 && latestJobMatches.length === 0 && (
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--gold)', marginTop: '4px', flexShrink: 0 }}></div>
                         <div>

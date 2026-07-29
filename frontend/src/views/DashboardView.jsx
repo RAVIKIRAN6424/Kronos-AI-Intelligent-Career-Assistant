@@ -9,6 +9,7 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
   const [botRunning, setBotRunning] = useState(false);
   const [showPortalModal, setShowPortalModal] = useState(false);
   const [portals, setPortals] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
   const [connectedCount, setConnectedCount] = useState(0);
   const [botState, setBotState] = useState({
     is_running: 0,
@@ -262,8 +263,7 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
             {portals.length > 0 ? (
               portals.map((p, idx) => {
                 const isConnected = p.is_connected === 1 || p.is_connected === true;
-                const domainName = p.domain.split('.')[0];
-                const displayName = domainName.charAt(0).toUpperCase() + domainName.slice(1);
+                const displayName = p.portal_name || (p.domain ? p.domain.split('.')[0] : 'Unknown');
                 
                 return (
                   <div className="portal-row" key={idx}>
@@ -285,12 +285,12 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
           {/* Recent Activity */}
           <div className="side-card">
             <h3>Recent Activity</h3>
-            {[
+            {(currentUser && recentActivities.length > 0 ? recentActivities : [
               { id: 1, time: '2h ago', action: 'Applied to Senior Backend Engineer at Stripe' },
               { id: 2, time: '5h ago', action: 'Automation engine discovered 12 new matches' },
               { id: 3, time: '1d ago', action: 'Resume parsed and optimized successfully' }
-            ].map(feed => (
-              <div className="activity-row" key={feed.id}>
+            ]).map((feed, idx) => (
+              <div className="activity-row" key={feed.id || idx}>
                 <div className="activity-dot"></div>
                 <div>
                   <div className="activity-text">{feed.action}</div>

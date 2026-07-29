@@ -45,9 +45,20 @@ export const ConnectedPortalsView = ({ toast }) => {
   };
 
   const handleToggleConnect = async (portal) => {
+    if (!portal.is_connected && !portal.account_email) {
+      toast('Please provide account details to connect.', 'error');
+      return;
+    }
+
+    const actionText = `${portal.is_connected ? 'Disconnected' : 'Connected'} ${portal.portal_name} account`;
+    const activity = { id: Date.now(), time: 'Just now', action: actionText };
+    const existingLogs = JSON.parse(localStorage.getItem('kronos_activities') || '[]');
+    localStorage.setItem('kronos_activities', JSON.stringify([activity, ...existingLogs].slice(0, 10)));
+
     try {
       const updated = await api.updatePortal(portal.id, {
-        is_connected: portal.is_connected ? 0 : 1
+        is_connected: portal.is_connected ? 0 : 1,
+        account_email: portal.account_email
       });
       toast(`${portal.portal_name} ${updated.is_connected ? 'Connected' : 'Disconnected'}!`, updated.is_connected ? 'success' : 'info');
       fetchPortals();
@@ -111,8 +122,20 @@ export const ConnectedPortalsView = ({ toast }) => {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(2, 6, 15, 0.6)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-subtle)', fontSize: '12px', color: 'var(--text-muted)' }}>
-              Connected Account: <strong style={{ color: '#ffffff' }}>{p.account_email || 'None'}</strong>
+            <div style={{ background: 'var(--panel-2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-subtle)', fontSize: '12px', color: 'var(--text-muted)' }}>
+              <label style={{ display: 'block', marginBottom: '6px' }}>Connected Account Email:</label>
+              <input 
+                type="email" 
+                className="cyber-input" 
+                placeholder={`e.g. user@${p.portal_name.toLowerCase()}.com`}
+                value={p.account_email || ''} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPortals(prev => prev.map(pt => pt.id === p.id ? { ...pt, account_email: val } : pt));
+                }}
+                disabled={p.is_connected}
+                style={{ width: '100%', padding: '8px', fontSize: '12px', background: 'var(--bg)', border: '1px solid var(--border-subtle)', color: 'var(--text-main)', borderRadius: '4px' }}
+              />
             </div>
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
