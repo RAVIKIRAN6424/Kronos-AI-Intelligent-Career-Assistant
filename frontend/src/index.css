@@ -246,6 +246,7 @@ a { text-decoration: none; color: inherit; }
   width: 100%; background: var(--bg); border: 1px solid var(--line-strong);
   border-radius: 8px; padding: 10px 14px; color: var(--text); outline: none; font-family: var(--font-body); font-size: 13px;
 }
+.cyber-input-with-icon { padding-left: 38px; }
 .cyber-input:focus { border-color: var(--gold); }
 .cyber-select {
   width: 100%; background: var(--bg); border: 1px solid var(--line-strong);

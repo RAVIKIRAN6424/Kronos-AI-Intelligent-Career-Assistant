@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RobotBackground } from './components/RobotBackground';
 import { Navbar } from './components/Navbar';
 import { AuthModal } from './components/AuthModal';
@@ -112,6 +112,22 @@ export function App() {
     }
   };
 
+
+  const notifRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
+
+  const recentAppliedJobs = jobs.filter(j => j.status === 'Applied').sort((a,b) => new Date(b.date_applied || b.created_at) - new Date(a.date_applied || a.created_at)).slice(0, 3);
+
   const handleRefreshJobs = async () => {
     try {
       const updatedJobs = await api.getJobs();
@@ -165,7 +181,7 @@ export function App() {
             </div>
           </div>
           <div className="header-right">
-            <div className="icon-btn" style={{ position: 'relative' }} onClick={() => setShowNotifications(!showNotifications)}>
+            <div className="icon-btn" style={{ position: 'relative' }} ref={notifRef} onClick={() => setShowNotifications(!showNotifications)}>
               <div className="dot"></div>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
               {showNotifications && (
@@ -176,8 +192,23 @@ export function App() {
                 }} onClick={(e) => e.stopPropagation()}>
                   <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px' }}>Notifications</h4>
                   <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', gap: '8px' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--sage)', marginTop: '4px', flexShrink: 0 }}></div><div><b>Automated Apply</b><br/><span style={{ color: 'var(--text-muted)' }}>Successfully applied to Stripe.</span></div></div>
-                    <div style={{ display: 'flex', gap: '8px' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--gold)', marginTop: '4px', flexShrink: 0 }}></div><div><b>New Match</b><br/><span style={{ color: 'var(--text-muted)' }}>Found 5 new roles matching your profile.</span></div></div>
+                    {recentAppliedJobs.length > 0 ? recentAppliedJobs.map(job => (
+                      <div key={job.id} style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--sage)', marginTop: '4px', flexShrink: 0 }}></div>
+                        <div>
+                          <b>Automated Apply</b><br/>
+                          <span style={{ color: 'var(--text-muted)' }}>Successfully applied to {job.company} at {new Date(job.date_applied || job.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.</span>
+                        </div>
+                      </div>
+                    )) : (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--gold)', marginTop: '4px', flexShrink: 0 }}></div>
+                        <div>
+                          <b>System Active</b><br/>
+                          <span style={{ color: 'var(--text-muted)' }}>Engine is scanning for new roles...</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
