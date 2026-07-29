@@ -205,23 +205,21 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
           className="mobile-menu-drawer"
           style={{
             position: 'fixed',
-            top: '72px',
-            left: '12px',
-            right: '12px',
-            maxHeight: 'calc(85vh)',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            maxHeight: '100vh',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
             background: 'rgba(4, 8, 20, 0.98)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid var(--accent-cyan)',
-            borderRadius: '16px',
-            padding: '20px',
+            padding: '24px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.95), var(--glow-cyan)',
-            zIndex: 9999
+            gap: '12px',
+            zIndex: 99999
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>

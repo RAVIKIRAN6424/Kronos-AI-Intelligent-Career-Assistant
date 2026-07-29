@@ -333,6 +333,13 @@ export const api = {
     setStorage('kronos_bot_state', updated);
     return res || updated;
   },
+  updateBotState: async (payload) => {
+    const res = await request('/bot/update', { method: 'POST', body: payload });
+    const current = getStorage('kronos_bot_state', { is_running: 0, started_time: null, current_portal: 'LinkedIn', current_job: 'Idle', applications_today: 0 });
+    const updated = { ...current, ...payload };
+    setStorage('kronos_bot_state', updated);
+    return res || updated;
+  },
 
   // Dedicated Latest Jobs Search
   getRecentJobs: async () => {
@@ -350,15 +357,30 @@ export const api = {
     ]);
   },
   sendChatbotMessage: async (text) => {
+    const user = getStorage('kronos_user', null);
+    const q = text.toLowerCase();
+
+    if (!user && (q.includes('job') || q.includes('role') || q.includes('position') || q.includes('apply') || q.includes('hire'))) {
+      const current = getStorage('kronos_chatbot', []);
+      const updated = [
+        ...current,
+        { id: Date.now(), sender: 'user', text },
+        { id: Date.now() + 1, sender: 'bot', text: 'Hello! I would love to help you find job details. Please log in or create an account first so I can fetch tailored opportunities for you! 😊' }
+      ];
+      setStorage('kronos_chatbot', updated);
+      return { reply: 'Hello! I would love to help you find job details. Please log in or create an account first so I can fetch tailored opportunities for you! 😊', history: updated };
+    }
+
     const res = await request('/chatbot/chat', { method: 'POST', body: { text } });
     const current = getStorage('kronos_chatbot', [
       { id: 1, sender: 'bot', text: 'Hello! I am your Kronos AI Career Assistant. How can I help with your job search, resume optimization, or interview prep today?' }
     ]);
-    let replyText = `I evaluated your question regarding "${text}". As your Kronos AI Assistant, I recommend tailoring resume keywords, optimizing your profile, and targeting active job postings.`;
-    if (text.toLowerCase().includes('interview')) {
-      replyText = `For interviews: 1. Review system design fundamentals, 2. Use the STAR method for behavioral questions, 3. Highlight quantifiable metrics from past projects.`;
-    } else if (text.toLowerCase().includes('resume') || text.toLowerCase().includes('ats')) {
-      replyText = `To pass ATS filters: Use clean formatting, clear standard headings, and match job description keywords truthfully.`;
+    
+    let replyText = `I evaluated your question regarding "${text}". As your friendly Kronos AI Assistant, I recommend tailoring resume keywords, optimizing your profile, and targeting active job postings! Let me know if you need more help!`;
+    if (q.includes('interview')) {
+      replyText = `For interviews, here are my top tips: 1. Review system design fundamentals. 2. Use the STAR method for behavioral questions. 3. Highlight quantifiable metrics from past projects. You've got this! 🌟`;
+    } else if (q.includes('resume') || q.includes('ats')) {
+      replyText = `To pass ATS filters: Use clean formatting, clear standard headings, and match job description keywords truthfully. Let me know if you want me to scan your resume! ✨`;
     }
     const updated = [
       ...current,

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Calendar, MapPin, Building2, ExternalLink, Send, CheckCircle2, Sparkles, Globe, ShieldCheck, Filter, Loader2, ChevronLeft, ChevronRight, Clock, Briefcase } from 'lucide-react';
 import { api } from '../utils/api';
 import { categoryTheme } from '../utils/categoryColors';
+import { JobDetailModal } from '../components/JobDetailModal';
 
 export const SearchView = ({ toast, onOpenOutreach }) => {
   const allPortalsList = ['All Portals', 'LinkedIn', 'Indeed', 'Glassdoor', 'Naukri', 'Monster', 'Google Jobs'];
@@ -10,6 +11,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
   const [postedWithin, setPostedWithin] = useState('all'); // 'all', '24h', '2d', '1w'
   const [experienceLevel, setExperienceLevel] = useState('all'); // 'all', 'entry', 'mid', 'senior'
   const [locationFilter, setLocationFilter] = useState('all'); // 'all', 'mode_remote', 'mode_hybrid', 'mode_onsite', 'state_karnataka', etc.
+  const [selectedJobDetail, setSelectedJobDetail] = useState(null);
   const [searching, setSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 8;
@@ -130,10 +132,33 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
     }
   };
 
-  // Dynamic Multi-Portal Job Generator for ANY Search Term (e.g. AUTO CAD, Civil Engineer, Salesforce, Data Analyst)
+  // Dynamic Multi-Portal Job Generator for ANY Search Term (e.g. AUTO CAD, Civil Engineer, Salesforce, Data Analyst, Finance, Healthcare)
   const generateDynamicJobsForQuery = (queryStr) => {
     if (!queryStr || !queryStr.trim()) return [];
     const q = queryStr.trim();
+    const qLower = q.toLowerCase();
+
+    // Infer category dynamically based on search keywords
+    let inferredCat = 'Software';
+    if (qLower.includes('cad') || qLower.includes('mechanical') || qLower.includes('hvac') || qLower.includes('piping') || qLower.includes('drafting')) {
+      inferredCat = 'Mechanical';
+    } else if (qLower.includes('civil') || qLower.includes('structural') || qLower.includes('construction') || qLower.includes('site') || qLower.includes('surveyor')) {
+      inferredCat = 'Civil';
+    } else if (qLower.includes('electrical') || qLower.includes('electronics') || qLower.includes('embedded') || qLower.includes('circuit')) {
+      inferredCat = 'Electrical';
+    } else if (qLower.includes('finance') || qLower.includes('bank') || qLower.includes('accounting') || qLower.includes('tax') || qLower.includes('audit')) {
+      inferredCat = 'Finance';
+    } else if (qLower.includes('marketing') || qLower.includes('sales') || qLower.includes('seo') || qLower.includes('growth')) {
+      inferredCat = 'Marketing';
+    } else if (qLower.includes('nurse') || qLower.includes('health') || qLower.includes('medical') || qLower.includes('pharma') || qLower.includes('clinical')) {
+      inferredCat = 'Healthcare';
+    } else if (qLower.includes('design') || qLower.includes('graphic') || qLower.includes('ui/ux') || qLower.includes('creative')) {
+      inferredCat = 'Design';
+    } else if (qLower.includes('hr') || qLower.includes('recruiter') || qLower.includes('talent') || qLower.includes('people')) {
+      inferredCat = 'HR';
+    } else if (qLower.includes('data') || qLower.includes('ai') || qLower.includes('ml') || qLower.includes('analytics')) {
+      inferredCat = 'Data Science';
+    }
 
     const portalSources = ['LinkedIn', 'Indeed', 'Glassdoor', 'Naukri', 'Monster', 'Google Jobs'];
     const locationsList = [
@@ -148,14 +173,19 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
     const companiesList = ['L&T Engineering', 'Tata Digital R&D', 'Infosys Tech', 'Bechtel Global', 'Siemens Systems', 'ABB Industrial', 'Cognizant', 'Wipro Tech', 'Google Cloud', 'Microsoft Systems'];
 
     const titleTemplates = [
-      (role) => `Senior ${role} Architect`,
-      (role) => `Lead ${role} Specialist`,
-      (role) => `Mid-Level ${role} Engineer`,
+      (role) => `Senior ${role} Specialist`,
+      (role) => `Lead ${role} Lead`,
+      (role) => `Mid-Level ${role} Professional`,
       (role) => `Entry Level ${role} Associate (Fresher)`,
-      (role) => `Principal ${role} Solutions Lead`
+      (role) => `Principal ${role} Solutions Architect`,
+      (role) => `Junior ${role} Engineer`,
+      (role) => `Staff ${role} Consultant`,
+      (role) => `Director of ${role} Operations`,
+      (role) => `Senior ${role} Analyst`,
+      (role) => `Technical ${role} Lead`
     ];
 
-    const expLevels = ['senior', 'senior', 'mid', 'entry', 'senior'];
+    const expLevels = ['senior', 'senior', 'mid', 'entry', 'senior', 'entry', 'senior', 'senior', 'mid', 'senior'];
     const generated = [];
 
     portalSources.forEach((portal, pIdx) => {
@@ -179,13 +209,14 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
           work_mode: locObj.mode,
           state: locObj.state,
           country: locObj.country,
-          category: 'Engineering / Tech',
+          category: inferredCat,
           source: portal,
           url: portalUrl,
+          description: `Comprehensive job role for ${q}. Responsible for end-to-end design, execution, optimization, quality standards, and technical documentation across multi-disciplinary teams.`,
           posted_date: `Posted ${tIdx + 1} ${tIdx === 0 ? 'hour' : 'hours'} ago`,
           posted_at: new Date(Date.now() - (tIdx + 1) * 3600 * 1000).toISOString(),
           experience_level: exp,
-          key_skills: `${q}, Technical Design, Workflow Optimization, Industry Standards`,
+          key_skills: `${q}, Industry Standards, Workflow Optimization, Documentation`,
           match_score: 96 - tIdx * 2
         });
       });
@@ -371,13 +402,31 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
                 <option value="mode_onsite">📍 On-site</option>
               </optgroup>
 
-              <optgroup label="State / Region">
+              <optgroup label="State / Region (India)">
+                <option value="state_andhra">📌 Andhra Pradesh</option>
+                <option value="state_delhi">📌 Delhi / NCR</option>
+                <option value="state_gujarat">📌 Gujarat</option>
+                <option value="state_haryana">📌 Haryana</option>
                 <option value="state_karnataka">📌 Karnataka (Bengaluru)</option>
-                <option value="state_telangana">📌 Telangana (Hyderabad)</option>
+                <option value="state_kerala">📌 Kerala</option>
                 <option value="state_maharashtra">📌 Maharashtra (Mumbai/Pune)</option>
-                <option value="state_tn">📌 Tamil Nadu (Chennai)</option>
-                <option value="state_up">📌 Uttar Pradesh / NCR</option>
-                <option value="state_ca">📌 California (USA)</option>
+                <option value="state_punjab">📌 Punjab</option>
+                <option value="state_rajasthan">📌 Rajasthan</option>
+                <option value="state_tamilnadu">📌 Tamil Nadu (Chennai)</option>
+                <option value="state_telangana">📌 Telangana (Hyderabad)</option>
+                <option value="state_up">📌 Uttar Pradesh</option>
+                <option value="state_westbengal">📌 West Bengal</option>
+              </optgroup>
+
+              <optgroup label="State / Region (USA)">
+                <option value="state_ca">📌 California</option>
+                <option value="state_tx">📌 Texas</option>
+                <option value="state_ny">📌 New York</option>
+                <option value="state_fl">📌 Florida</option>
+                <option value="state_il">📌 Illinois</option>
+                <option value="state_pa">📌 Pennsylvania</option>
+                <option value="state_wa">📌 Washington</option>
+                <option value="state_ma">📌 Massachusetts</option>
               </optgroup>
 
               <optgroup label="Country">
@@ -461,7 +510,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
             No matching job postings found for "{searchTerm || 'selected filter'}". Try adjusting experience level, recency, or portal filters.
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
+          <div className="job-results-scroll-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', maxHeight: 'calc(100vh - 240px)', overflowY: 'auto', paddingRight: '4px' }}>
             {currentJobsSlice.map(job => {
               const isApplied = appliedJobIds.includes(job.id);
               const colors = categoryTheme[job.category] || categoryTheme['Software'];
@@ -469,7 +518,21 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
               const expLabel = exp === 'senior' ? 'Senior (5+ yrs)' : exp === 'entry' ? 'Entry Level / Fresher' : 'Mid Level (2-5 yrs)';
 
               return (
-                <div key={job.id} className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '16px' }}>
+                <div
+                  key={job.id}
+                  className="glass-card"
+                  onClick={() => setSelectedJobDetail(job)}
+                  style={{
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justify: 'space-between',
+                    gap: '16px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="Click to view full job details & description"
+                >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
                       <span style={{ fontSize: '10px', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: colors.bg, color: colors.border, border: `1px solid ${colors.border}` }}>
@@ -510,7 +573,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
                       <Clock size={12} color="var(--accent-cyan)" /> {job.posted_date || 'Posted recently'}
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
                       {job.url && (
                         <a
                           href={job.url}
@@ -518,6 +581,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
                           rel="noopener noreferrer"
                           className="btn-cyber-outline"
                           style={{ padding: '6px 12px', fontSize: '11px', textDecoration: 'none' }}
+                          title="Open live job listing on portal"
                         >
                           <ExternalLink size={13} />
                         </a>
@@ -537,6 +601,16 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
               );
             })}
           </div>
+        )}
+
+        {/* Full Job Details Modal */}
+        {selectedJobDetail && (
+          <JobDetailModal
+            job={selectedJobDetail}
+            onClose={() => setSelectedJobDetail(null)}
+            toast={toast}
+            onOpenOutreach={onOpenOutreach}
+          />
         )}
 
         {/* Pagination Controls */}

@@ -3,31 +3,31 @@
    ========================================================= */
 
 :root, [data-theme="cyber-cyan"] {
-  /* 1. Cyber Cyan (Default High-Tech Navy & Neon Cyan) */
-  --bg-dark: #040814;
-  --bg-card: rgba(8, 16, 32, 0.78);
-  --bg-card-hover: rgba(14, 28, 54, 0.9);
-  --bg-modal: rgba(6, 12, 24, 0.96);
+  /* Professional Sleek Blue & Clean White Theme */
+  --bg-dark: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-modal: #ffffff;
   
-  --border-cyber: rgba(0, 242, 254, 0.3);
-  --border-subtle: rgba(0, 242, 254, 0.12);
+  --border-cyber: #e2e8f0;
+  --border-subtle: #f1f5f9;
 
-  --accent-cyan: #00f2fe;
-  --accent-purple: #9d4edd;
-  --accent-blue: #4facfe;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
+  --accent-cyan: #2563eb;
+  --accent-purple: #4f46e5;
+  --accent-blue: #3b82f6;
+  --accent-emerald: #059669;
+  --accent-amber: #d97706;
+  --accent-rose: #e11d48;
 
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
 
-  --glow-cyan: 0 0 22px rgba(0, 242, 254, 0.38);
-  --glow-purple: 0 0 22px rgba(157, 78, 221, 0.38);
-  --glow-emerald: 0 0 22px rgba(16, 185, 129, 0.38);
+  --glow-cyan: 0 4px 6px -1px rgba(37, 99, 235, 0.1), 0 2px 4px -1px rgba(37, 99, 235, 0.06);
+  --glow-purple: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
+  --glow-emerald: 0 4px 6px -1px rgba(5, 150, 105, 0.1), 0 2px 4px -1px rgba(5, 150, 105, 0.06);
   
-  --font-heading: 'Outfit', -apple-system, sans-serif;
+  --font-heading: 'Inter', -apple-system, sans-serif;
   --font-body: 'Inter', -apple-system, sans-serif;
   --font-code: 'JetBrains Mono', monospace;
 }
@@ -247,15 +247,13 @@ body {
   background: var(--accent-cyan);
 }
 
-/* Glassmorphism Card Utility */
+/* Modern Card Utility */
 .glass-card {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-cyber);
-  border-radius: 16px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--glow-cyan);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .glass-card:hover {
@@ -267,20 +265,18 @@ body {
 
 .glass-panel {
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-cyber);
-  border-radius: 18px;
-  box-shadow: var(--glow-cyan);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* Inputs & Form Elements */
 .cyber-input {
   width: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  background: #ffffff;
   border: 1px solid var(--border-cyber);
-  border-radius: 10px;
-  padding: 12px 16px;
+  border-radius: 8px;
+  padding: 10px 14px;
   color: var(--text-main);
   font-family: var(--font-body);
   font-size: 14px;
@@ -290,8 +286,8 @@ body {
 
 .cyber-input:focus {
   border-color: var(--accent-cyan);
-  box-shadow: 0 0 14px var(--accent-cyan);
-  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  background: #ffffff;
 }
 
 .cyber-select {
@@ -337,25 +333,25 @@ body {
 
 /* Buttons */
 .btn-cyber {
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-  color: #040814;
-  font-weight: 800;
+  background: var(--accent-cyan);
+  color: #ffffff;
+  font-weight: 600;
   font-family: var(--font-heading);
-  border: none;
-  border-radius: 10px;
-  padding: 12px 24px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 20px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
-  box-shadow: var(--glow-cyan);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .btn-cyber:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 25px var(--accent-cyan);
-  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background: #1d4ed8;
 }
 
 .btn-cyber-outline {
@@ -442,7 +438,7 @@ body {
 }
 
 .animate-pulse-glow {
-  animation: pulseGlow 3s infinite ease-in-out;
+  animation: none;
 }
 
 /* Cyber primary button definition (Fixes theme consistency audit) */
@@ -480,8 +476,8 @@ select optgroup,
 .cyber-select option,
 .cyber-input optgroup,
 .cyber-select optgroup {
-  background-color: #0b1329 !important;
-  color: #f0f6fc !important;
+  background-color: #ffffff !important;
+  color: var(--text-main) !important;
   font-family: var(--font-body) !important;
   font-size: 13px !important;
   padding: 10px 14px !important;
@@ -490,9 +486,9 @@ select optgroup,
 select optgroup,
 .cyber-input optgroup,
 .cyber-select optgroup {
-  background-color: #050a18 !important;
+  background-color: #f8fafc !important;
   color: var(--accent-cyan) !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
 }
 
 /* Fluid Layout Container System (Zero side-bleeding or dead strips across viewports) */

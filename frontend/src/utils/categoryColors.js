@@ -47,6 +47,46 @@ export const categoryTheme = {
     glow: '0 0 12px rgba(96, 165, 250, 0.25)',
     label: 'Business & Growth',
     badgeClass: 'badge-business'
+  },
+  Finance: {
+    color: '#10b981',
+    bg: 'rgba(16, 185, 129, 0.12)',
+    border: 'rgba(16, 185, 129, 0.4)',
+    glow: '0 0 12px rgba(16, 185, 129, 0.25)',
+    label: 'Finance & Banking',
+    badgeClass: 'badge-finance'
+  },
+  Marketing: {
+    color: '#f97316',
+    bg: 'rgba(249, 115, 22, 0.12)',
+    border: 'rgba(249, 115, 22, 0.4)',
+    glow: '0 0 12px rgba(249, 115, 22, 0.25)',
+    label: 'Marketing & Sales',
+    badgeClass: 'badge-marketing'
+  },
+  Healthcare: {
+    color: '#ec4899',
+    bg: 'rgba(236, 72, 153, 0.12)',
+    border: 'rgba(236, 72, 153, 0.4)',
+    glow: '0 0 12px rgba(236, 72, 153, 0.25)',
+    label: 'Healthcare & Pharma',
+    badgeClass: 'badge-healthcare'
+  },
+  Design: {
+    color: '#a855f7',
+    bg: 'rgba(168, 85, 247, 0.12)',
+    border: 'rgba(168, 85, 247, 0.4)',
+    glow: '0 0 12px rgba(168, 85, 247, 0.25)',
+    label: 'Design & Creative',
+    badgeClass: 'badge-design'
+  },
+  HR: {
+    color: '#06b6d4',
+    bg: 'rgba(6, 182, 212, 0.12)',
+    border: 'rgba(6, 182, 212, 0.4)',
+    glow: '0 0 12px rgba(6, 182, 212, 0.25)',
+    label: 'HR & People Ops',
+    badgeClass: 'badge-hr'
   }
 };
 
