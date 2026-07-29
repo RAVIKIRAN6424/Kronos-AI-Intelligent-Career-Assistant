@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Mic, MicOff, User, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Bot, Send, Mic, MicOff, User, Volume2, VolumeX, Sparkles, Paperclip, X } from 'lucide-react';
 import { api } from '../utils/api';
 
 export const ChatbotView = ({ toast }) => {
@@ -10,9 +10,11 @@ export const ChatbotView = ({ toast }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [sending, setSending] = useState(false);
   const [speakingBotId, setSpeakingBotId] = useState(null);
+  const [attachment, setAttachment] = useState(null);
 
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchHistory();
@@ -115,8 +117,9 @@ export const ChatbotView = ({ toast }) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    const userMsg = inputText.trim();
+    const userMsg = (attachment ? `[Attached: ${attachment.name}] ` : '') + inputText.trim();
     setInputText('');
+    setAttachment(null);
     setSending(true);
 
     const userEntry = { id: Date.now(), sender: 'user', text: userMsg };
@@ -270,9 +273,65 @@ export const ChatbotView = ({ toast }) => {
         </button>
 
         <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            if (e.target.files && e.target.files[0]) {
+              setAttachment(e.target.files[0]);
+            }
+          }}
+          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+        />
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            background: attachment ? 'var(--panel-2)' : 'rgba(0, 242, 254, 0.05)',
+            border: attachment ? '1px solid var(--gold)' : '1px solid var(--border-subtle)',
+            color: attachment ? 'var(--gold)' : 'var(--text-muted)',
+            padding: '12px',
+            borderRadius: '10px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            position: 'relative'
+          }}
+          title="Attach PDF, Document, or Image"
+        >
+          <Paperclip size={20} />
+          {attachment && (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setAttachment(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
+              style={{
+                position: 'absolute',
+                top: '-5px',
+                right: '-5px',
+                background: 'var(--coral)',
+                color: '#fff',
+                borderRadius: '50%',
+                width: '16px',
+                height: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <X size={12} />
+            </span>
+          )}
+        </button>
+
+        <input
           type="text"
           className="cyber-input"
-          placeholder={isRecording ? 'Listening to your voice...' : 'Ask career advice, interview questions, or resume tips...'}
+          placeholder={isRecording ? 'Listening to your voice...' : attachment ? `Attached: ${attachment.name}. Type message...` : 'Ask career advice, interview questions, or resume tips...'}
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           style={{ flex: 1, fontSize: '14px' }}
