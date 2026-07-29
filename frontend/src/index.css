@@ -3,11 +3,11 @@
    ========================================================= */
 
 :root, [data-theme="cyber-cyan"] {
-  /* Premium Dark Muted Theme (Linear Vibe) */
-  --bg-dark: #121212;
-  --bg-card: #1c1c1c;
-  --bg-card-hover: #262626;
-  --bg-modal: #1a1a1a;
+  /* Premium Dark Muted Theme (Solid Graphite) */
+  --bg-dark: #0D0E11;
+  --bg-card: #111318;
+  --bg-card-hover: #1c1f28;
+  --bg-modal: #111318;
   
   --border-cyber: #333333;
   --border-subtle: #2a2a2a;
@@ -475,7 +475,7 @@ select optgroup,
 .cyber-select option,
 .cyber-input optgroup,
 .cyber-select optgroup {
-  background-color: #ffffff !important;
+  background-color: var(--bg-card) !important;
   color: var(--text-main) !important;
   font-family: var(--font-body) !important;
   font-size: 13px !important;
@@ -485,7 +485,7 @@ select optgroup,
 select optgroup,
 .cyber-input optgroup,
 .cyber-select optgroup {
-  background-color: var(--bg-card) !important;
+  background-color: var(--bg-dark) !important;
   color: var(--accent-cyan) !important;
   font-weight: 600 !important;
 }

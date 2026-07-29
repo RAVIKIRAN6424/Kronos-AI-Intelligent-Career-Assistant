@@ -334,7 +334,12 @@ export const api = {
     return res || updated;
   },
   updateBotState: async (payload) => {
-    const res = await request('/bot/update', { method: 'POST', body: payload });
+    let res = null;
+    try {
+      res = await request('/bot/update', { method: 'POST', body: payload });
+    } catch (e) {
+      console.warn('Backend update unavailable, using local storage fallback');
+    }
     const current = getStorage('kronos_bot_state', { is_running: 0, started_time: null, current_portal: 'LinkedIn', current_job: 'Idle', applications_today: 0 });
     const updated = { ...current, ...payload };
     setStorage('kronos_bot_state', updated);
