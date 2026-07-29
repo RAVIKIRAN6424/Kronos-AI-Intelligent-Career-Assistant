@@ -6,8 +6,8 @@ export const LandingView = ({ onOpenAuthModal, activeTheme, setTheme, currentUse
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '40px', padding: '20px 0 60px' }}>
       {/* Hero Section */}
-      <div className="glass-panel" style={{ padding: '48px 36px', borderRadius: '24px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+      <div className="glass-panel hero-card">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
             <KronosAppLogo size={64} />
@@ -17,11 +17,11 @@ export const LandingView = ({ onOpenAuthModal, activeTheme, setTheme, currentUse
             <Sparkles size={15} /> KRONOS AI — Autonomous Personal Career Assistant
           </div>
 
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '46px', fontWeight: 900, lineHeight: 1.15, background: 'linear-gradient(135deg, var(--text) 30%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <h1 className="hero-title">
             Automate Your Job Search with Intelligent AI Precision
           </h1>
 
-          <p style={{ fontSize: '16px', color: 'var(--text-muted)', lineHeight: 1.6, maxWidth: '680px' }}>
+          <p className="hero-subtitle">
             Kronos AI continuously scans live connected portals, matches your role-specific resumes, optimizes ATS scores truthfully, and automates high-converting recruiter outreach.
           </p>
 
