@@ -24,6 +24,8 @@ function setStorage(key, data) {
   }
 }
 
+let inMemoryChatHistory = null;
+
 /**
  * Custom fetch helper with offline & guest mode fallback
  */
@@ -355,35 +357,42 @@ export const api = {
 
   // AI Career Chatbot
   getChatbotMessages: async () => {
-    const res = await request('/chatbot/messages');
-    if (res && Array.isArray(res)) return res;
-    return getStorage('kronos_chatbot', [
-      { id: 1, sender: 'bot', text: 'Hello! I am your Kronos AI Career Assistant. How can I help with your job search, resume optimization, or interview prep today?' }
-    ]);
+    if (!inMemoryChatHistory) {
+      inMemoryChatHistory = [
+        { id: 1, sender: 'bot', text: 'Hello! I am your Kronos AI Career Assistant. How can I help with your job search, resume optimization, or interview prep today?' }
+      ];
+    }
+    return inMemoryChatHistory;
   },
   sendChatbotMessage: async (text) => {
     const user = getStorage('kronos_user', null);
     const q = text.toLowerCase();
 
+    if (!inMemoryChatHistory) {
+      inMemoryChatHistory = [
+        { id: 1, sender: 'bot', text: 'Hello! I am your Kronos AI Career Assistant. How can I help with your job search, resume optimization, or interview prep today?' }
+      ];
+    }
+
     if (!user && (q.includes('job') || q.includes('role') || q.includes('position') || q.includes('apply') || q.includes('hire'))) {
-      const current = getStorage('kronos_chatbot', []);
       const updated = [
-        ...current,
+        ...inMemoryChatHistory,
         { id: Date.now(), sender: 'user', text },
         { id: Date.now() + 1, sender: 'bot', text: 'Hello! I would love to help you find job details. Please log in or create an account first so I can fetch tailored opportunities for you! 😊' }
       ];
-      setStorage('kronos_chatbot', updated);
+      inMemoryChatHistory = updated;
       return { reply: 'Hello! I would love to help you find job details. Please log in or create an account first so I can fetch tailored opportunities for you! 😊', history: updated };
     }
 
-    const res = await request('/chatbot/chat', { method: 'POST', body: { text } });
-    const current = getStorage('kronos_chatbot', [
-      { id: 1, sender: 'bot', text: 'Hello! I am your Kronos AI Career Assistant. How can I help with your job search, resume optimization, or interview prep today?' }
-    ]);
+    const current = inMemoryChatHistory;
+
+    const res = await request('/chatbot/chat', { method: 'POST', body: { text, history: current } });
     
     let replyText = `I evaluated your question regarding "${text}". As your friendly Kronos AI Assistant, I recommend tailoring resume keywords, optimizing your profile, and targeting active job postings! Let me know if you need more help!`;
     
-    if (q.includes('not about') || q.includes('don\\'t want') || q.includes('stop')) {
+    if (res && res.reply) {
+      replyText = res.reply;
+    } else if (q.includes('not about') || q.includes('don\\'t want') || q.includes('stop')) {
       replyText = `My apologies! Let's shift gears. You mentioned "${text}". I can help with interview prep, salary negotiation, or job searching instead. What would you like to focus on?`;
     } else if (q.includes('interview')) {
       replyText = `For interviews regarding "${text}", here are my top tips: 1. Review system design fundamentals. 2. Use the STAR method for behavioral questions. 3. Highlight quantifiable metrics from past projects. You've got this! 🌟`;
@@ -396,8 +405,8 @@ export const api = {
       { id: Date.now(), sender: 'user', text },
       { id: Date.now() + 1, sender: 'bot', text: replyText }
     ];
-    setStorage('kronos_chatbot', updated);
-    return res || { reply: replyText, history: updated };
+    inMemoryChatHistory = updated;
+    return { reply: replyText, history: updated };
   },
 
   // Scraper
