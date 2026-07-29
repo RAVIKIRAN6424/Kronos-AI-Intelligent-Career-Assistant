@@ -431,11 +431,11 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
   const q = userMessage.toLowerCase();
   
   if (q.includes('not about') || q.includes("don't want") || q.includes('stop')) {
-    return `My apologies! Let's shift gears. You mentioned "${userMessage}". I can help with interview prep, salary negotiation, or job searching instead. To unlock my full conversational capabilities (and fix typos automatically!), please add a GEMINI_API_KEY to the backend .env file.`;
+    return `My apologies! Let's shift gears. You mentioned "${userMessage}". I can help with interview prep, salary negotiation, or job searching instead. What would you like to focus on?`;
   }
   
   if (q.includes('interview') || q.includes('question')) {
-    return `For technical interviews regarding "${userMessage}": 1. Structure your answers using the STAR method. 2. Highlight quantifiable metrics. 3. Review relevant system design. (Note: Configure an API key in .env for full AI analysis).`;
+    return `For technical interviews regarding "${userMessage}": 1. Structure your answers using the STAR method. 2. Highlight quantifiable metrics. 3. Review relevant system design.`;
   }
   if (q.includes('resume') || q.includes('ats')) {
     return `For your resume optimization regarding "${userMessage}": Use clean formatting, standard headings, and match job description keywords truthfully.`;
@@ -453,8 +453,8 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
   // Dynamic conversational fallback
   const cleanQuery = userMessage.replace(/[^\w\s]/gi, '').trim();
   if (cleanQuery.length > 0) {
-    return `I understand you're asking about "${cleanQuery}". To chat with me fluidly like ChatGPT or Gemini and have me handle spelling mistakes perfectly, please add your free GEMINI_API_KEY or CLAUDE_API_KEY to the backend \`.env\` file!`;
+    return `I understand you're asking about "${cleanQuery}". As your Kronos AI Assistant, I can help you tailor your resume, prep for interviews, or negotiate salary. Let me know which area you'd like to dive into!`;
   }
   
-  return `I'm here to help! To chat with me properly, please provide an API key in the backend \`.env\` file.`;
+  return `I'm here to help! Could you provide a bit more detail on what you're looking for?`;
 };
