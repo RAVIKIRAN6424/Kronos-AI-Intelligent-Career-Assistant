@@ -106,263 +106,194 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
     : [];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Welcome Banner & Bot Control */}
-      <div className="glass-card" style={{
-        padding: '28px',
-        background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.08), rgba(157, 78, 221, 0.12))',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
-        <div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0, 242, 254, 0.15)', padding: '4px 10px', borderRadius: '20px', color: 'var(--accent-cyan)', fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>
-            <Zap size={14} /> AUTONOMOUS CAREER ASSISTANT ENGINE
+    <>
+      {/* Bot Engine Status Strip */}
+      <div className="strip">
+        <div 
+          className="item" 
+          style={{ cursor: 'pointer', transition: 'background 0.2s' }}
+          onClick={handleToggleBot}
+        >
+          <div className="lbl" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Bot Execution State</span>
+            <span style={{ fontSize: '9px', background: 'var(--panel-2)', padding: '2px 4px', borderRadius: '4px' }}>CLICK TO TOGGLE</span>
           </div>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', color: '#ffffff', fontWeight: 800 }}>
-            Welcome to Kronos AI Assistant
-          </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '600px', marginTop: '4px' }}>
-            Automated background checking of enabled portals, matching role-specific resumes, and filtering job age (&lt;7 days).
-          </p>
-        </div>
-
-        {/* START / STOP Control Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <button
-            onClick={handleToggleBot}
-            style={{
-              background: botRunning ? 'rgba(239, 68, 68, 0.2)' : 'var(--accent-cyan)',
-              color: botRunning ? '#f87171' : '#060a12',
-              border: botRunning ? '2px solid #f87171' : 'none',
-              padding: '14px 28px',
-              borderRadius: '12px',
-              fontWeight: 800,
-              fontSize: '16px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              boxShadow: botRunning ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'var(--glow-cyan)',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {botRunning ? <Square size={20} fill="#f87171" /> : <Play size={20} fill="#060a12" />}
-            {botRunning ? 'STOP AUTOMATION' : 'START AUTOMATION'}
-          </button>
-        </div>
-      </div>
-
-      {/* Bot Engine Status Box */}
-      <div className="glass-card" style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', border: '1px solid var(--border-cyber)' }}>
-        <div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Bot Execution State</div>
-          <div style={{ fontSize: '16px', fontWeight: 800, color: botRunning ? 'var(--accent-emerald)' : '#f87171', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: botRunning ? 'var(--accent-emerald)' : '#f87171' }} />
-            {botRunning ? 'RUNNING (AUTOMATED)' : 'STOPPED / PAUSED'}
+          <div className={`val ${botRunning ? 'sage' : 'stopped'}`}>
+            {botRunning ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--sage)' }} />
+                RUNNING (AUTOMATED)
+              </span>
+            ) : (
+              'STOPPED / PAUSED'
+            )}
           </div>
         </div>
-
-        <div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Started Time</div>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', marginTop: '4px', fontFamily: 'var(--font-code)' }}>
-            {botState.started_time || 'Not started today'}
-          </div>
+        <div className="item">
+          <div className="lbl">Started Time</div>
+          <div className="val">{botState.started_time || 'Not started today'}</div>
         </div>
-
-        <div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Current Scanning Portal</div>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--accent-cyan)', marginTop: '4px' }}>
-            {botState.current_portal || 'LinkedIn'}
-          </div>
+        <div className="item">
+          <div className="lbl">Current Scanning Portal</div>
+          <div className="val sage">{botState.current_portal || 'LinkedIn'}</div>
         </div>
-
-        <div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Current Job Task</div>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {botState.current_job || 'Idle'}
-          </div>
+        <div className="item">
+          <div className="lbl">Current Job Task</div>
+          <div className="val">{botState.current_job || 'Idle'}</div>
         </div>
-
-        <div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Applications Sent Today</div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-purple)', marginTop: '4px', fontFamily: 'var(--font-code)' }}>
+        <div className="item">
+          <div className="lbl">Applications Sent Today</div>
+          <div className="val">
             {isUserLoggedIn ? (botState.applications_today || 0) : 0} Jobs
           </div>
         </div>
       </div>
 
-      {/* Metrics Cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: '16px'
-      }}>
-        <div className="glass-card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '13px' }}>
-            <span>Total Saved Jobs</span>
-            <Briefcase size={18} color="var(--accent-cyan)" />
+      <div className="layout-grid">
+        <div className="main-col">
+          {/* Metrics */}
+          <div className="metrics">
+            <div className="mcard">
+              <div className="top">Total Saved Jobs <Briefcase size={14} /></div>
+              <div className="num">{totalSaved}</div>
+              <div className="sub">Across all industry streams</div>
+            </div>
+            <div className="mcard">
+              <div className="top">Applications Sent <Send size={14} /></div>
+              <div className="num sage">{totalApplied}</div>
+              <div className="sub">Active recruiters contacted</div>
+            </div>
+            <div className="mcard">
+              <div className="top">Interviews Scheduled <Award size={14} /></div>
+              <div className="num gold">{totalInterviews}</div>
+              <div className="sub">High conversion rate</div>
+            </div>
           </div>
-          <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: '#ffffff', marginTop: '8px' }}>
-            {totalSaved}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', marginTop: '4px' }}>Across all industry streams</div>
-        </div>
 
-        <div className="glass-card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '13px' }}>
-            <span>Applications Sent</span>
-            <Send size={18} color="var(--accent-blue)" />
-          </div>
-          <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: 'var(--accent-blue)', marginTop: '8px' }}>
-            {totalApplied}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Active recruiters contacted</div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '13px' }}>
-            <span>Interviews Scheduled</span>
-            <Award size={18} color="var(--accent-amber)" />
-          </div>
-          <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: 'var(--accent-amber)', marginTop: '8px' }}>
-            {totalInterviews}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--accent-amber)', marginTop: '4px' }}>High conversion rate</div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '13px' }}>
-            <span>Avg Match Score</span>
-            <Sparkles size={18} color="var(--accent-purple)" />
-          </div>
-          <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: 'var(--accent-purple)', marginTop: '8px' }}>
-            {computedAvgScore}%
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Claude AI Profile Score</div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '13px' }}>
-            <span>Offers Received</span>
-            <CheckCircle2 size={18} color="var(--accent-emerald)" />
-          </div>
-          <div style={{ fontSize: '32px', fontFamily: 'var(--font-code)', fontWeight: 800, color: 'var(--accent-emerald)', marginTop: '8px' }}>
-            {totalOffers}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--accent-emerald)', marginTop: '4px' }}>Final offer stage</div>
-        </div>
-      </div>
-
-      {/* Activity Overview: Chart & Feed */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-        {/* Application Activity Chart */}
-        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <TrendingUp size={18} color="var(--accent-cyan)" /> Application Activity
-          </h3>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flex: 1, gap: '8px', marginTop: '16px', height: '140px' }}>
-            {[ { day: 'Mon', count: 2 }, { day: 'Tue', count: 5 }, { day: 'Wed', count: 3 }, { day: 'Thu', count: 8 }, { day: 'Fri', count: 4 }, { day: 'Sat', count: 1 }, { day: 'Sun', count: 6 } ].map((d, i) => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flex: 1 }}>
-                <div style={{
-                  width: '100%',
-                  maxWidth: '32px',
-                  height: `${(d.count / 8) * 100}%`,
-                  background: i === 3 ? 'var(--accent-cyan)' : 'var(--bg-card-hover)',
-                  borderRadius: '4px 4px 0 0',
-                  transition: 'height 0.5s ease'
-                }} />
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{d.day}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Activity Feed */}
-        <div className="glass-card" style={{ padding: '24px' }}>
-          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Clock size={18} color="var(--accent-purple)" /> Recent Activity
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {[
-              { id: 1, time: '2h ago', action: 'Applied to Senior Backend Engineer at Stripe', type: 'apply' },
-              { id: 2, time: '5h ago', action: 'Automation engine discovered 12 new matches', type: 'scan' },
-              { id: 3, time: '1d ago', action: 'Resume parsed and optimized successfully', type: 'resume' },
-              { id: 4, time: '1d ago', action: 'Interview scheduled with Google', type: 'interview' }
-            ].map(feed => (
-              <div key={feed.id} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                <div style={{ 
-                  background: 'var(--bg-dark)',
-                  border: '1px solid var(--border-cyber)',
-                  padding: '8px', 
-                  borderRadius: '8px',
-                  color: feed.type === 'apply' ? 'var(--accent-cyan)' : feed.type === 'interview' ? 'var(--accent-emerald)' : 'var(--text-muted)'
-                }}>
-                  {feed.type === 'apply' ? <Send size={14} /> : feed.type === 'interview' ? <Award size={14} /> : feed.type === 'scan' ? <Search size={14} /> : <FileText size={14} />}
-                </div>
-                <div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-main)', lineHeight: '1.4' }}>{feed.action}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px' }}>{feed.time}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Top Matching Jobs */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff' }}>
-            🔥 Top AI-Matched Opportunities
-          </h3>
-          <button className="btn-cyber-outline" style={{ fontSize: '12px', padding: '6px 12px' }} onClick={() => onNavigate('jobs')}>
-            View All Jobs CRM ({jobs.length}) <ArrowUpRight size={14} />
-          </button>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-          {topJobs.map(job => (
-            <div key={job.id} className="glass-card" style={{ padding: '20px', cursor: 'pointer' }} onClick={() => onSelectJob(job)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <span className="badge-domain">{job.category || 'Software'}</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent-cyan)', fontFamily: 'var(--font-code)' }}>
-                  {job.match_score}% Match
-                </span>
-              </div>
-              <h4 style={{ fontSize: '16px', color: '#ffffff', fontFamily: 'var(--font-heading)', marginBottom: '4px' }}>
-                {job.title}
-              </h4>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                {job.company} • {job.location}
-              </div>
-              <div className="score-container" style={{ marginBottom: '12px' }}>
-                <div className="score-bar-bg">
-                  <div className="score-bar-fill" style={{ width: `${job.match_score}%` }} />
-                </div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: 'var(--text-dim)' }}>
-                <span>Salary: {job.salary || 'Competitive'}</span>
-                <span className={`badge-status badge-${(job.status || 'Saved').toLowerCase()}`}>
-                  {job.status}
-                </span>
+          {/* Chart Card */}
+          <div className="chart-card">
+            <div className="chart-head">
+              <h3>Application Activity</h3>
+              <div className="chart-legend">
+                <span><div className="sw" style={{ background: 'var(--gold)' }}></div> Interviews</span>
+                <span><div className="sw" style={{ background: 'var(--line-strong)' }}></div> Applied</span>
               </div>
             </div>
-          ))}
+            <div className="bars">
+              {[
+                { day: 'MON', count: 2 }, { day: 'TUE', count: 5 }, { day: 'WED', count: 3 }, 
+                { day: 'THU', count: 8 }, { day: 'FRI', count: 4 }, { day: 'SAT', count: 1 }, { day: 'SUN', count: 6 }
+              ].map((d, i) => (
+                <div className="bar-col" key={i}>
+                  <div 
+                    className="bar" 
+                    style={{ 
+                      height: `${(d.count / 8) * 100}%`,
+                      background: i === 3 ? 'linear-gradient(180deg, var(--gold), rgba(212, 166, 87, 0.15))' : 'var(--line-strong)'
+                    }} 
+                  ></div>
+                  <div className="day">{d.day}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Opportunities Card */}
+          <div className="opps-card">
+            <div className="opps-head">
+              <h3>Top AI-Matched Opportunities</h3>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('jobs'); }}>View All ({jobs.length})</a>
+            </div>
+            
+            {topJobs.length > 0 ? topJobs.map(job => (
+              <div className="opp-row" key={job.id} onClick={() => onSelectJob(job)} style={{ cursor: 'pointer' }}>
+                <div>
+                  <div className="opp-title">{job.title}</div>
+                  <div className="opp-sub">{job.company} • {job.location}</div>
+                </div>
+                <div className="opp-score">{job.match_score}% Match</div>
+                <div className="opp-portal">{job.category || 'Software'}</div>
+                <div className="opp-badge">{job.status || 'Saved'}</div>
+              </div>
+            )) : (
+              <div className="opp-row">
+                <div className="opp-sub">No job matches available yet.</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="side-col">
+          {/* Match Score Ring */}
+          <div className="side-card">
+            <h3>Profile Match Score</h3>
+            <div className="score-ring">
+              <div className="ring" style={{
+                background: `conic-gradient(var(--gold) 0% ${computedAvgScore}%, var(--line-strong) ${computedAvgScore}% 100%)`
+              }}>
+                <div className="ring-inner">{computedAvgScore}%</div>
+              </div>
+              <div className="score-detail">
+                <b>Claude AI</b><br/>Profile Score based on recent scans
+              </div>
+            </div>
+          </div>
+
+          {/* Portal Status */}
+          <div className="side-card">
+            <h3>Portal Status</h3>
+            <div className="portal-row">
+              <div className="portal-name">
+                <div className="portal-dot" style={{ background: connectedCount >= 1 ? 'var(--sage)' : 'var(--coral)' }}></div> 
+                LinkedIn
+              </div>
+              <div className="portal-status">{connectedCount >= 1 ? 'Connected' : 'Disconnected'}</div>
+            </div>
+            <div className="portal-row">
+              <div className="portal-name">
+                <div className="portal-dot" style={{ background: connectedCount >= 2 ? 'var(--sage)' : 'var(--coral)' }}></div> 
+                Indeed
+              </div>
+              <div className="portal-status">{connectedCount >= 2 ? 'Connected' : 'Disconnected'}</div>
+            </div>
+            <div className="portal-row">
+              <div className="portal-name">
+                <div className="portal-dot" style={{ background: connectedCount >= 3 ? 'var(--sage)' : 'var(--coral)' }}></div> 
+                Glassdoor
+              </div>
+              <div className="portal-status">{connectedCount >= 3 ? 'Connected' : 'Disconnected'}</div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="side-card">
+            <h3>Recent Activity</h3>
+            {[
+              { id: 1, time: '2h ago', action: 'Applied to Senior Backend Engineer at Stripe' },
+              { id: 2, time: '5h ago', action: 'Automation engine discovered 12 new matches' },
+              { id: 3, time: '1d ago', action: 'Resume parsed and optimized successfully' }
+            ].map(feed => (
+              <div className="activity-row" key={feed.id}>
+                <div className="activity-dot"></div>
+                <div>
+                  <div className="activity-text">{feed.action}</div>
+                  <div className="activity-time">{feed.time}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Modal: Job Portals Connection Requirement */}
       {showPortalModal && (
-        <div className="modal-backdrop">
+        <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="glass-card animate-slide-up" style={{
             maxWidth: '480px',
             width: '90%',
             padding: '32px',
-            border: '2px solid var(--accent-amber)',
-            boxShadow: '0 0 40px rgba(245, 158, 11, 0.3)',
+            border: '2px solid var(--gold)',
+            boxShadow: '0 0 40px rgba(212, 166, 87, 0.3)',
             display: 'flex',
             flexDirection: 'column',
             gap: '20px'
@@ -373,19 +304,19 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
                   width: '48px',
                   height: '48px',
                   borderRadius: '12px',
-                  background: 'rgba(245, 158, 11, 0.15)',
+                  background: 'var(--gold-soft)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '1px solid var(--accent-amber)'
+                  border: '1px solid var(--gold)'
                 }}>
-                  <AlertTriangle size={26} color="var(--accent-amber)" />
+                  <AlertTriangle size={26} color="var(--gold)" />
                 </div>
                 <div>
                   <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', color: '#ffffff', fontWeight: 800 }}>
                     Portals Connection Required
                   </h3>
-                  <div style={{ fontSize: '12px', color: 'var(--accent-amber)', fontWeight: 600, marginTop: '2px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--gold)', fontWeight: 600, marginTop: '2px' }}>
                     At least 2 Job Portals needed
                   </div>
                 </div>
@@ -406,20 +337,20 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
               background: 'rgba(2, 6, 15, 0.6)',
               padding: '16px',
               borderRadius: '12px',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--line)',
               display: 'flex',
-              justify: 'space-between',
+              justifyContent: 'space-between',
               alignItems: 'center'
             }}>
               <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Connected Portals Status:</span>
               <span style={{
                 fontWeight: 800,
                 fontSize: '14px',
-                color: connectedCount >= 2 ? 'var(--accent-emerald)' : '#f87171',
-                background: connectedCount >= 2 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                color: connectedCount >= 2 ? 'var(--sage)' : 'var(--coral)',
+                background: connectedCount >= 2 ? 'var(--sage-soft)' : 'var(--coral-soft)',
                 padding: '4px 12px',
                 borderRadius: '20px',
-                border: connectedCount >= 2 ? '1px solid var(--accent-emerald)' : '1px solid #f87171'
+                border: connectedCount >= 2 ? '1px solid var(--sage)' : '1px solid var(--coral)'
               }}>
                 {connectedCount} / 2 Portals Connected
               </span>
@@ -448,6 +379,6 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

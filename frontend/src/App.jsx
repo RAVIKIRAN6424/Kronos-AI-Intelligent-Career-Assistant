@@ -112,108 +112,128 @@ export function App() {
   };
 
   return (
-    <div className="app-layout" style={{ position: 'relative' }}>
+    <div className="app">
       {/* 3D Interactive Robot & Particle Background Canvas */}
       <RobotBackground />
 
       {/* Sidebar Navigation */}
-      <aside className="sidebar-container">
-        <Navbar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          activeTheme={activeTheme}
-          setTheme={setActiveTheme}
-          currentUser={currentUser}
-          onOpenAuthModal={() => handleOpenAuth('login')}
-          backendOnline={backendOnline}
-        />
-      </aside>
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        activeTheme={activeTheme}
+        setTheme={setActiveTheme}
+        currentUser={currentUser}
+        onOpenAuthModal={() => handleOpenAuth('login')}
+        backendOnline={backendOnline}
+      />
 
       {/* Main Content Area */}
-      <main className="kronos-main-container" style={{ position: 'relative', zIndex: 1 }}>
-        {activeTab === 'landing' && (
-          <LandingView
-            onOpenAuthModal={handleOpenAuth}
-            activeTheme={activeTheme}
-            setTheme={setActiveTheme}
-            currentUser={currentUser}
-            onNavigate={setActiveTab}
-            onLogout={handleLogout}
-          />
-        )}
+      <div className="main">
+        <div className="header">
+          <div>
+            <h1>Hello, {currentUser?.full_name?.split(' ')[0] || 'Guest'}</h1>
+            <div className="sub">Your career engine is running optimally today.</div>
+          </div>
+          <div className="header-right">
+            <div className="search">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              Search roles, companies...
+            </div>
+            <div className="icon-btn">
+              <div className="dot"></div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </div>
+            <div className="avatar" onClick={() => setActiveTab('profile')}>
+              {currentUser?.full_name ? currentUser.full_name.substring(0,2).toUpperCase() : 'GU'}
+            </div>
+          </div>
+        </div>
 
-        {activeTab === 'dashboard' && (
-          <DashboardView
-            jobs={currentUser ? jobs : []}
-            analytics={currentUser ? analytics : null}
-            onNavigate={setActiveTab}
-            onSelectJob={setSelectedJob}
-            toast={addToast}
-            currentUser={currentUser}
-            onOpenAuthModal={handleOpenAuth}
-          />
-        )}
+        <div className="content">
+          {activeTab === 'landing' && (
+            <LandingView
+              onOpenAuthModal={handleOpenAuth}
+              activeTheme={activeTheme}
+              setTheme={setActiveTheme}
+              currentUser={currentUser}
+              onNavigate={setActiveTab}
+              onLogout={handleLogout}
+            />
+          )}
 
-        {activeTab === 'jobs' && (
-          <JobsCrmView
-            jobs={currentUser ? jobs : []}
-            onSelectJob={setSelectedJob}
-            onRefreshJobs={handleRefreshJobs}
-            toast={addToast}
-            currentUser={currentUser}
-            onOpenAuthModal={() => handleOpenAuth('login')}
-          />
-        )}
+          {activeTab === 'dashboard' && (
+            <DashboardView
+              jobs={currentUser ? jobs : []}
+              analytics={currentUser ? analytics : null}
+              onNavigate={setActiveTab}
+              onSelectJob={setSelectedJob}
+              toast={addToast}
+              currentUser={currentUser}
+              onOpenAuthModal={handleOpenAuth}
+            />
+          )}
 
-        {activeTab === 'portals' && (
-          <ConnectedPortalsView toast={addToast} />
-        )}
+          {activeTab === 'jobs' && (
+            <JobsCrmView
+              jobs={currentUser ? jobs : []}
+              onSelectJob={setSelectedJob}
+              onRefreshJobs={handleRefreshJobs}
+              toast={addToast}
+              currentUser={currentUser}
+              onOpenAuthModal={() => handleOpenAuth('login')}
+            />
+          )}
 
-        {activeTab === 'resumes' && (
-          <ResumeSectionView toast={addToast} />
-        )}
+          {activeTab === 'portals' && (
+            <ConnectedPortalsView toast={addToast} />
+          )}
 
-        {activeTab === 'automation' && (
-          <AutomationSettingsView toast={addToast} />
-        )}
+          {activeTab === 'resumes' && (
+            <ResumeSectionView toast={addToast} />
+          )}
 
-        {activeTab === 'search' && (
-          <SearchView toast={addToast} />
-        )}
+          {activeTab === 'automation' && (
+            <AutomationSettingsView toast={addToast} />
+          )}
 
-        {activeTab === 'analytics' && (
-          <AnalyticsView
-            jobs={currentUser ? jobs : []}
-            currentUser={currentUser}
-            onOpenAuthModal={() => handleOpenAuth('login')}
-          />
-        )}
+          {activeTab === 'search' && (
+            <SearchView toast={addToast} />
+          )}
 
-        {activeTab === 'chatbot' && (
-          <ChatbotView toast={addToast} />
-        )}
+          {activeTab === 'analytics' && (
+            <AnalyticsView
+              jobs={currentUser ? jobs : []}
+              currentUser={currentUser}
+              onOpenAuthModal={() => handleOpenAuth('login')}
+            />
+          )}
 
-        {activeTab === 'profile' && (
-          <ProfileView
-            onProfileUpdated={(updated) => {
-              if (updated && updated.deleted) {
-                setCurrentUser(null);
-                localStorage.removeItem('kronos_user');
-                addToast('Account deleted successfully! You can now create a new account.', 'info');
-                handleOpenAuth('register');
-              } else if (updated && updated.full_name) {
-                setCurrentUser(updated);
-              }
-            }}
-            onLogout={handleLogout}
-            toast={addToast}
-          />
-        )}
+          {activeTab === 'chatbot' && (
+            <ChatbotView toast={addToast} />
+          )}
 
-        {activeTab === 'settings' && (
-          <SettingsView toast={addToast} />
-        )}
-      </main>
+          {activeTab === 'profile' && (
+            <ProfileView
+              onProfileUpdated={(updated) => {
+                if (updated && updated.deleted) {
+                  setCurrentUser(null);
+                  localStorage.removeItem('kronos_user');
+                  addToast('Account deleted successfully! You can now create a new account.', 'info');
+                  handleOpenAuth('register');
+                } else if (updated && updated.full_name) {
+                  setCurrentUser(updated);
+                }
+              }}
+              onLogout={handleLogout}
+              toast={addToast}
+            />
+          )}
+
+          {activeTab === 'settings' && (
+            <SettingsView toast={addToast} />
+          )}
+        </div>
+      </div>
 
       {/* Step 2 & 3 Auth & Onboarding Modal */}
       <AuthModal
@@ -245,7 +265,7 @@ export function App() {
           job={selectedJob}
           onClose={() => setSelectedJob(null)}
           onJobUpdated={() => handleRefreshJobs()}
-          onOpenOutreach={handleOpenOutreach}
+          onOpenOutreach={() => {}}
           toast={addToast}
         />
       )}
