@@ -23,20 +23,20 @@ Running tests on SQLite, Anthropic AI, SMTP, and System Health...
     console.error(`❌ [SQLITE DB FAIL]: ${err.message}`);
   }
 
-  // 2. Test Anthropic Claude API Key
+  // 2. Test Kronos AI Engine API Key
   try {
     const setting = await getOne(`SELECT value FROM settings WHERE key = 'claude_api_key'`);
     const key = setting?.value || process.env.CLAUDE_API_KEY;
     if (key && key.trim().length > 10) {
       const anthropic = new Anthropic({ apiKey: key });
-      console.log(`✅ [CLAUDE API] Key configured (${key.slice(0, 8)}...). Ready for live AI analysis.`);
+      console.log(`✅ [KRONOS AI ENGINE] Key configured (${key.slice(0, 8)}...). Ready for live AI analysis.`);
       claudeOk = true;
     } else {
-      console.log(`ℹ️ [CLAUDE API] No API Key provided. Kronos AI will use built-in Smart Heuristic Scoring Engine (Offline/Zero-Cost mode).`);
+      console.log(`ℹ️ [KRONOS AI ENGINE] No API Key provided. Kronos AI will use built-in Smart Heuristic Scoring Engine (Offline/Zero-Cost mode).`);
       claudeOk = true; // Fallback ready
     }
   } catch (err) {
-    console.warn(`⚠️ [CLAUDE API WARNING]: ${err.message}`);
+    console.warn(`⚠️ [KRONOS AI ENGINE WARNING]: ${err.message}`);
   }
 
   // 3. Test SMTP Credentials

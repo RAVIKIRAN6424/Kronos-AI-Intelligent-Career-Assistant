@@ -154,7 +154,7 @@ export const optimizeResumeWithAI = async (roleName, resumeText = '', isFresher 
   if (client) {
     try {
       const prompt = `
-You are Kronos AI, an elite ATS Resume & Career Systems Expert powered by Claude.
+You are Kronos AI, an elite ATS Resume & Career Systems Expert powered by Kronos Core AI Engine.
 Transform and optimize the candidate's actual resume for the target role: "${roleName}".
 CANDIDATE LEVEL: ${isFresher ? 'Fresher / Entry-Level Graduate' : 'Experienced Professional'}
 
@@ -195,7 +195,7 @@ Return strictly a valid JSON object matching this schema:
         return JSON.parse(jsonMatch[0]);
       }
     } catch (err) {
-      console.warn('⚠️ Anthropic Claude API call failed or unconfigured, using smart fallback ATS optimizer:', err.message);
+      console.warn('⚠️ Kronos AI Engine API call failed or unconfigured, using smart fallback ATS optimizer:', err.message);
     }
   }
 
@@ -321,7 +321,7 @@ Return strictly a valid JSON object:
         return JSON.parse(jsonMatch[0]);
       }
     } catch (err) {
-      console.warn('⚠️ Claude API call failed, generating email via local engine:', err.message);
+      console.warn('⚠️ Kronos AI call failed, generating email via local engine:', err.message);
     }
   }
 

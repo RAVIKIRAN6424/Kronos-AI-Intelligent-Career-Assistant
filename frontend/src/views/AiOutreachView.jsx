@@ -114,7 +114,7 @@ export const AiOutreachView = ({ jobs, selectedJobForOutreach, toast }) => {
           <Send size={24} color="var(--accent-cyan)" /> AI Cold Outreach Hub
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
-          Synthesize hyper-personalized cold email pitches using Anthropic Claude API based on target job description & candidate resume.
+          Synthesize hyper-personalized cold email pitches using Kronos AI Engine based on target job description & candidate resume.
         </p>
       </div>
 
@@ -185,7 +185,7 @@ export const AiOutreachView = ({ jobs, selectedJobForOutreach, toast }) => {
           {/* Custom Focus Instructions */}
           <div>
             <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
-              Custom Focus Notes for Claude AI (Optional)
+              Custom Focus Notes for Kronos AI (Optional)
             </label>
             <textarea
               className="cyber-input"

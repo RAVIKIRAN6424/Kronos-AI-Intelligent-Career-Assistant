@@ -234,7 +234,7 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
                 <div className="ring-inner">{computedAvgScore}%</div>
               </div>
               <div className="score-detail">
-                <b>Claude AI</b><br/>Profile Score based on recent scans
+                <b>Kronos AI</b><br/>Profile Score based on recent scans
               </div>
             </div>
           </div>

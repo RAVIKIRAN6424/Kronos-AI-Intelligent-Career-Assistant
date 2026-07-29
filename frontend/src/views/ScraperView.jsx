@@ -58,7 +58,7 @@ export const ScraperView = ({ onRefreshJobs, toast }) => {
 
       setTimeout(() => {
         setProgress(70);
-        addLog(`🧠 Analyzing job descriptions with Anthropic Claude AI score engine...`);
+        addLog(`🧠 Analyzing job descriptions with Kronos AI score engine...`);
       }, 1800);
 
       const res = await api.triggerScraper({

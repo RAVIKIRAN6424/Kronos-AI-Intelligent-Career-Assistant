@@ -108,7 +108,7 @@ export const SettingsView = ({ toast }) => {
             <Settings size={24} color="var(--accent-cyan)" /> System Settings & API Configuration
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
-            Manage Anthropic Claude API credentials, Nodemailer SMTP server connection, and Node-Cron scheduler.
+            Manage Kronos AI credentials, Nodemailer SMTP server connection, and Node-Cron scheduler.
           </p>
         </div>
 
@@ -121,12 +121,12 @@ export const SettingsView = ({ toast }) => {
         {/* Left Column: AI & SMTP Settings */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Key size={18} color="var(--accent-cyan)" /> Anthropic Claude AI API Key
+            <Key size={18} color="var(--accent-cyan)" /> Kronos AI Engine API Key
           </h3>
 
           <div>
             <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
-              Claude API Secret Key (sk-ant-...)
+              Kronos AI Secret Key
             </label>
             <input
               type="password"
