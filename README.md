@@ -12,6 +12,20 @@
 
 ---
 
+
+---
+
+## 🎯 Technical Assessment Highlights
+
+This project was built to fulfill the **Software Developer (Onsite)** technical assessment criteria:
+1. **Business Value using AI:** Kronos acts as an autonomous CRM and job board automation engine. By utilizing Anthropic's Claude API, it solves the complex, time-consuming problem of manual resume tailoring and cold outreach generation, providing measurable business value to recruiters and candidates alike.
+2. **Git Version Control:** Monorepo architecture maintained on GitHub.
+3. **CI/CD Pipeline with AI:** GitHub Actions (.github/workflows/ci-cd.yml) automates the continuous integration (Node.js tests, Vite builds) and continuous deployment lifecycle.
+4. **Deployed to Vercel:** Fully integrated pipeline automatically pushes successful production builds to Vercel edge networks.
+5. **Documentation:** This comprehensive README and supplementary assessment documentation generated using AI.
+
+---
+
 ## 📌 Executive Summary
 
 **Kronos AI** is an autonomous career intelligence system and job application management CRM. Designed with a glassmorphic interface and interactive 3D particle canvas (`RobotBackground`), Kronos AI automates job discovery, ATS resume matching, cold email recruiter outreach, and application tracking.
