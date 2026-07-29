@@ -713,28 +713,18 @@ router.get('/jobs/recent', async (req, res) => {
 });
 
 router.get('/chatbot/messages', async (req, res) => {
-  try {
-    const msgs = await query(`SELECT * FROM chatbot_messages ORDER BY id ASC`);
-    res.json(msgs);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json([]);
 });
 
 router.post('/chatbot/chat', async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, history = [] } = req.body;
     if (!text) return res.status(400).json({ error: 'Message text is required.' });
 
-    await run(`INSERT INTO chatbot_messages (sender, text) VALUES ('user', ?)`, [text]);
-
-    // Smart Career Assistant AI Bot Response Generator
-    const history = await query(`SELECT * FROM chatbot_messages ORDER BY id ASC LIMIT 20`);
+    // Smart Career Assistant AI Bot Response Generator uses the history sent from the client
     const reply = await generateChatbotResponse(text, history);
 
-    await run(`INSERT INTO chatbot_messages (sender, text) VALUES ('bot', ?)`, [reply]);
-    const fullHistory = await query(`SELECT * FROM chatbot_messages ORDER BY id ASC`);
-    res.json({ reply, history: fullHistory });
+    res.json({ reply });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
