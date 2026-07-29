@@ -563,6 +563,201 @@ select option, select optgroup {
   }
   .sidebar {
     position: fixed;
+  --sage-soft: rgba(16, 185, 129, 0.1);
+  --coral: var(--accent-rose);
+  --coral-soft: rgba(239, 68, 68, 0.1);
+  --blue: var(--accent-blue);
+  --text: var(--text-main);
+}
+
+/* Professional Dark */
+[data-theme="professional-dark"] {
+  --bg-dark: #0F172A;
+  --bg-card: #1E293B;
+  --bg-card-hover: #334155;
+  --bg-modal: #1E293B;
+  --border-cyber: #334155;
+  --border-subtle: #1E293B;
+  --accent-cyan: #38BDF8;
+  --accent-purple: #818CF8;
+  --accent-blue: #60A5FA;
+  --accent-emerald: #34D399;
+  --accent-amber: #FBBF24;
+  --accent-rose: #FB7185;
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-dim: #64748B;
+
+  --bg: var(--bg-dark);
+  --sidebar: var(--bg-card);
+  --panel: var(--bg-card);
+  --panel-2: var(--bg-card-hover);
+  --line: var(--border-subtle);
+  --line-strong: var(--border-cyber);
+  --gold: var(--accent-amber);
+  --gold-soft: rgba(56, 189, 248, 0.1);
+  --sage: var(--accent-emerald);
+  --sage-soft: rgba(52, 211, 153, 0.1);
+  --coral: var(--accent-rose);
+  --coral-soft: rgba(251, 113, 133, 0.1);
+  --blue: var(--accent-blue);
+  --text: var(--text-main);
+}
+
+/* Slate Gray */
+[data-theme="slate-gray"] {
+  --bg-dark: #18181B;
+  --bg-card: #27272A;
+  --bg-card-hover: #3F3F46;
+  --bg-modal: #27272A;
+  --border-cyber: #3F3F46;
+  --border-subtle: #27272A;
+  --accent-cyan: #A1A1AA;
+  --accent-purple: #D4D4D8;
+  --accent-blue: #A1A1AA;
+  --accent-emerald: #10B981;
+  --accent-amber: #F59E0B;
+  --accent-rose: #EF4444;
+  --text-main: #FAFAFA;
+  --text-muted: #A1A1AA;
+  --text-dim: #71717A;
+
+  --bg: var(--bg-dark);
+  --sidebar: var(--bg-card);
+  --panel: var(--bg-card);
+  --panel-2: var(--bg-card-hover);
+  --line: var(--border-subtle);
+  --line-strong: var(--border-cyber);
+  --gold: var(--accent-amber);
+  --gold-soft: rgba(250, 250, 250, 0.1);
+  --sage: var(--accent-emerald);
+  --sage-soft: rgba(16, 185, 129, 0.1);
+  --coral: var(--accent-rose);
+  --coral-soft: rgba(239, 68, 68, 0.1);
+  --blue: var(--accent-blue);
+  --text: var(--text-main);
+}
+
+/* Navy Blue */
+[data-theme="navy-blue"] {
+  --bg-dark: #001E36;
+  --bg-card: #002B4D;
+  --bg-card-hover: #003B6B;
+  --bg-modal: #002B4D;
+  --border-cyber: #004B87;
+  --border-subtle: #002B4D;
+  --accent-cyan: #4CC9F0;
+  --accent-purple: #4361EE;
+  --accent-blue: #4CC9F0;
+  --accent-emerald: #10B981;
+  --accent-amber: #F59E0B;
+  --accent-rose: #EF4444;
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-dim: #64748B;
+
+  --bg: var(--bg-dark);
+  --sidebar: var(--bg-card);
+  --panel: var(--bg-card);
+  --panel-2: var(--bg-card-hover);
+  --line: var(--border-subtle);
+  --line-strong: var(--border-cyber);
+  --gold: var(--accent-amber);
+  --gold-soft: rgba(76, 201, 240, 0.1);
+  --sage: var(--accent-emerald);
+  --sage-soft: rgba(16, 185, 129, 0.1);
+  --coral: var(--accent-rose);
+  --coral-soft: rgba(239, 68, 68, 0.1);
+  --blue: var(--accent-blue);
+  --text: var(--text-main);
+}
+
+/* ================= RESPONSIVE LAYOUT & HELPER CLASSES ================= */
+
+/* Hero Cards & Typography */
+.hero-card {
+  padding: 48px 36px;
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.hero-title {
+  font-family: var(--font-heading);
+  font-size: 46px;
+  font-weight: 900;
+  line-height: 1.15;
+  background: linear-gradient(135deg, var(--text) 30%, var(--accent-cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+}
+.hero-subtitle {
+  font-size: 16px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 680px;
+  text-align: center;
+}
+
+/* Grids */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.responsive-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+}
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* Flex Controls */
+.responsive-flex-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Modals */
+.responsive-modal {
+  width: 100%;
+  max-width: 480px;
+  padding: 36px;
+}
+
+/* Base Responsive Fixes */
+.glass-panel, .glass-card {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Specific component fixes */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .responsive-grid-5, .strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .app {
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar {
+    position: fixed;
     left: -100%;
     transition: left 0.3s ease;
     width: 260px;
@@ -573,11 +768,6 @@ select option, select optgroup {
   }
   .mobile-overlay {
     display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    z-index: 999;
   }
   .mobile-overlay.open {
     display: block;
@@ -662,4 +852,12 @@ select option, select optgroup {
 
 .mobile-menu-btn {
   display: none;
+}
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
 }
