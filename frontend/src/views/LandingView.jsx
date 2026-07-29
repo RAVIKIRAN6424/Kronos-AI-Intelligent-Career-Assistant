@@ -17,7 +17,7 @@ export const LandingView = ({ onOpenAuthModal, activeTheme, setTheme, currentUse
             <Sparkles size={15} /> KRONOS AI — Autonomous Personal Career Assistant
           </div>
 
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '46px', fontWeight: 900, lineHeight: 1.15, background: 'linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '46px', fontWeight: 900, lineHeight: 1.15, background: 'linear-gradient(135deg, var(--text) 30%, var(--accent-cyan) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             Automate Your Job Search with Intelligent AI Precision
           </h1>
 
@@ -58,7 +58,7 @@ export const LandingView = ({ onOpenAuthModal, activeTheme, setTheme, currentUse
           <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(0, 242, 254, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
             <Rocket size={22} color="var(--accent-cyan)" />
           </div>
-          <h3 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>100% Automated Workflow</h3>
+          <h3 style={{ color: 'var(--text)', fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>100% Automated Workflow</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1.5 }}>
             Set daily start and stop times. Kronos checks role matches, verifies posting freshness (&lt;7 days), avoids duplicates, and queues applications automatically.
           </p>
@@ -68,7 +68,7 @@ export const LandingView = ({ onOpenAuthModal, activeTheme, setTheme, currentUse
           <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(168, 85, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
             <Sparkles size={22} color="#c084fc" />
           </div>
-          <h3 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>Multi-Role AI Resume Optimizer</h3>
+          <h3 style={{ color: 'var(--text)', fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>Multi-Role AI Resume Optimizer</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1.5 }}>
             Create role-specific resumes for Java, AWS, DevOps, Mechanical, Data Science, and Web roles with truthful ATS Keyword Scoring.
           </p>
@@ -78,7 +78,7 @@ export const LandingView = ({ onOpenAuthModal, activeTheme, setTheme, currentUse
           <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
             <Shield size={22} color="var(--accent-emerald)" />
           </div>
-          <h3 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>Connected Job Portals</h3>
+          <h3 style={{ color: 'var(--text)', fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>Connected Job Portals</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1.5 }}>
             Connect LinkedIn, Indeed, Glassdoor, Google Jobs, Naukri, and Monster. Enable or disable individual portals with 1-click toggles.
           </p>
