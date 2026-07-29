@@ -41,6 +41,49 @@ export const startScheduler = (hours = 24) => {
     }
   });
 
+  
+  // Automated Email Reporting Task (Checks every minute)
+  cron.schedule('* * * * *', async () => {
+    try {
+      const profile = await getOne(`SELECT * FROM profile WHERE id = 1`);
+      if (profile && profile.report_enabled === 1 && profile.report_email) {
+        const now = new Date();
+        const currentHHMM = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        
+        if (currentHHMM === profile.report_time) {
+          console.log(`✉️ Automated reporting triggered for ${profile.report_email} at ${currentHHMM}`);
+          const { sendDailyJobReport } = await import('./emailService.js');
+          
+          // Get jobs applied today
+          const todayStr = new Date().toISOString().split('T')[0];
+          const jobs = await query(`SELECT * FROM jobs WHERE status = 'Applied' AND created_at >= ?`, [todayStr + ' 00:00:00']);
+          
+          const reportData = {
+            date: new Date().toLocaleDateString('en-US', { dateStyle: 'medium' }),
+            jobs: jobs.map(j => ({
+              portal: j.source || 'Kronos',
+              company: j.company,
+              role: j.title,
+              resume: 'Profile Default',
+              status: j.status
+            }))
+          };
+          
+          // Attach resume if present
+          let pdfAttachment = null;
+          if (profile.resume_text) {
+             pdfAttachment = Buffer.from(profile.resume_text);
+          }
+          
+          await sendDailyJobReport(profile.report_email, profile.full_name || 'User', reportData, pdfAttachment);
+          console.log('✅ Automated daily report sent successfully.');
+        }
+      }
+    } catch (err) {
+      console.error('❌ Email Reporting Scheduler task error:', err.message);
+    }
+  });
+
   isSchedulerRunning = true;
   return true;
 };

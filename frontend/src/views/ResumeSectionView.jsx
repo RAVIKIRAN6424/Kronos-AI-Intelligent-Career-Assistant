@@ -680,7 +680,7 @@ EDUCATION & CERTIFICATIONS:
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(4, 8, 20, 0.88)', backdropFilter: 'blur(12px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: '#081020', border: '1px solid var(--accent-cyan)', borderRadius: '16px', maxWidth: '440px', width: '100%', padding: '24px', color: '#fff', boxShadow: 'var(--glow-cyan)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Plus size={20} color="var(--accent-cyan)" /> Add New Job Role Profile
               </h3>
               <button type="button" onClick={() => setShowAddRoleModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -720,7 +720,7 @@ EDUCATION & CERTIFICATIONS:
       {/* Header Banner (Clean Header - Theme Selector Dropdown Removed as requested) */}
       <div className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: 'var(--text-main)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
             <FileText size={24} color="var(--accent-cyan)" /> Target Role Resume & Live ATS Studio
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
@@ -792,7 +792,7 @@ EDUCATION & CERTIFICATIONS:
                     padding: '8px 16px',
                     paddingRight: resumes.length > 1 ? '32px' : '16px',
                     borderRadius: '20px',
-                    background: isSelected ? 'var(--accent-cyan)' : 'rgba(13, 22, 38, 0.8)',
+                    background: isSelected ? 'var(--accent-cyan)' : 'var(--panel-2)',
                     color: isSelected ? '#060a12' : 'var(--text-muted)',
                     border: isSelected ? 'none' : '1px solid var(--border-subtle)',
                     fontWeight: 700,
@@ -854,7 +854,7 @@ EDUCATION & CERTIFICATIONS:
           
           {/* File Upload Box */}
           <div>
-            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', color: '#ffffff', fontWeight: 700, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', color: 'var(--text-main)', fontWeight: 700, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Upload size={16} color="var(--accent-cyan)" /> 1. Upload PDF Resume File
             </h3>
 
@@ -869,7 +869,7 @@ EDUCATION & CERTIFICATIONS:
                 padding: '24px',
                 textAlign: 'center',
                 cursor: 'pointer',
-                background: isDragging ? 'rgba(0, 242, 254, 0.08)' : 'rgba(2, 6, 15, 0.6)',
+                background: isDragging ? 'rgba(0, 242, 254, 0.08)' : 'var(--panel-2)',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -882,7 +882,7 @@ EDUCATION & CERTIFICATIONS:
               />
 
               <Upload size={32} color={uploadedFileName ? 'var(--accent-cyan)' : 'var(--text-muted)'} style={{ marginBottom: '8px' }} />
-              <div style={{ fontWeight: 700, fontSize: '14px', color: '#ffffff' }}>
+              <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-main)' }}>
                 {uploadedFileName ? `File Selected: ${uploadedFileName}` : `Click to Upload PDF or Drag & Drop`}
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
@@ -894,7 +894,7 @@ EDUCATION & CERTIFICATIONS:
           {/* Manual Text Area */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', color: 'var(--text-main)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <FileCode size={16} color="var(--accent-purple)" /> 2. Or Fill Resume Details Manually below:
               </h3>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -930,7 +930,7 @@ EDUCATION & CERTIFICATIONS:
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: 'var(--text-main)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Cpu size={20} color="var(--accent-cyan)" /> Live ATS Scoring & Evaluation Card
             </h3>
             <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '12px', background: 'rgba(0, 242, 254, 0.12)', color: 'var(--accent-cyan)', fontWeight: 700, border: '1px solid var(--accent-cyan)' }}>
@@ -941,7 +941,7 @@ EDUCATION & CERTIFICATIONS:
           {/* Target ATS Score Slider */}
           <div style={{ background: 'rgba(2, 6, 15, 0.8)', padding: '16px', borderRadius: '14px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>Target ATS Improvement Goal:</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)' }}>Target ATS Improvement Goal:</span>
               <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--accent-cyan)', fontFamily: 'var(--font-code)' }}>{targetScore}% ATS</span>
             </div>
             
@@ -999,7 +999,7 @@ EDUCATION & CERTIFICATIONS:
             <div style={{ fontSize: '56px', fontWeight: 900, color: currentATS.ats_score >= 80 ? 'var(--accent-cyan)' : currentATS.ats_score >= 60 ? '#facc15' : '#ef4444', fontFamily: 'var(--font-heading)' }}>
               {currentATS.ats_score}%
             </div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', marginTop: '-4px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', marginTop: '-4px' }}>
               Overall ATS Compatibility Score
             </div>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
@@ -1009,24 +1009,24 @@ EDUCATION & CERTIFICATIONS:
 
           {/* Score Metrics Breakdown */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-            <div style={{ background: 'rgba(2, 6, 15, 0.6)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-subtle)' }}>
+            <div style={{ background: 'var(--panel-2)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-subtle)' }}>
               <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-cyan)' }}>{currentATS.keyword_score}%</div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Keyword Alignment</div>
             </div>
 
-            <div style={{ background: 'rgba(2, 6, 15, 0.6)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-subtle)' }}>
+            <div style={{ background: 'var(--panel-2)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-subtle)' }}>
               <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-purple)' }}>{currentATS.formatting_score}%</div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Structure & Layout</div>
             </div>
 
-            <div style={{ background: 'rgba(2, 6, 15, 0.6)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-subtle)' }}>
+            <div style={{ background: 'var(--panel-2)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-subtle)' }}>
               <div style={{ fontSize: '20px', fontWeight: 800, color: '#10b981' }}>{currentATS.grammar_score}%</div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Readability & Tone</div>
             </div>
           </div>
 
           {/* Missing Skills Warning Card */}
-          <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '16px', color: '#ffffff' }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '16px', color: 'var(--text-main)' }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#ef4444', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <AlertTriangle size={15} /> Target Domain Skills Evaluation
             </div>

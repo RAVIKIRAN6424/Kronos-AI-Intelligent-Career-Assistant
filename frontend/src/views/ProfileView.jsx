@@ -20,6 +20,11 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
   const [preferredLocations, setPreferredLocations] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [expectedSalary, setExpectedSalary] = useState('');
+  
+  // Automated Email Reporting State
+  const [reportEmail, setReportEmail] = useState('');
+  const [reportTime, setReportTime] = useState('18:00');
+  const [reportEnabled, setReportEnabled] = useState(false);
 
   // Target Job Roles Selection State
   const defaultAvailableRoles = [
@@ -88,6 +93,9 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
         setPreferredLocations(data.preferred_locations || '');
         setRemoteOnly(Boolean(data.remote_only));
         setExpectedSalary(data.expected_salary || '');
+        setReportEmail(data.report_email || '');
+        setReportTime(data.report_time || '18:00');
+        setReportEnabled(Boolean(data.report_enabled));
         setResumeSummary(data.resume_summary || data.resume_text || '');
         
         // Parse section splits if present
@@ -360,6 +368,32 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
         </div>
       </div>
 
+      {/* Automated Email Reporting */}
+      <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Globe size={18} color="var(--accent-cyan)" /> Automated Daily Reporting
+        </h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '-8px' }}>
+          Receive a daily email digest of your recently applied jobs and matched roles along with your resume attached.
+        </p>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Reporting Email Address</label>
+            <input type="email" className="cyber-input" value={reportEmail} onChange={(e) => setReportEmail(e.target.value)} placeholder="your-email@example.com" />
+          </div>
+          <div>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Daily Report Time</label>
+            <input type="time" className="cyber-input" value={reportTime} onChange={(e) => setReportTime(e.target.value)} />
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <input type="checkbox" id="reportEnabled" checked={reportEnabled} onChange={(e) => setReportEnabled(e.target.checked)} style={{ cursor: 'pointer' }} />
+          <label htmlFor="reportEnabled" style={{ fontSize: '12px', color: 'var(--text-main)', cursor: 'pointer' }}>Enable daily email reports</label>
+        </div>
+      </div>
+
       {/* Target Job Roles Interactive Selector & Add Custom Role */}
       <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -381,7 +415,7 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '20px',
-                  background: isSelected ? 'var(--accent-cyan)' : 'rgba(13, 22, 38, 0.8)',
+                  background: isSelected ? 'var(--accent-cyan)' : 'var(--panel-2)',
                   color: isSelected ? '#060a12' : 'var(--text-muted)',
                   border: isSelected ? 'none' : '1px solid var(--border-subtle)',
                   fontWeight: 700,
@@ -444,7 +478,7 @@ export const ProfileView = ({ onProfileUpdated, onLogout, toast }) => {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '20px',
-                  background: isSelected ? 'var(--accent-cyan)' : 'rgba(13, 22, 38, 0.8)',
+                  background: isSelected ? 'var(--accent-cyan)' : 'var(--panel-2)',
                   color: isSelected ? '#060a12' : 'var(--text-muted)',
                   border: isSelected ? 'none' : '1px solid var(--border-subtle)',
                   fontWeight: 700,

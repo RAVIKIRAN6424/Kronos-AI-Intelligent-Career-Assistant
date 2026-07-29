@@ -123,9 +123,17 @@ export const initDb = () => {
           preferred_locations TEXT,
           remote_only INTEGER DEFAULT 0,
           expected_salary TEXT,
+          report_email TEXT,
+          report_time TEXT,
+          report_enabled INTEGER DEFAULT 0,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
+
+      // Ensure new email reporting columns exist on existing installations
+      db.run(`ALTER TABLE profile ADD COLUMN report_email TEXT`, () => {});
+      db.run(`ALTER TABLE profile ADD COLUMN report_time TEXT`, () => {});
+      db.run(`ALTER TABLE profile ADD COLUMN report_enabled INTEGER DEFAULT 0`, () => {});
 
       // 5. Outreach Logs Table
       db.run(`

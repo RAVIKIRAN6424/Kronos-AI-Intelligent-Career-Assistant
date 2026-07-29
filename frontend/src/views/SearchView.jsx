@@ -472,7 +472,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '20px',
-                  background: isSelected ? 'var(--accent-cyan)' : 'rgba(13, 22, 38, 0.8)',
+                  background: isSelected ? 'var(--accent-cyan)' : 'var(--panel-2)',
                   color: isSelected ? '#060a12' : 'var(--text-muted)',
                   border: isSelected ? 'none' : '1px solid var(--border-subtle)',
                   fontWeight: 700,

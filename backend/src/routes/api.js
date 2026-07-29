@@ -359,7 +359,8 @@ router.put('/profile', async (req, res) => {
   try {
     const {
       full_name, email, phone, age, location, target_domain, target_titles, experience_years,
-      skills, resume_text, resume_summary, preferred_locations, remote_only, expected_salary
+      skills, resume_text, resume_summary, preferred_locations, remote_only, expected_salary,
+      report_email, report_time, report_enabled
     } = req.body;
 
     await run(`
@@ -378,11 +379,15 @@ router.put('/profile', async (req, res) => {
         preferred_locations = COALESCE(?, preferred_locations),
         remote_only = COALESCE(?, remote_only),
         expected_salary = COALESCE(?, expected_salary),
+        report_email = COALESCE(?, report_email),
+        report_time = COALESCE(?, report_time),
+        report_enabled = COALESCE(?, report_enabled),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = 1
     `, [
       full_name, email, phone, age, location, target_domain, target_titles, experience_years,
-      skills, resume_text, resume_summary, preferred_locations, remote_only, expected_salary
+      skills, resume_text, resume_summary, preferred_locations, remote_only, expected_salary,
+      report_email, report_time, report_enabled
     ]);
 
     const updated = await getOne(`SELECT * FROM profile WHERE id = 1`);
