@@ -300,6 +300,35 @@ export const ChatbotView = ({ toast }) => {
           {isRecording ? <MicOff size={20} className="cyber-glow-pulse" /> : <Mic size={20} />}
         </button>
 
+        {/* Global Voice Output Toggle */}
+        <button
+          type="button"
+          onClick={() => {
+            if (!autoMute && window.speechSynthesis.speaking) {
+              window.speechSynthesis.cancel();
+              setSpeakingBotId(null);
+            }
+            setAutoMute(!autoMute);
+            if (toast) {
+              toast(autoMute ? 'Voice playback enabled.' : 'Voice playback disabled.', 'info');
+            }
+          }}
+          style={{
+            background: autoMute ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 242, 254, 0.12)',
+            border: autoMute ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(0, 242, 254, 0.3)',
+            color: autoMute ? '#f87171' : 'var(--accent-cyan)',
+            padding: '12px',
+            borderRadius: '10px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+          title={autoMute ? "Enable Bot Voice Output" : "Disable Bot Voice Output"}
+        >
+          {autoMute ? <VolumeX size={20} /> : <Volume2 size={20} />}
+        </button>
+
         <input
           type="file"
           ref={fileInputRef}
