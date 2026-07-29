@@ -53,6 +53,7 @@ export const RobotBackground = () => {
       const compStyle = getComputedStyle(document.documentElement);
       const cyan = compStyle.getPropertyValue('--accent-cyan').trim() || '#00f2fe';
       const purple = compStyle.getPropertyValue('--accent-purple').trim() || '#9d4edd';
+      const bgCard = compStyle.getPropertyValue('--bg-card').trim() || '#ffffff';
 
       // Smooth mouse interpolation
       mouse.x += (mouse.targetX - mouse.x) * 0.05;
@@ -146,7 +147,7 @@ export const RobotBackground = () => {
       ctx.beginPath();
       ctx.arc(botCenterX, botCenterY, 12, 0, Math.PI * 2);
       const gradient = ctx.createRadialGradient(botCenterX, botCenterY, 2, botCenterX, botCenterY, 15);
-      gradient.addColorStop(0, '#ffffff');
+      gradient.addColorStop(0, bgCard);
       gradient.addColorStop(0.5, cyan);
       gradient.addColorStop(1, purple);
       ctx.fillStyle = gradient;
