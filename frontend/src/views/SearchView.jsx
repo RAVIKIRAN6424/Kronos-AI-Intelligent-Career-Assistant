@@ -366,6 +366,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               placeholder="Search target title, company, skills (e.g. Java, Python, Data Analyst, CAD)..."
+              style={{ width: '100%', height: '42px', paddingLeft: '44px', paddingRight: '16px', borderRadius: '10px', fontSize: '13px', background: 'var(--panel)', border: '1px solid var(--border-cyber)', color: 'var(--text-main)' }}
             />
           </div>
 
