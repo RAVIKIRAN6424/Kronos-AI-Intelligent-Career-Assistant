@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getOne, query } from '../config/database.js';
+
+/**
  * Get Anthropic Client initialized with user setting or env key
  */
 const getAnthropicClient = async () => {
