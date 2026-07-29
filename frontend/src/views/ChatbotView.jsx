@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Mic, MicOff, User, Volume2, VolumeX, Sparkles, Paperclip, X } from 'lucide-react';
+import { Send, Mic, MicOff, User, Volume2, VolumeX, Sparkles, Paperclip, X } from 'lucide-react';
+import { KronosAppLogo } from '../components/KronosAppLogo';
 import { api } from '../utils/api';
 
 export const ChatbotView = ({ toast }) => {
@@ -180,7 +181,7 @@ export const ChatbotView = ({ toast }) => {
       {/* Header */}
       <div className="glass-panel" style={{ padding: '20px' }}>
         <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#ffffff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Bot size={24} color="var(--accent-cyan)" /> AI Career & Interview Chatbot Assistant
+          <KronosAppLogo size={24} /> AI Career & Interview Chatbot Assistant
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '2px' }}>
           Get instant career advice, STAR-method interview practice, and resume optimization tips via Text & Voice.
@@ -200,8 +201,8 @@ export const ChatbotView = ({ toast }) => {
             }}
           >
             {m.sender === 'bot' && (
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(0, 242, 254, 0.15)', border: '1px solid var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Bot size={20} color="var(--accent-cyan)" />
+              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--panel)', border: '1px solid var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <KronosAppLogo size={20} />
               </div>
             )}
 

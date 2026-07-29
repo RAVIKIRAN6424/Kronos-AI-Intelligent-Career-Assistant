@@ -1,5 +1,6 @@
 import React from 'react';
-import { Bot, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
+import { KronosAppLogo } from './KronosAppLogo';
 
 export const WelcomeModal = ({ isOpen, onClose, userName }) => {
   if (!isOpen) return null;
@@ -9,8 +10,8 @@ export const WelcomeModal = ({ isOpen, onClose, userName }) => {
       <div className="glass-panel cyber-glow-pulse" style={{ width: '100%', maxWidth: '480px', padding: '36px', borderRadius: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', border: '1px solid var(--accent-cyan)' }}>
         
         {/* Animated AI Robot Avatar */}
-        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(0, 242, 254, 0.15)', border: '2px solid var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--glow-cyan)' }}>
-          <Bot size={44} color="var(--accent-cyan)" />
+        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--panel)', border: '2px solid var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px var(--gold-soft)' }}>
+          <KronosAppLogo size={44} />
         </div>
 
         <div>
