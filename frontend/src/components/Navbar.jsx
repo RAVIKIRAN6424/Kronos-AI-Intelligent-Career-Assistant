@@ -47,45 +47,35 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
   ];
 
   return (
-    <header className="glass-panel kronos-navbar" style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-      borderBottom: '1px solid var(--border-cyber)',
-      padding: '12px 24px',
-      margin: '12px 16px 24px 16px',
+    <header className="kronos-sidebar" style={{
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '16px',
-      flexWrap: 'wrap'
+      flexDirection: 'column',
+      height: '100%',
+      padding: '24px 16px',
+      gap: '24px'
     }}>
       {/* Brand Logo & Status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => handleNavClick('dashboard')}>
-        <KronosAppLogo size={46} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '0 8px' }} onClick={() => handleNavClick('dashboard')}>
+        <KronosAppLogo size={36} />
         <div>
           <h1 style={{
             fontFamily: 'var(--font-heading)',
-            fontWeight: 800,
-            fontSize: '20px',
-            letterSpacing: '1px',
-            background: 'linear-gradient(90deg, #ffffff, var(--accent-cyan))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            fontWeight: 700,
+            fontSize: '18px',
+            color: 'var(--text-main)',
+            letterSpacing: '0.5px'
           }}>
-            KRONOS AI <span style={{ fontSize: '13px', color: 'var(--accent-purple)', textTransform: 'uppercase', letterSpacing: '2px' }}>CRM</span>
+            KRONOS
           </h1>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-code)' }}>
+          <p style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{
-              width: '8px',
-              height: '8px',
+              width: '6px',
+              height: '6px',
               borderRadius: '50%',
               backgroundColor: backendOnline ? 'var(--accent-emerald)' : 'var(--accent-amber)',
               display: 'inline-block'
             }} />
-            <span>{backendOnline ? 'Engine Online' : 'Offline / Standalone'}</span>
-            <span>•</span>
-            <span style={{ color: 'var(--accent-cyan)' }}>{clockTime}</span>
+            <span>{backendOnline ? 'Online' : 'Offline'}</span>
           </p>
         </div>
       </div>
@@ -97,22 +87,25 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         aria-label="Toggle Navigation Menu"
         style={{
-          background: 'rgba(0, 242, 254, 0.1)',
-          border: '1px solid var(--accent-cyan)',
-          color: 'var(--accent-cyan)',
+          position: 'absolute',
+          right: '16px',
+          top: '20px',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-cyber)',
+          color: 'var(--text-main)',
           borderRadius: '8px',
-          padding: '8px 12px',
+          padding: '6px 10px',
           cursor: 'pointer',
           display: 'none', // Shown via CSS media query
           alignItems: 'center',
           gap: '6px'
         }}
       >
-        {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+        {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       {/* Desktop Navigation Tabs */}
-      <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', padding: '4px 0' }}>
+      <nav className="desktop-nav" style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, overflowY: 'auto' }}>
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -121,55 +114,31 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
               key={item.id}
               onClick={() => handleNavClick(item.id)}
               style={{
-                background: isActive ? 'rgba(0, 242, 254, 0.15)' : 'transparent',
-                color: isActive ? 'var(--accent-cyan)' : 'var(--text-muted)',
-                border: isActive ? '1px solid var(--accent-cyan)' : '1px solid transparent',
+                background: isActive ? 'var(--bg-card-hover)' : 'transparent',
+                color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
+                border: 'none',
                 borderRadius: '8px',
-                padding: '8px 14px',
+                padding: '8px 12px',
                 fontFamily: 'var(--font-heading)',
                 fontSize: '13px',
-                fontWeight: isActive ? 700 : 500,
+                fontWeight: isActive ? 600 : 500,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease'
+                gap: '12px',
+                textAlign: 'left',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Icon size={16} />
+              <Icon size={16} color={isActive ? 'var(--text-main)' : 'var(--text-muted)'} />
               {item.label}
             </button>
           );
         })}
       </nav>
 
-      {/* Right Utility Bar: Theme Swapper & User Auth */}
-      <div className="desktop-utils" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {/* Theme Select */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(2, 6, 15, 0.6)', padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-          <Palette size={15} color="var(--accent-cyan)" />
-          <select
-            value={activeTheme}
-            onChange={(e) => setTheme(e.target.value)}
-            style={{
-              background: 'transparent',
-              color: 'var(--text-main)',
-              border: 'none',
-              fontSize: '12px',
-              fontFamily: 'var(--font-heading)',
-              cursor: 'pointer',
-              outline: 'none'
-            }}
-          >
-            {themes.map(t => (
-              <option key={t.id} value={t.id} style={{ background: '#090d16', color: '#ffffff' }}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
+      {/* Utilities at the bottom of the sidebar */}
+      <div className="desktop-utils" style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border-cyber)' }}>
         {/* User Auth Button */}
         {currentUser ? (
           <div
@@ -177,29 +146,32 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(157, 78, 221, 0.15)',
-              border: '1px solid rgba(157, 78, 221, 0.4)',
-              padding: '6px 12px',
+              gap: '10px',
+              padding: '8px 12px',
               borderRadius: '8px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-cyber)'
             }}
           >
-            <User size={16} color="var(--accent-purple)" />
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff' }}>{currentUser.full_name || currentUser.email.split('@')[0]}</div>
-              <div style={{ fontSize: '10px', color: 'var(--accent-cyan)' }}>{currentUser.target_domain || 'Software'}</div>
+            <div style={{ background: 'var(--accent-cyan)', borderRadius: '50%', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <User size={14} color="#121212" />
+            </div>
+            <div style={{ textAlign: 'left', overflow: 'hidden' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {currentUser.full_name || currentUser.email.split('@')[0]}
+              </div>
             </div>
           </div>
         ) : (
-          <button className="btn-cyber" onClick={onOpenAuthModal}>
+          <button className="btn-cyber" onClick={onOpenAuthModal} style={{ width: '100%', justifyContent: 'center' }}>
             <LogIn size={15} />
-            Sign In / Register
+            Sign In
           </button>
         )}
       </div>
 
-      {/* Responsive Mobile Drawer Menu (Auto-closes when any nav item is selected, fully scrollable on small screens) */}
+      {/* Responsive Mobile Drawer Menu */}
       {isMobileMenuOpen && (
         <div
           className="mobile-menu-drawer"
@@ -212,9 +184,7 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
             maxHeight: '100vh',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
-            background: 'rgba(4, 8, 20, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            background: 'var(--bg-dark)',
             padding: '24px',
             display: 'flex',
             flexDirection: 'column',
@@ -222,84 +192,59 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
             zIndex: 99999
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent-cyan)', letterSpacing: '1px' }}>
-              KRONOS NAVIGATION MENU
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>
+              KRONOS
             </span>
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(false)}
-              style={{ background: 'none', border: 'none', color: 'var(--accent-cyan)', cursor: 'pointer', padding: '4px' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}
             >
               <X size={20} />
             </button>
           </div>
 
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                style={{
-                  background: isActive ? 'rgba(0, 242, 254, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                  color: isActive ? 'var(--accent-cyan)' : '#ffffff',
-                  border: isActive ? '1px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
-                  borderRadius: '10px',
-                  padding: '12px 16px',
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '14px',
-                  fontWeight: isActive ? 700 : 500,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  textAlign: 'left',
-                  width: '100%'
-                }}
-              >
-                <Icon size={18} color={isActive ? 'var(--accent-cyan)' : 'var(--text-muted)'} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {navItems.map(item => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  style={{
+                    background: isActive ? 'var(--bg-card-hover)' : 'transparent',
+                    color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: '14px',
+                    fontWeight: isActive ? 600 : 500,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    textAlign: 'left',
+                    width: '100%'
+                  }}
+                >
+                  <Icon size={18} color={isActive ? 'var(--text-main)' : 'var(--text-muted)'} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
 
-          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '14px', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#ffffff', fontWeight: 600 }}>
-                <Palette size={16} color="var(--accent-cyan)" />
-                <span>Theme Theme:</span>
-              </div>
-              <select
-                value={activeTheme}
-                onChange={(e) => setTheme(e.target.value)}
-                style={{
-                  background: '#090d16',
-                  color: '#ffffff',
-                  border: '1px solid var(--accent-cyan)',
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontFamily: 'var(--font-heading)',
-                  outline: 'none'
-                }}
-              >
-                {themes.map(t => (
-                  <option key={t.id} value={t.id} style={{ background: '#090d16', color: '#ffffff' }}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+          <div style={{ borderTop: '1px solid var(--border-cyber)', paddingTop: '16px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {!currentUser ? (
               <button className="btn-cyber" onClick={() => { setIsMobileMenuOpen(false); onOpenAuthModal(); }} style={{ width: '100%', justifyContent: 'center' }}>
                 <LogIn size={15} /> Sign In / Register
               </button>
             ) : (
-              <button className="btn-cyber-outline" onClick={() => handleNavClick('profile')} style={{ width: '100%', justifyContent: 'center' }}>
-                <User size={15} /> View Candidate Profile
+              <button className="btn-cyber-primary" onClick={() => handleNavClick('profile')} style={{ width: '100%', justifyContent: 'center' }}>
+                <User size={15} /> My Profile
               </button>
             )}
           </div>

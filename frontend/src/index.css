@@ -3,29 +3,29 @@
    ========================================================= */
 
 :root, [data-theme="cyber-cyan"] {
-  /* Professional Sleek Blue & Clean White Theme */
-  --bg-dark: #f8fafc;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
-  --bg-modal: #ffffff;
+  /* Premium Dark Muted Theme (Linear Vibe) */
+  --bg-dark: #121212;
+  --bg-card: #1c1c1c;
+  --bg-card-hover: #262626;
+  --bg-modal: #1a1a1a;
   
-  --border-cyber: #e2e8f0;
-  --border-subtle: #f1f5f9;
+  --border-cyber: #333333;
+  --border-subtle: #2a2a2a;
 
-  --accent-cyan: #2563eb;
-  --accent-purple: #4f46e5;
-  --accent-blue: #3b82f6;
-  --accent-emerald: #059669;
+  --accent-cyan: #e3e3e3;
+  --accent-purple: #9ca3af;
+  --accent-blue: #71717a;
+  --accent-emerald: #10b981;
   --accent-amber: #d97706;
   --accent-rose: #e11d48;
 
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-dim: #94a3b8;
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --text-dim: #71717a;
 
-  --glow-cyan: 0 4px 6px -1px rgba(37, 99, 235, 0.1), 0 2px 4px -1px rgba(37, 99, 235, 0.06);
-  --glow-purple: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
-  --glow-emerald: 0 4px 6px -1px rgba(5, 150, 105, 0.1), 0 2px 4px -1px rgba(5, 150, 105, 0.06);
+  --glow-cyan: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --glow-purple: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --glow-emerald: 0 4px 12px rgba(0, 0, 0, 0.4);
   
   --font-heading: 'Inter', -apple-system, sans-serif;
   --font-body: 'Inter', -apple-system, sans-serif;
@@ -273,7 +273,7 @@ body {
 /* Inputs & Form Elements */
 .cyber-input {
   width: 100%;
-  background: #ffffff;
+  background: var(--bg-dark);
   border: 1px solid var(--border-cyber);
   border-radius: 8px;
   padding: 10px 14px;
@@ -286,8 +286,8 @@ body {
 
 .cyber-input:focus {
   border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(227, 227, 227, 0.15);
+  background: var(--bg-dark);
 }
 
 .cyber-select {
@@ -334,7 +334,7 @@ body {
 /* Buttons */
 .btn-cyber {
   background: var(--accent-cyan);
-  color: #ffffff;
+  color: #121212;
   font-weight: 600;
   font-family: var(--font-heading);
   border: 1px solid transparent;
@@ -350,8 +350,8 @@ body {
 
 .btn-cyber:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  background: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: #ffffff;
 }
 
 .btn-cyber-outline {
@@ -443,25 +443,24 @@ body {
 
 /* Cyber primary button definition (Fixes theme consistency audit) */
 .btn-cyber-primary {
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-  color: #040814;
-  font-weight: 800;
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-weight: 600;
   font-family: var(--font-heading);
-  border: 1px solid var(--accent-cyan);
-  border-radius: 10px;
+  border: 1px solid var(--border-cyber);
+  border-radius: 8px;
   padding: 10px 20px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
-  box-shadow: var(--glow-cyan);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .btn-cyber-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 25px var(--accent-cyan);
-  filter: brightness(1.1);
+  background: var(--bg-card-hover);
+  border-color: var(--accent-cyan);
 }
 
 /* Input with left icon spacing override (Fixes magnifying glass icon overlapping placeholder text) */
@@ -486,24 +485,39 @@ select optgroup,
 select optgroup,
 .cyber-input optgroup,
 .cyber-select optgroup {
-  background-color: #f8fafc !important;
+  background-color: var(--bg-card) !important;
   color: var(--accent-cyan) !important;
   font-weight: 600 !important;
 }
 
-/* Fluid Layout Container System (Zero side-bleeding or dead strips across viewports) */
-header.kronos-navbar {
-  width: calc(100% - 32px) !important;
-  max-width: 1400px !important;
-  margin: 12px auto 24px auto !important;
+/* Fluid Layout Container System */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.sidebar-container {
+  width: 260px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-cyber);
+  background: var(--bg-dark);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
 }
 
 .kronos-main-container {
-  width: 100% !important;
-  max-width: 1400px !important;
-  margin: 0 auto !important;
-  padding: 0 20px !important;
+  flex: 1;
+  width: 100%;
+  padding: 32px 40px !important;
   box-sizing: border-box !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
 }
 
 /* =========================================================
@@ -512,19 +526,26 @@ header.kronos-navbar {
 
 /* Navigation Header Breakdown (< 1024px) */
 @media (max-width: 1024px) {
-  .hamburger-toggle-btn {
-    display: inline-flex !important;
+  .app-layout {
+    flex-direction: column;
+  }
+  .sidebar-container {
+    width: 100%;
+    height: auto;
+    position: sticky;
+    top: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border-cyber);
+    z-index: 200;
   }
   .desktop-nav {
     display: none !important;
   }
-  header.kronos-navbar {
-    width: calc(100% - 16px) !important;
-    padding: 10px 14px !important;
-    margin: 8px auto 16px auto !important;
+  .hamburger-toggle-btn {
+    display: inline-flex !important;
   }
   .kronos-main-container {
-    padding: 0 12px !important;
+    padding: 24px 16px !important;
   }
 }
 

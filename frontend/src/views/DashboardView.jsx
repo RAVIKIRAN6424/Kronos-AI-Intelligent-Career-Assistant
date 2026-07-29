@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Briefcase, Send, Award, TrendingUp, Search, Sparkles, CheckCircle2, ArrowUpRight, Zap, Play, Square, Clock, Globe, Shield, AlertTriangle, X, Lock
+  Briefcase, Send, Award, TrendingUp, Search, Sparkles, CheckCircle2, ArrowUpRight, Zap, Play, Square, Clock, Globe, Shield, AlertTriangle, X, Lock, FileText
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { categoryTheme } from '../utils/categoryColors';
@@ -253,6 +253,62 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
             {totalOffers}
           </div>
           <div style={{ fontSize: '11px', color: 'var(--accent-emerald)', marginTop: '4px' }}>Final offer stage</div>
+        </div>
+      </div>
+
+      {/* Activity Overview: Chart & Feed */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+        {/* Application Activity Chart */}
+        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <TrendingUp size={18} color="var(--accent-cyan)" /> Application Activity
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flex: 1, gap: '8px', marginTop: '16px', height: '140px' }}>
+            {[ { day: 'Mon', count: 2 }, { day: 'Tue', count: 5 }, { day: 'Wed', count: 3 }, { day: 'Thu', count: 8 }, { day: 'Fri', count: 4 }, { day: 'Sat', count: 1 }, { day: 'Sun', count: 6 } ].map((d, i) => (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flex: 1 }}>
+                <div style={{
+                  width: '100%',
+                  maxWidth: '32px',
+                  height: `${(d.count / 8) * 100}%`,
+                  background: i === 3 ? 'var(--accent-cyan)' : 'var(--bg-card-hover)',
+                  borderRadius: '4px 4px 0 0',
+                  transition: 'height 0.5s ease'
+                }} />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{d.day}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Activity Feed */}
+        <div className="glass-card" style={{ padding: '24px' }}>
+          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Clock size={18} color="var(--accent-purple)" /> Recent Activity
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {[
+              { id: 1, time: '2h ago', action: 'Applied to Senior Backend Engineer at Stripe', type: 'apply' },
+              { id: 2, time: '5h ago', action: 'Automation engine discovered 12 new matches', type: 'scan' },
+              { id: 3, time: '1d ago', action: 'Resume parsed and optimized successfully', type: 'resume' },
+              { id: 4, time: '1d ago', action: 'Interview scheduled with Google', type: 'interview' }
+            ].map(feed => (
+              <div key={feed.id} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                <div style={{ 
+                  background: 'var(--bg-dark)',
+                  border: '1px solid var(--border-cyber)',
+                  padding: '8px', 
+                  borderRadius: '8px',
+                  color: feed.type === 'apply' ? 'var(--accent-cyan)' : feed.type === 'interview' ? 'var(--accent-emerald)' : 'var(--text-muted)'
+                }}>
+                  {feed.type === 'apply' ? <Send size={14} /> : feed.type === 'interview' ? <Award size={14} /> : feed.type === 'scan' ? <Search size={14} /> : <FileText size={14} />}
+                </div>
+                <div>
+                  <div style={{ fontSize: '14px', color: 'var(--text-main)', lineHeight: '1.4' }}>{feed.action}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px' }}>{feed.time}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

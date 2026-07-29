@@ -112,20 +112,22 @@ export function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', position: 'relative', paddingBottom: '40px' }}>
+    <div className="app-layout" style={{ position: 'relative' }}>
       {/* 3D Interactive Robot & Particle Background Canvas */}
       <RobotBackground />
 
-      {/* Top Navbar */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        activeTheme={activeTheme}
-        setTheme={setActiveTheme}
-        currentUser={currentUser}
-        onOpenAuthModal={() => handleOpenAuth('login')}
-        backendOnline={backendOnline}
-      />
+      {/* Sidebar Navigation */}
+      <aside className="sidebar-container">
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          activeTheme={activeTheme}
+          setTheme={setActiveTheme}
+          currentUser={currentUser}
+          onOpenAuthModal={() => handleOpenAuth('login')}
+          backendOnline={backendOnline}
+        />
+      </aside>
 
       {/* Main Content Area */}
       <main className="kronos-main-container" style={{ position: 'relative', zIndex: 1 }}>
