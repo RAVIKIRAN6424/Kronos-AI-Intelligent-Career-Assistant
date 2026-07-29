@@ -4,10 +4,11 @@ import {
   BarChart3, UserCheck, MessageSquare, Zap, Settings, Sparkles
 } from 'lucide-react';
 
-export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, currentUser, backendOnline }) => {
+export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, currentUser, backendOnline, isSidebarOpen, setIsSidebarOpen }) => {
 
   const handleNavClick = (tabId) => {
     setActiveTab(tabId);
+    if (setIsSidebarOpen) setIsSidebarOpen(false);
   };
 
   const themes = [
@@ -47,7 +48,7 @@ export const Navbar = ({ activeTab, setActiveTab, activeTheme, setTheme, current
   ];
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
       <div className="brand" onClick={() => handleNavClick('landing')}>
         <div className="brand-mark"></div>
         <div className="brand-name">

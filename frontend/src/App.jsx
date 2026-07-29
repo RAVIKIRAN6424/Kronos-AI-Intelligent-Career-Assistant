@@ -45,10 +45,10 @@ export function App() {
   const [jobs, setJobs] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   
-  // Modals
   const [selectedJob, setSelectedJob] = useState(null);
   const [selectedJobForOutreach, setSelectedJobForOutreach] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -142,13 +142,25 @@ export function App() {
         currentUser={currentUser}
         onOpenAuthModal={() => handleOpenAuth('login')}
         backendOnline={backendOnline}
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
       />
+
+      {/* Mobile Overlay */}
+      <div 
+        className={`mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
+        onClick={() => setIsSidebarOpen(false)}
+      ></div>
 
       {/* Main Content Area */}
       <div className="main">
         <div className="header">
-          <div>
-            <h1>{getGreeting()}, {currentUser?.full_name?.split(' ')[0] || 'Guest'}</h1>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <div>
+              <h1>{getGreeting()}, {currentUser?.full_name?.split(' ')[0] || 'Guest'}</h1>
             <div className="sub">Your career engine is running optimally today.</div>
           </div>
           <div className="header-right">
