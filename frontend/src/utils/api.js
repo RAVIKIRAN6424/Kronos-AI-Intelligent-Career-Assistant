@@ -392,7 +392,7 @@ export const api = {
     
     if (res && res.reply) {
       replyText = res.reply;
-    } else if (q.includes('not about') || q.includes('don\\'t want') || q.includes('stop')) {
+    } else if (q.includes('not about') || q.includes("don't want") || q.includes('stop')) {
       replyText = `My apologies! Let's shift gears. You mentioned "${text}". I can help with interview prep, salary negotiation, or job searching instead. What would you like to focus on?`;
     } else if (q.includes('interview')) {
       replyText = `For interviews regarding "${text}", here are my top tips: 1. Review system design fundamentals. 2. Use the STAR method for behavioral questions. 3. Highlight quantifiable metrics from past projects. You've got this! 🌟`;

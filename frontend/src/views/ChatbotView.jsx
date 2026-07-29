@@ -103,7 +103,7 @@ export const ChatbotView = ({ toast }) => {
   const generateLocalBotReply = (query) => {
     const q = query.toLowerCase();
     // Negative matching
-    if (q.includes('not about') || q.includes('don\\'t want') || q.includes('stop')) {
+    if (q.includes('not about') || q.includes("don't want") || q.includes('stop')) {
       return `My apologies! Let's shift gears. You mentioned "${query}". I can help with interview prep, salary negotiation, or job searching instead. What would you like to focus on?`;
     }
 

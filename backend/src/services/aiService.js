@@ -396,7 +396,7 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
   // Intelligent fallback
   const q = userMessage.toLowerCase();
   
-  if (q.includes('not about') || q.includes('don\\'t want') || q.includes('stop')) {
+  if (q.includes('not about') || q.includes("don't want") || q.includes('stop')) {
     return `My apologies! Let's shift gears. You mentioned "${userMessage}". I can help with interview prep, salary negotiation, or job searching instead. What would you like to focus on?`;
   }
   
