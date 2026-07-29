@@ -72,8 +72,12 @@ export const ChatbotView = ({ toast }) => {
     }
   };
 
+  const [autoMute, setAutoMute] = useState(false);
+
   // Text-to-Speech (Voice Output / Read Lines Aloud)
   const speakText = (text, id = null) => {
+    if (autoMute) return;
+
     if (!('speechSynthesis' in window)) {
       if (toast) toast('Text-to-speech voice playback is not supported in this browser.', 'error');
       return;
@@ -83,6 +87,8 @@ export const ChatbotView = ({ toast }) => {
       window.speechSynthesis.cancel();
       if (speakingBotId === id) {
         setSpeakingBotId(null);
+        setAutoMute(true);
+        if (toast) toast('Voice playback muted for this session.', 'info');
         return;
       }
     }

@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getOne, query } from '../config/database.js';
-
-/**
  * Get Anthropic Client initialized with user setting or env key
  */
 const getAnthropicClient = async () => {
@@ -9,6 +8,17 @@ const getAnthropicClient = async () => {
   const apiKey = setting?.value || process.env.CLAUDE_API_KEY;
   if (apiKey && apiKey.trim().length > 10) {
     return new Anthropic({ apiKey });
+  }
+  return null;
+};
+
+/**
+ * Get Gemini Client initialized with env key
+ */
+const getGeminiClient = () => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (apiKey && apiKey.trim().length > 10) {
+    return new GoogleGenerativeAI(apiKey);
   }
   return null;
 };
@@ -372,11 +382,14 @@ Location: ${profile?.location || 'Bengaluru, India'}`;
  * Generate dynamic chatbot response
  */
 export const generateChatbotResponse = async (userMessage, chatHistory = []) => {
+  let systemPrompt = `You are Kronos AI, an elite career and interview preparation assistant. 
+  Your job is to provide helpful, conversational, and highly accurate advice regarding job searching, resumes, interviews, and salary negotiation. 
+  Please handle any spelling mistakes gracefully and respond thoughtfully to the user's intent.`;
+
+  // 1. Try Claude
   const client = await getAnthropicClient();
-  
   if (client) {
     try {
-      const systemPrompt = "You are Kronos AI, an elite autonomous career assistant. Answer the user's career, resume, and job-search questions intelligently, concisely, and professionally.";
       const messages = chatHistory.map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }));
       messages.push({ role: 'user', content: userMessage });
       
@@ -389,19 +402,38 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
       
       return response.content[0]?.text || 'I could not generate a response.';
     } catch (err) {
-      console.warn('⚠️ Chatbot AI failed:', err.message);
+      console.warn('⚠️ Claude AI failed:', err.message);
     }
   }
 
-  // Intelligent fallback
+  // 2. Try Gemini
+  const gemini = getGeminiClient();
+  if (gemini) {
+    try {
+      const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: systemPrompt });
+      
+      const formattedHistory = chatHistory.map(m => ({
+        role: m.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }]
+      }));
+      
+      const chat = model.startChat({ history: formattedHistory });
+      const result = await chat.sendMessage(userMessage);
+      return result.response.text();
+    } catch (err) {
+      console.warn('⚠️ Gemini AI failed:', err.message);
+    }
+  }
+
+  // Intelligent fallback if no API keys are provided
   const q = userMessage.toLowerCase();
   
   if (q.includes('not about') || q.includes("don't want") || q.includes('stop')) {
-    return `My apologies! Let's shift gears. You mentioned "${userMessage}". I can help with interview prep, salary negotiation, or job searching instead. What would you like to focus on?`;
+    return `My apologies! Let's shift gears. You mentioned "${userMessage}". I can help with interview prep, salary negotiation, or job searching instead. To unlock my full conversational capabilities (and fix typos automatically!), please add a GEMINI_API_KEY to the backend .env file.`;
   }
   
   if (q.includes('interview') || q.includes('question')) {
-    return `For technical interviews regarding "${userMessage}": 1. Structure your answers using the STAR method. 2. Highlight quantifiable metrics. 3. Review relevant system design.`;
+    return `For technical interviews regarding "${userMessage}": 1. Structure your answers using the STAR method. 2. Highlight quantifiable metrics. 3. Review relevant system design. (Note: Configure an API key in .env for full AI analysis).`;
   }
   if (q.includes('resume') || q.includes('ats')) {
     return `For your resume optimization regarding "${userMessage}": Use clean formatting, standard headings, and match job description keywords truthfully.`;
@@ -419,8 +451,8 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
   // Dynamic conversational fallback
   const cleanQuery = userMessage.replace(/[^\w\s]/gi, '').trim();
   if (cleanQuery.length > 0) {
-    return `I understand you're asking about "${cleanQuery}". As your Kronos AI Assistant, I can help you tailor your resume, prep for interviews, or negotiate salary. Let me know which area you'd like to dive into!`;
+    return `I understand you're asking about "${cleanQuery}". To chat with me fluidly like ChatGPT or Gemini and have me handle spelling mistakes perfectly, please add your free GEMINI_API_KEY or CLAUDE_API_KEY to the backend \`.env\` file!`;
   }
   
-  return `I'm here to help! Could you provide a bit more detail?`;
+  return `I'm here to help! To chat with me properly, please provide an API key in the backend \`.env\` file.`;
 };
