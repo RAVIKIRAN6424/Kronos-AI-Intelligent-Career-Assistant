@@ -111,7 +111,25 @@ export const ChatbotView = ({ toast }) => {
     if (q.includes('salary') || q.includes('negotiat')) {
       return `For salary negotiations: 1. Research market bands for your role and experience level. 2. Never give a single static number first—provide a range. 3. Frame compensation requests around the business value and impact you bring.`;
     }
-    return `That's an interesting point about "${query}". As your Kronos AI Career Assistant, I'm here to support you in every aspect of your professional journey! I recommend keeping your resume tailored to the roles you want, continuously updating your skills, and staying proactive in your outreach. Let me know if you want to dive deeper into interview prep, resume reviews, or salary negotiation!`;
+    if (q === 'hi' || q === 'hello' || q === 'hey') {
+      return `Hello! I am Kronos AI, your autonomous career engine. How can I assist you with your job search today?`;
+    }
+    if (q.includes('job') || q.includes('work')) {
+      return `Looking for a job can be tough, but I'm here to help! I can help optimize your resume or prepare you for interviews.`;
+    }
+    if (q.includes('how are you') || q.includes('what going on') || q.includes('whats up')) {
+      return `I'm doing great! Just analyzing some career data. How can I assist you with your job search today?`;
+    }
+    
+    const shortResponses = [
+      `That's interesting! Tell me more about your career goals.`,
+      `I see! How does that relate to your target job role?`,
+      `Got it. Do you want me to help you tailor your resume for this?`,
+      `I'm listening! As your career engine, I'm here to help you navigate this.`,
+      `Make sense! If you have any specific interview questions you want to practice, just let me know.`
+    ];
+    
+    return shortResponses[Math.floor(Math.random() * shortResponses.length)];
   };
 
   const handleSendMessage = async (e) => {
