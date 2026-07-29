@@ -161,7 +161,8 @@ export function App() {
             </button>
             <div>
               <h1>{getGreeting()}, {currentUser?.full_name?.split(' ')[0] || 'Guest'}</h1>
-            <div className="sub">Your career engine is running optimally today.</div>
+              <div className="sub">Your career engine is running optimally today.</div>
+            </div>
           </div>
           <div className="header-right">
             <div className="icon-btn" style={{ position: 'relative' }} onClick={() => setShowNotifications(!showNotifications)}>
