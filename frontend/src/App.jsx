@@ -48,6 +48,23 @@ export function App() {
   // Modals
   const [selectedJob, setSelectedJob] = useState(null);
   const [selectedJobForOutreach, setSelectedJobForOutreach] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'GU';
+    const parts = name.split(' ').filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
 
   // Toast Notifications
   const [toasts, setToasts] = useState([]);
@@ -131,20 +148,33 @@ export function App() {
       <div className="main">
         <div className="header">
           <div>
-            <h1>Hello, {currentUser?.full_name?.split(' ')[0] || 'Guest'}</h1>
+            <h1>{getGreeting()}, {currentUser?.full_name?.split(' ')[0] || 'Guest'}</h1>
             <div className="sub">Your career engine is running optimally today.</div>
           </div>
           <div className="header-right">
-            <div className="search">
+            <div className="search" onClick={() => setActiveTab('search')} style={{ cursor: 'pointer' }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               Search roles, companies...
             </div>
-            <div className="icon-btn">
+            <div className="icon-btn" style={{ position: 'relative' }} onClick={() => setShowNotifications(!showNotifications)}>
               <div className="dot"></div>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              {showNotifications && (
+                <div style={{
+                  position: 'absolute', top: '40px', right: '0', width: '300px', background: 'var(--bg-card)', 
+                  border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px', zIndex: 1000, 
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)', color: 'var(--text-main)', textAlign: 'left', cursor: 'default'
+                }} onClick={(e) => e.stopPropagation()}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px' }}>Notifications</h4>
+                  <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '8px' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--sage)', marginTop: '4px', flexShrink: 0 }}></div><div><b>Automated Apply</b><br/><span style={{ color: 'var(--text-muted)' }}>Successfully applied to Stripe.</span></div></div>
+                    <div style={{ display: 'flex', gap: '8px' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--gold)', marginTop: '4px', flexShrink: 0 }}></div><div><b>New Match</b><br/><span style={{ color: 'var(--text-muted)' }}>Found 5 new roles matching your profile.</span></div></div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="avatar" onClick={() => setActiveTab('profile')}>
-              {currentUser?.full_name ? currentUser.full_name.substring(0,2).toUpperCase() : 'GU'}
+              {getInitials(currentUser?.full_name)}
             </div>
           </div>
         </div>
