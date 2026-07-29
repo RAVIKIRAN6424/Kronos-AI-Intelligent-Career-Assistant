@@ -486,7 +486,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
                 }}
               >
                 <span>{portal}</span>
-                <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '10px', background: isSelected ? 'rgba(6, 10, 18, 0.3)' : 'rgba(255,255,255,0.1)' }}>
+                <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '10px', background: isSelected ? 'var(--blue-soft)' : 'var(--line-strong)' }}>
                   {count}
                 </span>
               </button>
@@ -499,7 +499,7 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-            Showing <strong style={{ color: '#ffffff' }}>{sortedFilteredJobs.length}</strong> live postings
+            Showing <strong style={{ color: 'var(--text-main)' }}>{sortedFilteredJobs.length}</strong> live postings
             {selectedPortal !== 'All Portals' ? ` on ${selectedPortal}` : ''}
             {experienceLevel !== 'all' ? ` (${experienceLevel.toUpperCase()})` : ''}
             {postedWithin !== 'all' ? ` (${postedWithin === '24h' ? 'Last 24h' : postedWithin === '2d' ? 'Last 2 days' : 'Last 1 week'})` : ''} (Page {currentPage} of {totalPages}):
@@ -541,17 +541,17 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
                       </span>
 
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <span style={{ fontSize: '10px', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: 'rgba(157, 78, 221, 0.15)', color: 'var(--accent-purple)', border: '1px solid var(--accent-purple)' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: 'var(--gold-soft)', color: 'var(--accent-purple)', border: '1px solid var(--accent-purple)' }}>
                           {expLabel}
                         </span>
 
-                        <span style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: 700, background: 'rgba(0, 242, 254, 0.1)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--accent-cyan)' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: 700, background: 'var(--blue-soft)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--accent-cyan)' }}>
                           {job.source}
                         </span>
                       </div>
                     </div>
 
-                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff', lineHeight: '1.3', marginBottom: '6px' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-main)', lineHeight: '1.3', marginBottom: '6px' }}>
                       {job.title}
                     </h3>
 
@@ -564,8 +564,8 @@ export const SearchView = ({ toast, onOpenOutreach }) => {
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', background: 'rgba(2, 6, 15, 0.6)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-subtle)', marginBottom: '12px' }}>
-                      <strong style={{ color: '#ffffff' }}>Skills: </strong> {job.key_skills || 'Core domain skills'}
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', background: 'var(--panel-2)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-subtle)', marginBottom: '12px' }}>
+                      <strong style={{ color: 'var(--text-main)' }}>Skills: </strong> {job.key_skills || 'Core domain skills'}
                     </div>
                   </div>
 
