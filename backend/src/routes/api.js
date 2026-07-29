@@ -2,7 +2,7 @@ import express from 'express';
 import { query, getOne, run } from '../config/database.js';
 import { generateOTP, saveOTP, verifyOTPCode } from '../utils/otpHelper.js';
 import { scrapeLiveJobs } from '../services/scraperService.js';
-import { analyzeJobWithAI, generateColdEmailWithAI, optimizeResumeWithAI } from '../services/aiService.js';
+import { analyzeJobWithAI, generateColdEmailWithAI, optimizeResumeWithAI, generateChatbotResponse } from '../services/aiService.js';
 import {
   sendOTPEmail,
   sendForgotPasswordOTP,
@@ -724,16 +724,12 @@ router.post('/chatbot/chat', async (req, res) => {
     await run(`INSERT INTO chatbot_messages (sender, text) VALUES ('user', ?)`, [text]);
 
     // Smart Career Assistant AI Bot Response Generator
-    let reply = `I evaluated your question regarding "${text}". As your Kronos AI Career Assistant, I recommend tailoring your resume keywords, optimizing your LinkedIn summary, and automating outreach during peak recruiter hours (09:00 AM - 11:00 AM).`;
-    if (text.toLowerCase().includes('interview')) {
-      reply = `For technical interviews: 1. Review system design fundamentals, 2. Prepare STAR-method behavioral responses, 3. Highlight quantifiable metric achievements from your previous projects.`;
-    } else if (text.toLowerCase().includes('resume') || text.toLowerCase().includes('ats')) {
-      reply = `To pass ATS filters: Ensure your contact info is clean, use standard section headings (Experience, Skills, Education), and match job keywords truthfully without formatting tables.`;
-    }
+    const history = await query(`SELECT * FROM chatbot_messages ORDER BY id ASC LIMIT 20`);
+    const reply = await generateChatbotResponse(text, history);
 
     await run(`INSERT INTO chatbot_messages (sender, text) VALUES ('bot', ?)`, [reply]);
-    const history = await query(`SELECT * FROM chatbot_messages ORDER BY id ASC`);
-    res.json({ reply, history });
+    const fullHistory = await query(`SELECT * FROM chatbot_messages ORDER BY id ASC`);
+    res.json({ reply, history: fullHistory });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

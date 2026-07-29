@@ -556,6 +556,10 @@ export const api = {
   optimizeResume: async (role_name, resume_text = '', is_fresher = false) => {
     const res = await request('/resumes/optimize', { method: 'POST', body: { role_name, resume_text, is_fresher } });
     return res;
+  },
+  sendChatbotMessage: async (text) => {
+    const res = await request('/chatbot/chat', { method: 'POST', body: { text } });
+    return res;
   }
 };
 

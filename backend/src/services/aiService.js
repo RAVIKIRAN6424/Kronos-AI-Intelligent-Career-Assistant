@@ -367,3 +367,45 @@ Location: ${profile?.location || 'Bengaluru, India'}`;
 
   return { subject, body };
 };
+
+/**
+ * Generate dynamic chatbot response
+ */
+export const generateChatbotResponse = async (userMessage, chatHistory = []) => {
+  const client = await getAnthropicClient();
+  
+  if (client) {
+    try {
+      const systemPrompt = "You are Kronos AI, an elite autonomous career assistant. Answer the user's career, resume, and job-search questions intelligently, concisely, and professionally.";
+      const messages = chatHistory.map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }));
+      messages.push({ role: 'user', content: userMessage });
+      
+      const response = await client.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 500,
+        system: systemPrompt,
+        messages
+      });
+      
+      return response.content[0]?.text || 'I could not generate a response.';
+    } catch (err) {
+      console.warn('⚠️ Chatbot AI failed:', err.message);
+    }
+  }
+
+  // Intelligent fallback
+  const q = userMessage.toLowerCase();
+  if (q.includes('interview') || q.includes('question')) {
+    return `For technical interviews: 1. Structure your answers using the STAR method (Situation, Task, Action, Result). 2. Highlight quantifiable metric achievements from your previous projects. 3. Review system design & data structures relevant to your targeted role.`;
+  }
+  if (q.includes('resume') || q.includes('ats')) {
+    return `To pass ATS filters: 1. Use clean standard section headings (Experience, Skills, Education). 2. Match technical keywords truthfully from target job descriptions. 3. Avoid multi-column table layouts that confuse PDF parsers.`;
+  }
+  if (q.includes('salary') || q.includes('negotiat')) {
+    return `For salary negotiations: 1. Research market bands for your role and experience level. 2. Never give a single static number first—provide a range. 3. Frame compensation requests around the business value and impact you bring.`;
+  }
+  if (q === 'hi' || q === 'hello' || q === 'hey') {
+    return `Hello! I am Kronos AI, your autonomous career engine. I can help you tailor your resume, prepare for interviews, or analyze job matches. What do you need help with today?`;
+  }
+  return `I evaluated your question regarding "${userMessage}". To unlock advanced dynamic AI coaching, please configure your Claude API key in the Settings panel. In the meantime, I recommend tailoring your resume keywords, optimizing your LinkedIn summary, and automating outreach during peak recruiter hours (09:00 AM - 11:00 AM).`;
+};
