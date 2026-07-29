@@ -395,14 +395,19 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
 
   // Intelligent fallback
   const q = userMessage.toLowerCase();
+  
+  if (q.includes('not about') || q.includes('don\\'t want') || q.includes('stop')) {
+    return `My apologies! Let's shift gears. You mentioned "${userMessage}". I can help with interview prep, salary negotiation, or job searching instead. What would you like to focus on?`;
+  }
+  
   if (q.includes('interview') || q.includes('question')) {
-    return `For technical interviews: 1. Structure your answers using the STAR method (Situation, Task, Action, Result). 2. Highlight quantifiable metric achievements from your previous projects. 3. Review system design & data structures relevant to your targeted role.`;
+    return `For technical interviews regarding "${userMessage}": 1. Structure your answers using the STAR method. 2. Highlight quantifiable metrics. 3. Review relevant system design.`;
   }
   if (q.includes('resume') || q.includes('ats')) {
-    return `To pass ATS filters: 1. Use clean standard section headings (Experience, Skills, Education). 2. Match technical keywords truthfully from target job descriptions. 3. Avoid multi-column table layouts that confuse PDF parsers.`;
+    return `For your resume optimization regarding "${userMessage}": Use clean formatting, standard headings, and match job description keywords truthfully.`;
   }
   if (q.includes('salary') || q.includes('negotiat')) {
-    return `For salary negotiations: 1. Research market bands for your role and experience level. 2. Never give a single static number first—provide a range. 3. Frame compensation requests around the business value and impact you bring.`;
+    return `Regarding salary for "${userMessage}": Research market bands, never give a single static number first, and frame requests around business value.`;
   }
   if (q.includes('job') || q.includes('work')) {
     return `Looking for a job can be tough, but I'm here to help! I can help optimize your resume or prepare you for interviews.`;
@@ -411,14 +416,11 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
     return `I'm doing great! Just analyzing some career data. How can I assist you with your job search today?`;
   }
   
-  const shortResponses = [
-    `That's interesting! Tell me more about your career goals.`,
-    `I see! How does that relate to your target job role?`,
-    `Got it. Do you want me to help you tailor your resume for this?`,
-    `I'm listening! As your career engine, I'm here to help you navigate this.`,
-    `Make sense! If you have any specific interview questions you want to practice, just let me know.`
-  ];
+  // Dynamic conversational fallback
+  const cleanQuery = userMessage.replace(/[^\w\s]/gi, '').trim();
+  if (cleanQuery.length > 0) {
+    return `I understand you're asking about "${cleanQuery}". As your Kronos AI Assistant, I can help you tailor your resume, prep for interviews, or negotiate salary. Let me know which area you'd like to dive into!`;
+  }
   
-  // Return a random short conversational response
-  return shortResponses[Math.floor(Math.random() * shortResponses.length)];
+  return `I'm here to help! Could you provide a bit more detail?`;
 };

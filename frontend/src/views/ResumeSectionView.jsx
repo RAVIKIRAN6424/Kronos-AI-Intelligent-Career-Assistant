@@ -462,6 +462,11 @@ EDUCATION & CERTIFICATIONS:
 
   // Tailored Resume Improvement Engine (Rewrites weak sections & adds target role keywords)
   const handleOptimizeResume = async () => {
+    if (!userProfile) {
+      if (toast) toast('Please log in to use the AI Resume Improvement engine.', 'error');
+      return;
+    }
+    
     setOptimizing(true);
     try {
       if (toast) toast(`Tailoring and optimizing resume content for ${selectedRole} ATS standards...`, 'info');

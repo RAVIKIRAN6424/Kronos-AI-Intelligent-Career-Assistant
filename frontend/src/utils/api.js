@@ -382,11 +382,15 @@ export const api = {
     ]);
     
     let replyText = `I evaluated your question regarding "${text}". As your friendly Kronos AI Assistant, I recommend tailoring resume keywords, optimizing your profile, and targeting active job postings! Let me know if you need more help!`;
-    if (q.includes('interview')) {
-      replyText = `For interviews, here are my top tips: 1. Review system design fundamentals. 2. Use the STAR method for behavioral questions. 3. Highlight quantifiable metrics from past projects. You've got this! 🌟`;
+    
+    if (q.includes('not about') || q.includes('don\\'t want') || q.includes('stop')) {
+      replyText = `My apologies! Let's shift gears. You mentioned "${text}". I can help with interview prep, salary negotiation, or job searching instead. What would you like to focus on?`;
+    } else if (q.includes('interview')) {
+      replyText = `For interviews regarding "${text}", here are my top tips: 1. Review system design fundamentals. 2. Use the STAR method for behavioral questions. 3. Highlight quantifiable metrics from past projects. You've got this! 🌟`;
     } else if (q.includes('resume') || q.includes('ats')) {
-      replyText = `To pass ATS filters: Use clean formatting, clear standard headings, and match job description keywords truthfully. Let me know if you want me to scan your resume! ✨`;
+      replyText = `For your resume optimization regarding "${text}": Use clean formatting, clear standard headings, and match job description keywords truthfully. Let me know if you want me to scan your resume! ✨`;
     }
+    
     const updated = [
       ...current,
       { id: Date.now(), sender: 'user', text },
