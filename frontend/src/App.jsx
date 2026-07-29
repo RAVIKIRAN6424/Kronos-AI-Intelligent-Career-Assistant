@@ -194,7 +194,17 @@ export function App() {
                   <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px' }}>Notifications</h4>
                   <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {latestJobMatches.map(job => (
-                      <div key={'match-'+job.id} style={{ display: 'flex', gap: '8px' }}>
+                      <div 
+                        key={'match-'+job.id} 
+                        style={{ display: 'flex', gap: '8px', cursor: 'pointer', padding: '4px', borderRadius: '4px', transition: 'background 0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => {
+                          setActiveTab('jobs');
+                          setSelectedJob(job);
+                          setShowNotifications(false);
+                        }}
+                      >
                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--blue)', marginTop: '4px', flexShrink: 0 }}></div>
                         <div>
                           <b>New Profile Match!</b><br/>
@@ -203,7 +213,17 @@ export function App() {
                       </div>
                     ))}
                     {recentAppliedJobs.map(job => (
-                      <div key={'applied-'+job.id} style={{ display: 'flex', gap: '8px' }}>
+                      <div 
+                        key={'applied-'+job.id} 
+                        style={{ display: 'flex', gap: '8px', cursor: 'pointer', padding: '4px', borderRadius: '4px', transition: 'background 0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => {
+                          setActiveTab('jobs');
+                          setSelectedJob(job);
+                          setShowNotifications(false);
+                        }}
+                      >
                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--sage)', marginTop: '4px', flexShrink: 0 }}></div>
                         <div>
                           <b>Automated Apply</b><br/>
