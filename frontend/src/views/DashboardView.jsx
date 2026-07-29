@@ -8,6 +8,7 @@ import { categoryTheme } from '../utils/categoryColors';
 export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJob, onOpenScraper, toast, currentUser, onOpenAuthModal }) => {
   const [botRunning, setBotRunning] = useState(false);
   const [showPortalModal, setShowPortalModal] = useState(false);
+  const [portals, setPortals] = useState([]);
   const [connectedCount, setConnectedCount] = useState(0);
   const [botState, setBotState] = useState({
     is_running: 0,
@@ -19,7 +20,23 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
 
   useEffect(() => {
     fetchBotState();
-  }, []);
+    if (currentUser) {
+      fetchPortals();
+    }
+  }, [currentUser]);
+
+  const fetchPortals = async () => {
+    try {
+      const portalsData = await api.getPortals();
+      if (portalsData && Array.isArray(portalsData)) {
+        setPortals(portalsData.slice(0, 5)); // Show top 5 portals
+        const count = portalsData.filter(p => p.is_connected === 1 || p.is_connected === true).length;
+        setConnectedCount(count);
+      }
+    } catch (err) {
+      console.warn('Portals fetch notice:', err);
+    }
+  };
 
   const fetchBotState = async () => {
     try {
@@ -242,27 +259,27 @@ export const DashboardView = ({ jobs = [], analytics = {}, onNavigate, onSelectJ
           {/* Portal Status */}
           <div className="side-card">
             <h3>Portal Status</h3>
-            <div className="portal-row">
-              <div className="portal-name">
-                <div className="portal-dot" style={{ background: connectedCount >= 1 ? 'var(--sage)' : 'var(--coral)' }}></div> 
-                LinkedIn
+            {portals.length > 0 ? (
+              portals.map((p, idx) => {
+                const isConnected = p.is_connected === 1 || p.is_connected === true;
+                const domainName = p.domain.split('.')[0];
+                const displayName = domainName.charAt(0).toUpperCase() + domainName.slice(1);
+                
+                return (
+                  <div className="portal-row" key={idx}>
+                    <div className="portal-name">
+                      <div className="portal-dot" style={{ background: isConnected ? 'var(--sage)' : 'var(--coral)' }}></div> 
+                      {displayName}
+                    </div>
+                    <div className="portal-status">{isConnected ? 'Connected' : 'Disconnected'}</div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="portal-row">
+                <div className="portal-status">No portals configured.</div>
               </div>
-              <div className="portal-status">{connectedCount >= 1 ? 'Connected' : 'Disconnected'}</div>
-            </div>
-            <div className="portal-row">
-              <div className="portal-name">
-                <div className="portal-dot" style={{ background: connectedCount >= 2 ? 'var(--sage)' : 'var(--coral)' }}></div> 
-                Indeed
-              </div>
-              <div className="portal-status">{connectedCount >= 2 ? 'Connected' : 'Disconnected'}</div>
-            </div>
-            <div className="portal-row">
-              <div className="portal-name">
-                <div className="portal-dot" style={{ background: connectedCount >= 3 ? 'var(--sage)' : 'var(--coral)' }}></div> 
-                Glassdoor
-              </div>
-              <div className="portal-status">{connectedCount >= 3 ? 'Connected' : 'Disconnected'}</div>
-            </div>
+            )}
           </div>
 
           {/* Recent Activity */}
