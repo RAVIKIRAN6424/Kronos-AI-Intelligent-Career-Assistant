@@ -24,7 +24,9 @@ import { api } from './utils/api';
 export function App() {
   const [activeTab, setActiveTab] = useState('landing');
   const [activeTheme, setActiveTheme] = useState(() => {
-    return localStorage.getItem('kronos_theme') || 'cyber-cyan';
+    const user = localStorage.getItem('kronos_user');
+    if (!user) return 'brass-console';
+    return localStorage.getItem('kronos_theme') || 'brass-console';
   });
   
   // Auth & Welcome state
@@ -38,6 +40,7 @@ export function App() {
     setCurrentUser(null);
     localStorage.removeItem('kronos_user');
     setActiveTab('landing');
+    setActiveTheme('brass-console');
     addToast('Logged out successfully.', 'info');
   };
 
@@ -84,8 +87,10 @@ export function App() {
   // Sync Theme attribute & persist in localStorage
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', activeTheme);
-    localStorage.setItem('kronos_theme', activeTheme);
-  }, [activeTheme]);
+    if (currentUser) {
+      localStorage.setItem('kronos_theme', activeTheme);
+    }
+  }, [activeTheme, currentUser]);
 
   // Initial Load
   useEffect(() => {
@@ -344,6 +349,8 @@ export function App() {
         onAuthSuccess={(user) => {
           setCurrentUser(user);
           handleRefreshJobs();
+          const savedTheme = localStorage.getItem('kronos_theme');
+          if (savedTheme) setActiveTheme(savedTheme);
           setIsWelcomeOpen(true); // Step 4 Welcome Animation
           setActiveTab('dashboard');
         }}
