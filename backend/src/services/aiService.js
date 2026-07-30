@@ -17,8 +17,9 @@ const getAnthropicClient = async () => {
 /**
  * Get Gemini Client initialized with env key
  */
-const getGeminiClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
+const getGeminiClient = async () => {
+  const setting = await getOne(`SELECT value FROM settings WHERE key = 'gemini_api_key'`);
+  const apiKey = setting?.value || process.env.GEMINI_API_KEY;
   if (apiKey && apiKey.trim().length > 10) {
     return new GoogleGenerativeAI(apiKey);
   }
@@ -409,7 +410,7 @@ export const generateChatbotResponse = async (userMessage, chatHistory = []) => 
   }
 
   // 2. Try Gemini
-  const gemini = getGeminiClient();
+  const gemini = await getGeminiClient();
   if (gemini) {
     try {
       const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: systemPrompt });
