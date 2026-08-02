@@ -102,7 +102,7 @@ Provide your evaluation strictly as a valid JSON object with the following field
   const gemini = await getGeminiClient();
   if (gemini) {
     try {
-      const model = gemini.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const model = gemini.getGenerativeModel({ model: "gemini-3.6-flash" });
       const result = await model.generateContent(prompt);
       const text = result.response.text();
       const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -231,7 +231,7 @@ Return strictly a valid JSON object matching this schema:
   const gemini = await getGeminiClient();
   if (gemini) {
     try {
-      const model = gemini.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const model = gemini.getGenerativeModel({ model: "gemini-3.6-flash" });
       const result = await model.generateContent(prompt);
       const text = result.response.text();
       const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -461,7 +461,7 @@ Answer the specific question asked comprehensively. Be as detailed as necessary 
   const gemini = await getGeminiClient();
   if (gemini) {
     try {
-      const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: systemPrompt });
+      const model = gemini.getGenerativeModel({ model: "gemini-3.6-flash", systemInstruction: systemPrompt });
       
       const formattedHistory = chatHistory.map(m => ({
         role: m.sender === 'user' ? 'user' : 'model',
