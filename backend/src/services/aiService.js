@@ -482,15 +482,51 @@ Answer the specific question asked comprehensively. Be as detailed as necessary 
   if (q.includes('hi') || q.includes('hello') || q.includes('hey')) {
     return "Hello! I am your AI Assistant. I can help you with anything you need, from answering complex questions to providing career advice. How can I help you today?";
   }
+
+  if (q.includes('how are you') || q.includes('how do you do') || q.includes('what is up') || q.includes('whats up')) {
+    return "I'm doing great! Ready to help you with anything you need. What's on your mind?";
+  }
   
   if (q.includes('help')) {
     return "I'm here to help! Whether you need coding assistance, general knowledge, or job application tips, just ask.";
   }
 
+  if (q.includes('interview') || q.includes('question')) {
+    return "For technical interviews: 1. Structure your answers using the STAR method (Situation, Task, Action, Result). 2. Highlight quantifiable metrics. 3. Review relevant system design.";
+  }
+  
+  if (q.includes('resume') || q.includes('cv') || q.includes('ats')) {
+    return "To optimize your resume: Use clean formatting, standard ATS-friendly headings, and make sure your skills perfectly match the job description keywords truthfully.";
+  }
+  
+  if (q.includes('salary') || q.includes('negotiat')) {
+    return "Regarding salary negotiations: Research market bands for the role, avoid giving a single static number first, and frame your request around the business value you bring.";
+  }
+  
+  if (q.includes('job') || q.includes('work') || q.includes('opening') || q.includes('career')) {
+    return "Looking for a job can be tough, but I'm here to help! Focus on tailored applications and leverage your specific domain expertise.";
+  }
+  
+  if (q.includes('fresher') || q.includes('entry level')) {
+    return "For entry-level candidates, highlight your academic projects, internships, and transferable skills. Eagerness to learn is a huge asset!";
+  }
+  
+  if (q.includes('who are you') || q.includes('what are you')) {
+    return "I am Kronos AI, an advanced virtual assistant designed to help you with everything from complex technical questions to career optimization.";
+  }
+
+  if (q.includes('thank')) {
+    return "You're very welcome! Let me know if you need anything else.";
+  }
+
+  if (q.includes('bye') || q.includes('goodbye')) {
+    return "Goodbye! Have a great day and good luck with your career goals.";
+  }
+
   // Dynamic conversational fallback for general queries
   const cleanQuery = userMessage.trim();
   if (cleanQuery.length > 0) {
-    return `You asked: "${cleanQuery}". Since I am running in fallback mode without API keys, my knowledge is limited right now. Please configure an API key for the full AI experience!`;
+    return `You mentioned: "${cleanQuery}". That's an interesting point! While I am currently operating in offline mode (API key not configured), I'm still here to provide general guidance. Could you specify what aspect of that you'd like help with?`;
   }
   
   return `I am here and ready to help. What would you like to talk about?`;
