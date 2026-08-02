@@ -55,13 +55,10 @@ export const getRoleResumeForJob = async (jobTitle = '', jobCategory = '') => {
  * Analyze Job description against candidate profile to calculate Match Score % and key requirements
  */
 export const analyzeJobWithAI = async (jobDescription, jobTitle, candidateProfile) => {
-  const client = await getAnthropicClient();
-
-  if (client) {
-    try {
-      const prompt = `
-You are Kronos AI, an elite career match score algorithm.
-Analyze the following Job Posting against the Candidate Profile.
+  const prompt = `
+You are an elite and highly analytical AI system.
+Perform a deep, step-by-step reasoning analysis of the following Job Posting against the Candidate Profile.
+Your goal is to accurately calculate a precise match score and identify critical insights. Take your time to analyze thoroughly.
 
 JOB TITLE: ${jobTitle || 'N/A'}
 JOB DESCRIPTION: ${jobDescription}
@@ -75,27 +72,45 @@ CANDIDATE PROFILE:
 
 Provide your evaluation strictly as a valid JSON object with the following fields:
 {
-  "match_score": <number between 0 and 100>,
-  "rationale": "<2-3 sentence summary of why candidate matches>",
+  "match_score": <number between 0 and 100, reflecting true compatibility based on strict analysis>,
+  "rationale": "<Detailed explanation of the score, analyzing overlaps and gaps deeply>",
   "key_skills_found": ["<skill1>", "<skill2>", ...],
   "missing_skills": ["<skill1>", "<skill2>", ...],
   "job_category": "<Software|Mechanical|Electrical|Civil|Business|Data Science|Finance|Healthcare|Other>",
   "recommendations": ["<tip1>", "<tip2>"]
 }
 `;
+
+  const client = await getAnthropicClient();
+  if (client) {
+    try {
       const response = await client.messages.create({
         model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1000,
+        max_tokens: 1500,
         messages: [{ role: 'user', content: prompt }]
       });
-
       const text = response.content[0]?.text || '';
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
     } catch (err) {
-      console.warn('⚠️ Anthropic API call failed or unconfigured, falling back to smart heuristic:', err.message);
+      console.warn('⚠️ Anthropic API call failed in analyzeJobWithAI:', err.message);
+    }
+  }
+
+  const gemini = await getGeminiClient();
+  if (gemini) {
+    try {
+      const model = gemini.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+    } catch (err) {
+      console.warn('⚠️ Gemini AI call failed in analyzeJobWithAI:', err.message);
     }
   }
 
@@ -162,13 +177,10 @@ const heuristicAnalyzeJob = (jobDesc, jobTitle, profile) => {
  * STRICT DIRECTIVE: Ground optimization strictly in candidate's uploaded/provided details. Do NOT invent fake experience or claims.
  */
 export const optimizeResumeWithAI = async (roleName, resumeText = '', isFresher = false) => {
-  const client = await getAnthropicClient();
-
-  if (client) {
-    try {
-      const prompt = `
-You are Kronos AI, an elite ATS Resume & Career Systems Expert powered by Kronos Core AI Engine.
-Transform and optimize the candidate's actual resume for the target role: "${roleName}".
+  const prompt = `
+You are a highly advanced ATS AI Expert.
+Transform and deeply optimize the candidate's actual resume for the target role: "${roleName}".
+Take your time to thoroughly structure, refine, and calculate accurate scores.
 CANDIDATE LEVEL: ${isFresher ? 'Fresher / Entry-Level Graduate' : 'Experienced Professional'}
 
 CANDIDATE INPUT RESUME TEXT:
@@ -177,7 +189,7 @@ ${resumeText || 'No custom resume text uploaded.'}
 CRITICAL TRUTHFULNESS DIRECTIVE:
 1. Do NOT invent fake companies, fake licenses, or unmentioned experience years.
 2. Ground all experience, academic deliverables, and education strictly in the candidate's provided text.
-3. Structure content into clean standard ATS sections WITHOUT raw ASCII border characters (no '====' or '----'):
+3. Structure content into clean standard ATS sections WITHOUT raw ASCII border characters:
    - PROFESSIONAL SUMMARY (or GRADUATE PROFILE SUMMARY if Fresher)
    - CORE COMPETENCIES & TECHNICAL SKILLS
    - ${isFresher ? 'ACADEMIC PROJECTS & CAPSTONE DELIVERABLES' : 'PROFESSIONAL EXPERIENCE'}
@@ -187,15 +199,19 @@ CRITICAL TRUTHFULNESS DIRECTIVE:
 
 Return strictly a valid JSON object matching this schema:
 {
-  "ats_score": 96,
-  "grammar_score": 98,
-  "formatting_score": 95,
-  "keyword_score": 96,
-  "missing_skills": "Relevant job domain skills evaluated.",
-  "suggestions": "Optimized candidate details into professional ATS format.",
+  "ats_score": <number 0-100>,
+  "grammar_score": <number 0-100>,
+  "formatting_score": <number 0-100>,
+  "keyword_score": <number 0-100>,
+  "missing_skills": "<String listing missing critical domain skills>",
+  "suggestions": "<String giving actionable advice>",
   "optimized_resume_text": "<Full structured ATS resume text block>"
 }
 `;
+
+  const client = await getAnthropicClient();
+  if (client) {
+    try {
       const response = await client.messages.create({
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1500,
@@ -208,7 +224,22 @@ Return strictly a valid JSON object matching this schema:
         return JSON.parse(jsonMatch[0]);
       }
     } catch (err) {
-      console.warn('⚠️ Kronos AI Engine API call failed or unconfigured, using smart fallback ATS optimizer:', err.message);
+      console.warn('⚠️ Anthropic AI call failed in optimizeResumeWithAI:', err.message);
+    }
+  }
+
+  const gemini = await getGeminiClient();
+  if (gemini) {
+    try {
+      const model = gemini.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+    } catch (err) {
+      console.warn('⚠️ Gemini AI call failed in optimizeResumeWithAI:', err.message);
     }
   }
 
@@ -387,53 +418,23 @@ Location: ${profile?.location || 'Bengaluru, India'}`;
 export const generateChatbotResponse = async (userMessage, chatHistory = []) => {
   let systemPrompt = `
 IDENTITY
-You are Kronos, an AI Career Assistant. You help users with resumes, interview 
-preparation, salary negotiation, and general career advice. You are also capable 
-of normal, friendly conversation when the user isn't asking for career help.
+You are a highly capable, general-purpose AI assistant. You possess vast knowledge 
+across all topics (science, tech, coding, history, casual conversation, etc.).
+You are also integrated into a career platform, so you can provide excellent 
+career advice, ATS resume tips, and interview prep when asked.
 
 ═══════════════════════════════════════
 CORE BEHAVIOR RULES
 ═══════════════════════════════════════
-1. Always respond based on what the user ACTUALLY typed. Read their message 
-   carefully before replying.
-2. NEVER use a fixed or repeated template for every message.
-3. NEVER say phrases like "I understand you're asking about 'X'" — just respond 
-   to X directly, like a real person would.
-4. Vary your sentence structure, tone, and phrasing across different replies.
-5. If the message is unclear, ask ONE short clarifying question — don't guess 
-   with a generic reply, and don't dump a list of options as a safety net.
+1. Give a reply for EVERYTHING based on the user's message.
+2. Read the user's message carefully and respond accurately to their exact intent.
+3. If they ask a coding question, write code. If they ask a general knowledge 
+   question, answer it completely and accurately.
+4. Be conversational, natural, and helpful.
+5. Do NOT restrict yourself to only career topics. 
+6. NEVER use canned responses or repeat templates.
 
-═══════════════════════════════════════
-GENERAL CONVERSATION MODE
-═══════════════════════════════════════
-Use this when the user is chatting casually, joking, greeting you, saying 
-they're bored, or saying something with no clear career intent.
-- Respond naturally and briefly, matching their tone.
-- Don't steer to career topics every single time.
-- Occasionally mention you're available for career help, phrased differently 
-  each time — never the same sentence twice.
-- Keep it short: 1–2 sentences is usually enough.
-
-═══════════════════════════════════════
-CAREER MODE — INTENT CATEGORIES
-═══════════════════════════════════════
-1. RESUME HELP — ask target role/industry if missing. Give specific feedback.
-2. INTERVIEW PREP — ask role/company if missing. Offer mock Q&A, STAR method.
-3. SALARY NEGOTIATION — ask role/experience/location. Give concrete talking points.
-4. GENERAL CAREER ADVICE — direct, practical answers based on what's shared.
-
-Answer the specific question asked. Don't list all categories unless the user 
-asks what you can do. Ask only ONE clarifying question at a time. Keep replies 
-2–5 sentences unless the user wants something detailed (full resume, 10 
-questions, negotiation email draft).
-
-═══════════════════════════════════════
-STRICT PROHIBITIONS
-═══════════════════════════════════════
-- Do NOT use canned openers like "I understand you're asking about..."
-- Do NOT list all service categories in every reply.
-- Do NOT repeat the same response structure across different messages.
-- Do NOT default to a generic safe answer instead of addressing the real input.
+Answer the specific question asked comprehensively. Be as detailed as necessary to fully address the user's query.
 `;
 
   // 1. Try Claude
@@ -445,7 +446,7 @@ STRICT PROHIBITIONS
       
       const response = await client.messages.create({
         model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 500,
+        max_tokens: 1000,
         system: systemPrompt,
         messages
       });
@@ -475,40 +476,22 @@ STRICT PROHIBITIONS
     }
   }
 
-  // Intelligent fallback if no API keys are provided
+  // General conversational fallback if no API keys are provided
   const q = userMessage.toLowerCase();
   
-  if (q.includes('not about') || q.includes("don't want") || q.includes('stop')) {
-    return `My apologies! Let's shift gears. You mentioned "${userMessage}". I can help with interview prep, salary negotiation, or job searching instead. What would you like to focus on?`;
+  if (q.includes('hi') || q.includes('hello') || q.includes('hey')) {
+    return "Hello! I am your AI Assistant. I can help you with anything you need, from answering complex questions to providing career advice. How can I help you today?";
   }
   
-  if (q.includes('interview') || q.includes('question')) {
-    return `For technical interviews regarding "${userMessage}": 1. Structure your answers using the STAR method. 2. Highlight quantifiable metrics. 3. Review relevant system design.`;
+  if (q.includes('help')) {
+    return "I'm here to help! Whether you need coding assistance, general knowledge, or job application tips, just ask.";
   }
-  if (q.includes('resume') || q.includes('ats')) {
-    return `For your resume optimization regarding "${userMessage}": Use clean formatting, standard headings, and match job description keywords truthfully.`;
-  }
-  if (q.includes('salary') || q.includes('negotiat')) {
-    return `Regarding salary for "${userMessage}": Research market bands, never give a single static number first, and frame requests around business value.`;
-  }
-  if (q.includes('job') || q.includes('work') || q.includes('opening')) {
-    return `Looking for a job can be tough, but I'm here to help! I recommend exploring the latest active job postings on the platform.`;
-  }
-  if (q.includes('how are you') || q.includes('what going on') || q.includes('whats up') || q === 'hi' || q === 'hii' || q === 'hello') {
-    return `Hello! I'm doing great. As your Kronos AI Career Assistant, I'm ready to help you optimize your resume, prepare for interviews, or find job opportunities. How can I assist you?`;
-  }
-  if (q.includes('fresher') || q.includes('entry level') || q.includes('entry-level')) {
-    return `For freshers and entry-level candidates, I highly recommend highlighting your academic projects, internships, and transferable skills on your resume. Don't worry about lack of experience—focus on your potential and eagerness to learn!`;
-  }
-  if (q.includes('engineering') || q.includes('mechanical') || q.includes('software')) {
-    return `Engineering roles (like mechanical or software) require strong technical fundamentals. Make sure your resume explicitly lists the tools, software (like CAD or Git), and frameworks you are proficient in!`;
-  }
-  
-  // Dynamic conversational fallback
-  const cleanQuery = userMessage.replace(/[^\w\s]/gi, '').trim();
+
+  // Dynamic conversational fallback for general queries
+  const cleanQuery = userMessage.trim();
   if (cleanQuery.length > 0) {
-    return `I understand you're asking about "${cleanQuery}". As your Kronos AI Assistant, I can help you tailor your resume, prep for interviews, or negotiate salary. Let me know which area you'd like to dive into!`;
+    return `You asked: "${cleanQuery}". Since I am running in fallback mode without API keys, my knowledge is limited right now. Please configure an API key for the full AI experience!`;
   }
   
-  return `I'm here to help! Could you provide a bit more detail on what you're looking for?`;
+  return `I am here and ready to help. What would you like to talk about?`;
 };
